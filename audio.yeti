@@ -1,0 +1,18 @@
+
+module audio;
+
+import javax.sound.sampled:
+     AudioSystem, AudioInputStream, AudioFormat, UnsupportedAudioFileException;
+
+import java.io: File, IOException;
+
+openAudioFile name is string -> 'a = 
+   (f = new File(name);
+    stream = AudioSystem#getAudioInputStream(f);
+    format = stream#getFormat();
+    { stream, format } );
+
+{
+    openAudioFile
+}
+
