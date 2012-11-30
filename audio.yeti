@@ -12,6 +12,13 @@ openAudioFile name is string -> 'a =
     format = stream#getFormat();
     { stream, format } );
 
+read file n is { .format is ~AudioFormat, .stream is ~AudioInputStream } ->
+    number -> 'a =
+   (ch = file.format#getChannels();
+    b = new byte[n * ch];
+    f = new float[ch][n];
+    f);
+
 {
     openAudioFile
 }

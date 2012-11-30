@@ -1,0 +1,10 @@
+module matrix;
+
+zeros n =
+    map \0 [1..n];
+
+matrix rows cols = 
+    array (map \(new double[cols]) [1..rows]);
+
+{ matrix }
+
