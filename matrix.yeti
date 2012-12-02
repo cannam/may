@@ -1,10 +1,30 @@
 module matrix;
 
-zeros n =
-    map \0 [1..n];
+zeros n = array(map \0 [1..n]);
+ones  n = array(map \1 [1..n]);
 
-matrix rows cols = 
-    array (map \(new double[cols]) [1..rows]);
+generateMatrix f rows cols = array
+   (map do row: array
+       (map (f row) [0..cols-1])
+    done [0..rows-1]);
 
-{ matrix }
+constMatrix n = generateMatrix do row col: n done;
+
+randomMatrix = generateMatrix do row col: Math#random() done;
+
+zeroMatrix = constMatrix 0;
+identityMatrix = constMatrix 1;
+
+width m = if length m > 0 then length m[0] else 0 fi;
+
+height m = length m;
+
+transposed m = array
+   (map do n: array
+       (map do a: a[n-1] done m)
+    done [1..width m]);
+
+interleaved m = array(concat(transposed m));
+
+{ generateMatrix, constMatrix, randomMatrix, zeroMatrix, identityMatrix, interleaved, width, height, zeros, ones, transposed }
 

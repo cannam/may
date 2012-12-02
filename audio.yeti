@@ -6,6 +6,8 @@ import javax.sound.sampled:
 
 import java.io: File, IOException;
 
+mat = load matrix;
+
 openAudioFile name is string -> 'a = 
    (f = new File(name);
     stream = AudioSystem#getAudioInputStream(f);
@@ -15,11 +17,15 @@ openAudioFile name is string -> 'a =
 read file n is { .format is ~AudioFormat, .stream is ~AudioInputStream } ->
     number -> 'a =
    (ch = file.format#getChannels();
-    b = new byte[n * ch];
-    f = new float[ch][n];
-    f);
+    bbuf = new byte[n * ch * file.format#sampleSizeInBits() / 8];
+    fbuf = new float[n * ch];
+    file.f#read(bbuf);
+    //!!! magic here
+    mat.uninterleave ch fbuf;
+   );
 
 {
-    openAudioFile
+    openAudioFile,
+    read
 }
 
