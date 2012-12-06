@@ -19,6 +19,8 @@ width m = if length m > 0 then length m[0] else 0 fi;
 
 height m = length m;
 
+dimensions m = { cols = width m, rows = height m };
+
 transposed m = array
    (map do n: array
        (map do a: a[n-1] done m)
@@ -26,5 +28,16 @@ transposed m = array
 
 interleaved m = array(concat(transposed m));
 
-{ generateMatrix, constMatrix, randomMatrix, zeroMatrix, identityMatrix, interleaved, width, height, zeros, ones, transposed }
+deinterleaved rows v =
+    generateMatrix do row col:
+        v[rows * col + row]
+    done rows (length v / rows);
+
+{
+zeros, ones,
+generateMatrix, constMatrix, randomMatrix, zeroMatrix, identityMatrix,
+width, height, dimensions,
+transposed,
+interleaved, deinterleaved,
+}
 
