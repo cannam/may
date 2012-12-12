@@ -1,0 +1,57 @@
+module floatrix;
+
+zeros n = new double[n];
+ones  n = (a = zeros n; for [0..n-1] do i: a[i] := 1.0 done; a);
+
+zeroMatrix rows cols = array (map \(zeros cols) [1..rows]);
+
+generateMatrix f rows cols =
+   (m = zeroMatrix rows cols;
+    for [0..rows-1] do row:
+        for [0..cols-1] do col:
+            n = f row col;
+            m[row][col] := n;
+        done;
+    done;
+    m);
+
+constMatrix n = generateMatrix do row col: n done;
+
+randomMatrix = generateMatrix do row col: Math#random() done;
+
+identityMatrix = constMatrix 1;
+
+arrayWrap a is ~double[] -> array<number> = array(a);
+
+width m = if length m > 0 then length (arrayWrap m[0]) else 0 fi;
+
+height m = length m;
+
+dimensions m = { cols = width m, rows = height m };
+
+
+/*
+
+transposed m = array
+   (map do n: array
+       (map do a: a[n-1] done m)
+    done [1..width m]);
+
+interleaved m = array(concat(transposed m));
+
+deinterleaved rows v =
+    generateMatrix do row col:
+        v[rows * col + row]
+    done rows (length v / rows);
+*/
+
+{
+zeros, ones,
+generateMatrix, constMatrix, randomMatrix, zeroMatrix, identityMatrix,
+width, height, dimensions,
+/*
+transposed,
+interleaved, deinterleaved,
+*/
+}
+
