@@ -25,17 +25,20 @@ arrayWrap a is ~double[] -> array<number> = array(a);
 
 width m = if length m > 0 then length (arrayWrap m[0]) else 0 fi;
 
+cols = width;
+
 height m = length m;
+
+rows = height;
 
 dimensions m = { cols = width m, rows = height m };
 
+transposed m is array<~double[]> -> array<~double[]> = 
+    generateMatrix do row col: m[col][row] done (cols m) (rows m);
+        
+
 
 /*
-
-transposed m = array
-   (map do n: array
-       (map do a: a[n-1] done m)
-    done [1..width m]);
 
 interleaved m = array(concat(transposed m));
 
@@ -48,9 +51,9 @@ deinterleaved rows v =
 {
 zeros, ones,
 generateMatrix, constMatrix, randomMatrix, zeroMatrix, identityMatrix,
-width, height, dimensions,
-/*
+width, cols, height, rows, dimensions,
 transposed,
+/*
 interleaved, deinterleaved,
 */
 }
