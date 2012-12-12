@@ -1,0 +1,14 @@
+
+module framer;
+
+af = load audiofile;
+
+
+
+retrieveFrame blocksize filename =
+   (f = af.open filename; \(af.read f blocksize));
+
+
+
+{ }
+

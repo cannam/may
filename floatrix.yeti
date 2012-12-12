@@ -3,6 +3,13 @@ module floatrix;
 zeros n = new double[n];
 ones  n = (a = zeros n; for [0..n-1] do i: a[i] := 1.0 done; a);
 
+vector l is list?<number> -> ~double[] =
+   (arr = array(l);
+    len = length arr;
+    v = new double[len];
+    for [0..len-1] do i: n = arr[i]; v[i] := n done;
+    v);
+
 zeroMatrix rows cols = array (map \(zeros cols) [1..rows]);
 
 generateMatrix f rows cols =
@@ -46,15 +53,26 @@ interleaved m =
     done;
     v);
 
-deinterleaved rows v is number -> ~double[] -> 'a =
+deinterleaved rows v is number -> ~double[] -> array<~double[]> =
     generateMatrix do row col:
         v[rows * col + row]
     done rows (length (arrayWrap v) / rows);
 
+    //!!! too inefficient!
+mixedDown rows v is number -> ~double[] -> ~double[] =
+   (cols = (length (arrayWrap v) / rows);
+    mv = new double[cols];
+    for [0..cols-1] do col:
+        val = sum (map do row: v[col * rows + row] done [0..rows-1]) / rows;
+        mv[col] := val;
+    done;
+    mv);
+
 {
-zeros, ones,
+zeros, ones, vector,
 generateMatrix, constMatrix, randomMatrix, zeroMatrix, identityMatrix,
 width, cols, height, rows, dimensions,
 transposed, interleaved, deinterleaved,
+mixedDown,
 }
 

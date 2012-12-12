@@ -79,7 +79,13 @@ read { format is ~AudioFormat, stream is ~AudioInputStream } n =
     mat.deinterleaved channels doubles;
    );
 
-//!!! these need to reset first (and there needs to be a reset function!)
+readMono { format is ~AudioFormat, stream is ~AudioInputStream } n =
+   (doubles = readInterleaved { format, stream } n;
+    channels = format#getChannels();
+    mat.mixedDown channels doubles;
+   );
+
+//!!! need to read only remaining, not whole stream length
 
 readAllInterleaved { format is ~AudioFormat, stream is ~AudioInputStream } =
    readInterleaved { format, stream } stream#getFrameLength();
@@ -87,12 +93,17 @@ readAllInterleaved { format is ~AudioFormat, stream is ~AudioInputStream } =
 readAll { format is ~AudioFormat, stream is ~AudioInputStream } =
    read { format, stream } stream#getFrameLength();
 
+readAllMono { format is ~AudioFormat, stream is ~AudioInputStream } =
+   readMono { format, stream } stream#getFrameLength();
+
 {
     open,
     read,
     readAll,
     readInterleaved,
     readAllInterleaved,
+    readMono,
+    readAllMono,
     close
 }
 
