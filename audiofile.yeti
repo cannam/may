@@ -9,7 +9,7 @@ import java.io: File, IOException;
 
 import java.nio: ByteBuffer, ByteOrder;
 
-mat = load matrix;
+mat = load floatrix;
 
 open name is string -> 'a = 
    (f = new File(name);
@@ -20,43 +20,43 @@ open name is string -> 'a =
 close { stream is ~AudioInputStream } =
     stream#close();
 
-decode8u bytes floats n is ~byte[] -> ~float[] -> number -> () =
+decode8u bytes doubles n is ~byte[] -> ~double[] -> number -> () =
    (for [0..n-1] do i:
-       floats[i] := (bytes[i] / 128.0) - 1.0;
+       doubles[i] := (bytes[i] / 128.0) - 1.0;
     done
    );
 
-decode16s bytes floats n is ~byte[] -> ~float[] -> number -> () =
+decode16s bytes doubles n is ~byte[] -> ~double[] -> number -> () =
    (bb = ByteBuffer#wrap(bytes, 0, n * 2);
     bb#order(ByteOrder#LITTLE_ENDIAN);
     for [0..n-1] do i:
-       floats[i] := bb#getShort(i*2) / 32768.0;
+       doubles[i] := bb#getShort(i*2) / 32768.0;
     done
    );
 
-decode32f bytes floats n is ~byte[] -> ~float[] -> number -> () =
+decode32f bytes doubles n is ~byte[] -> ~double[] -> number -> () =
    (bb = ByteBuffer#wrap(bytes, 0, n * 4);
     bb#order(ByteOrder#LITTLE_ENDIAN);
     for [0..n-1] do i:
-       floats[i] := bb#getFloat(i*4);
+       doubles[i] := bb#getFloat(i*4);
     done
    );
 
 decodeFail () = 
     throw new UnsupportedAudioFileException("File format not supported. Supported formats are 8-bit unsigned PCM, 16-bit signed little-endian PCM, or IEEE float");
 
-decode { format is ~AudioFormat } bytes floats n = 
+decode { format is ~AudioFormat } bytes doubles n = 
    (if format#isBigEndian() then
         decodeFail()
     else
         enc = format#getEncoding();
         bits = format#getSampleSizeInBits();
         if bits == 32 then
-            decode32f bytes floats n;
+            decode32f bytes doubles n;
         elif bits == 16 and enc == AudioFormat$Encoding#PCM_SIGNED then
-            decode16s bytes floats n;
+            decode16s bytes doubles n;
         elif bits == 8 and enc == AudioFormat$Encoding#PCM_UNSIGNED then
-            decode8u bytes floats n;
+            decode8u bytes doubles n;
         else
             decodeFail();
         fi
@@ -68,16 +68,18 @@ readInterleaved { format is ~AudioFormat, stream is ~AudioInputStream } nframes 
     bytes = new byte[nframes * channels * bytesPerSample];
     bytesRead = stream#read(bytes);
     n = bytesRead / bytesPerSample;
-    floats = new float[n];
-    decode { format } bytes floats n;
-    floats;
+    doubles = new double[n];
+    decode { format } bytes doubles n;
+    doubles;
    );
 
 read { format is ~AudioFormat, stream is ~AudioInputStream } n =
-   (floats = readInterleaved { format, stream } n;
+   (doubles = readInterleaved { format, stream } n;
     channels = format#getChannels();
-    mat.deinterleaved channels (array floats); //!!! want to pass just floats
+    mat.deinterleaved channels doubles;
    );
+
+//!!! these need to reset first (and there needs to be a reset function!)
 
 readAllInterleaved { format is ~AudioFormat, stream is ~AudioInputStream } =
    readInterleaved { format, stream } stream#getFrameLength();
