@@ -17,6 +17,9 @@ open name is string -> 'a =
     format = stream#getFormat();
     { stream, format } );
 
+finished? { stream is ~AudioInputStream } =
+    not (stream#available() > 0);
+
 close { stream is ~AudioInputStream } =
     stream#close();
 
@@ -67,10 +70,13 @@ readInterleaved { format is ~AudioFormat, stream is ~AudioInputStream } nframes 
     bytesPerSample = format#getSampleSizeInBits() / 8;
     bytes = new byte[nframes * channels * bytesPerSample];
     bytesRead = stream#read(bytes);
-    n = bytesRead / bytesPerSample;
-    doubles = new double[n];
-    decode { format } bytes doubles n;
-    doubles;
+    if bytesRead <= 0 then new double[0];
+    else
+        n = int(bytesRead / bytesPerSample);
+        doubles = new double[n];
+        decode { format } bytes doubles n;
+        doubles;
+    fi;
    );
 
 read { format is ~AudioFormat, stream is ~AudioInputStream } n =
@@ -104,6 +110,7 @@ readAllMono { format is ~AudioFormat, stream is ~AudioInputStream } =
     readAllInterleaved,
     readMono,
     readAllMono,
+    finished?,
     close
 }
 

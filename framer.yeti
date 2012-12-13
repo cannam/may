@@ -1,14 +1,19 @@
 
 module framer;
 
+vec = load fvector;
 af = load audiofile;
 
+flist blocksize file =
+    if af.finished? file then
+       (af.close file; [] );
+    else
+        af.readMono file blocksize :. \(flist blocksize file);
+    fi;
 
+frames blocksize filename = flist blocksize (af.open filename);
 
-retrieveFrame blocksize filename =
-   (f = af.open filename; \(af.read f blocksize));
-
-
-
-{ }
+{ 
+    frames
+}
 
