@@ -1,0 +1,26 @@
+module fvector;
+
+import java.util: Arrays;
+
+zeros n = new double[n];
+ones  n = (a = zeros n; for [0..n-1] do i: a[i] := 1.0 done; a);
+
+vector l is list?<number> -> ~double[] =
+   (arr = array(l);
+    len = length arr;
+    v = zeros len;
+    for [0..len-1] do i: v[i] := arr[i] done;
+    v);
+
+arrayWrap a is ~double[] -> array<number> = array(a);
+
+vectorLength v = length (arrayWrap v);
+
+copyOfVector v is ~double[] -> ~double[] = Arrays#copyOf(v, length(arrayWrap v));
+
+{
+zeros, ones, vector,
+vectorLength,
+copyOfVector,
+}
+

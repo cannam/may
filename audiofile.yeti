@@ -9,7 +9,7 @@ import java.io: File, IOException;
 
 import java.nio: ByteBuffer, ByteOrder;
 
-mat = load floatrix;
+mat = load fmatrix;
 
 open name is string -> 'a = 
    (f = new File(name);
