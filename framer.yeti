@@ -4,6 +4,19 @@ module framer;
 vec = load fvector;
 af = load audiofile;
 
+flist2 blocksize hopsize file saved is number -> number -> 'a -> ~double[] -> 'b =
+    if af.finished? file then
+       (af.close file; [] ); //!!! wrong! need unit tests! need to read from any stream, not only a file, to facilitate that
+    else
+        block = af.readMono file blocksize;
+        blen = vec.vectorLength block;
+        for [0..blen-1] do i: saved[hopsize + i] := block[i] done;
+        for [blen..blocksize-1] do i: saved[hopsize + i] := 0.0 done;
+        v = vec.subVector saved 0 blocksize;
+        for [0..blocksize-1] do i: saved[i] := saved[i + hopsize] done;
+        v :. \(flist2 blocksize hopsize file saved);
+    fi;
+
 flist blocksize file =
     if af.finished? file then
        (af.close file; [] );
@@ -11,9 +24,11 @@ flist blocksize file =
         af.readMono file blocksize :. \(flist blocksize file);
     fi;
 
+overlappingFrames blocksize hopsize filename = flist2 blocksize hopsize (af.open filename) (new double[blocksize + hopsize]);
+
 frames blocksize filename = flist blocksize (af.open filename);
 
 { 
-    frames
+    frames, overlappingFrames
 }
 

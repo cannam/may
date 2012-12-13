@@ -18,9 +18,11 @@ vectorLength v = length (arrayWrap v);
 
 copyOfVector v is ~double[] -> ~double[] = Arrays#copyOf(v, length(arrayWrap v));
 
+subVector v start len is ~double[] -> number -> number -> ~double[] = Arrays#copyOfRange(v, start, start + len);
+
 {
 zeros, ones, vector,
 vectorLength,
-copyOfVector,
+copyOfVector, subVector,
 }
 
