@@ -82,7 +82,7 @@ read { format is ~AudioFormat, stream is ~AudioInputStream } n =
 readMono { format is ~AudioFormat, stream is ~AudioInputStream } n =
    (doubles = readInterleaved { format, stream } n;
     channels = format#getChannels();
-    mat.mixedDown channels doubles;
+    mat.mixedDownFromInterleaved channels doubles;
    );
 
 //!!! need to read only remaining, not whole stream length

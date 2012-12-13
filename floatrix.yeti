@@ -1,5 +1,7 @@
 module floatrix;
 
+import java.util: Arrays;
+
 zeros n = new double[n];
 ones  n = (a = zeros n; for [0..n-1] do i: a[i] := 1.0 done; a);
 
@@ -16,8 +18,7 @@ generateMatrix f rows cols =
    (m = zeroMatrix rows cols;
     for [0..rows-1] do row:
         for [0..cols-1] do col:
-            n = f row col;
-            m[row][col] := n;
+            m[row][col] := f row col;
         done;
     done;
     m);
@@ -40,6 +41,10 @@ rows = height;
 
 dimensions m = { cols = width m, rows = height m };
 
+copyOfVector v is ~double[] -> ~double[] = Arrays#copyOf(v, length(arrayWrap v));
+
+copyOfMatrix m = array (map copyOfVector m);
+
 transposed m is array<~double[]> -> array<~double[]> = 
     generateMatrix do row col: m[col][row] done (cols m) (rows m);
         
@@ -58,21 +63,34 @@ deinterleaved rows v is number -> ~double[] -> array<~double[]> =
         v[rows * col + row]
     done rows (length (arrayWrap v) / rows);
 
-    //!!! too inefficient!
-mixedDown rows v is number -> ~double[] -> ~double[] =
+mixedDown m =
+   (if empty? m then zeros 0 else
+        { cols, rows } = dimensions m;
+        v = copyOfVector m[0];
+        for [1..rows-1] do row:
+            for [0..cols-1] do col:
+                v[col] := v[col] + m[row][col];
+            done;
+        done;
+        v;
+    fi);
+
+mixedDownFromInterleaved rows v is number -> ~double[] -> ~double[] =
    (cols = (length (arrayWrap v) / rows);
-    mv = new double[cols];
-    for [0..cols-1] do col:
-        val = sum (map do row: v[col * rows + row] done [0..rows-1]) / rows;
-        mv[col] := val;
+    v' = zeros cols;
+    for [0..rows-1] do row:
+        for [0..cols-1] do col:
+            v'[col] := v'[col] + v[col * rows + row];
+        done;
     done;
-    mv);
+    v');
 
 {
 zeros, ones, vector,
 generateMatrix, constMatrix, randomMatrix, zeroMatrix, identityMatrix,
 width, cols, height, rows, dimensions,
+copyOfVector, copyOfMatrix,
 transposed, interleaved, deinterleaved,
-mixedDown,
+mixedDown, mixedDownFromInterleaved,
 }
 
