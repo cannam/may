@@ -4,35 +4,42 @@ module framer;
 vec = load fvector;
 af = load audiofile;
 
-blockList blocksize file =
-    if af.finished? file then
-       (af.close file; [] );
+blockList blocksize stream =
+    if stream.finished? then
+       (stream.close (); [] );
     else
-        af.readMono file blocksize :. \(blockList blocksize file);
+        stream.readMono blocksize :. \(blockList blocksize stream);
     fi;
 
-overlappingBlockList blocksize hopsize file buffer
+overlappingBlockList blocksize hopsize stream buffer
     is number -> number -> 'a -> ~double[] -> 'b =
-    if af.finished? file then
-       (af.close file; [] ); //!!! wrong! need unit tests! need to read from any stream, not only a file, to facilitate that
+    if stream.finished? then
+       (stream.close (); [] ); //!!! wrong! need unit tests! need to read from any stream, not only a file, to facilitate that
     else
-        block = af.readMono file hopsize;
+        block = stream.readMono hopsize;
         blen = vec.vectorLength block;
         for [0..blen-1] do i: buffer[blocksize - hopsize + i] := block[i] done;
         for [blen..hopsize-1] do i: buffer[blocksize - hopsize + i] := 0.0 done;
         v = vec.subVector buffer 0 blocksize;
         for [hopsize..blocksize-1] do i: buffer[i - hopsize] := buffer[i] done;
-        v :. \(overlappingBlockList blocksize hopsize file buffer);
+        v :. \(overlappingBlockList blocksize hopsize stream buffer);
     fi;
 
-overlappingFrames blocksize hopsize filename =
+overlappingFrames blocksize hopsize stream =
+    overlappingBlockList blocksize hopsize stream (new double[blocksize]);
+
+frames blocksize stream =
+    blockList blocksize stream;
+
+overlappingFramesOfFile blocksize hopsize filename =
     overlappingBlockList blocksize hopsize (af.open filename)
         (new double[blocksize]);
 
-frames blocksize filename =
+framesOfFile blocksize filename =
     blockList blocksize (af.open filename);
 
 { 
-    frames, overlappingFrames
+    frames, overlappingFrames,
+    framesOfFile, overlappingFramesOfFile,
 }
 

@@ -11,18 +11,6 @@ import java.nio: ByteBuffer, ByteOrder;
 
 mat = load fmatrix;
 
-open name is string -> 'a = 
-   (f = new File(name);
-    stream = AudioSystem#getAudioInputStream(f);
-    format = stream#getFormat();
-    { stream, format } );
-
-finished? { stream is ~AudioInputStream } =
-    not (stream#available() > 0);
-
-close { stream is ~AudioInputStream } =
-    stream#close();
-
 decode8u bytes doubles n is ~byte[] -> ~double[] -> number -> () =
    (for [0..n-1] do i:
        doubles[i] := (bytes[i] / 128.0) - 1.0;
@@ -65,7 +53,7 @@ decode { format is ~AudioFormat } bytes doubles n =
         fi
     fi);
 
-readInterleaved { format is ~AudioFormat, stream is ~AudioInputStream } nframes =
+readInterleaved' { format is ~AudioFormat, stream is ~AudioInputStream } nframes =
    (channels = format#getChannels();
     bytesPerSample = format#getSampleSizeInBits() / 8;
     bytes = new byte[nframes * channels * bytesPerSample];
@@ -79,38 +67,60 @@ readInterleaved { format is ~AudioFormat, stream is ~AudioInputStream } nframes 
     fi;
    );
 
-read { format is ~AudioFormat, stream is ~AudioInputStream } n =
-   (doubles = readInterleaved { format, stream } n;
+read' { format is ~AudioFormat, stream is ~AudioInputStream } n =
+   (doubles = readInterleaved' { format, stream } n;
     channels = format#getChannels();
     mat.deinterleaved channels doubles;
    );
 
-readMono { format is ~AudioFormat, stream is ~AudioInputStream } n =
-   (doubles = readInterleaved { format, stream } n;
+readMono' { format is ~AudioFormat, stream is ~AudioInputStream } n =
+   (doubles = readInterleaved' { format, stream } n;
     channels = format#getChannels();
     mat.mixedDownFromInterleaved channels doubles;
    );
 
-//!!! need to read only remaining, not whole stream length
+// Note, all this assumes the stream is non-blocking (i.e. available()
+// is to the end of file)
 
-readAllInterleaved { format is ~AudioFormat, stream is ~AudioInputStream } =
-   readInterleaved { format, stream } stream#getFrameLength();
+available' { format is ~AudioFormat, stream is ~AudioInputStream } =
+    stream#available() / ((format#getSampleSizeInBits() / 8) * format#getChannels());
 
-readAll { format is ~AudioFormat, stream is ~AudioInputStream } =
-   read { format, stream } stream#getFrameLength();
+readAllInterleaved' { format is ~AudioFormat, stream is ~AudioInputStream } =
+    readInterleaved' { format, stream } (available' { format, stream });
 
-readAllMono { format is ~AudioFormat, stream is ~AudioInputStream } =
-   readMono { format, stream } stream#getFrameLength();
+readAll' { format is ~AudioFormat, stream is ~AudioInputStream } =
+    read' { format, stream } (available' { format, stream });
+
+readAllMono' { format is ~AudioFormat, stream is ~AudioInputStream } =
+    readMono' { format, stream } (available' { format, stream });
+
+finished?' { stream is ~AudioInputStream } =
+    not (stream#available() > 0);
+
+close' { stream is ~AudioInputStream } =
+    stream#close();
+
+open name is string -> 'a = 
+   (f = new File(name);
+    stream = AudioSystem#getAudioInputStream(f);
+    format = stream#getFormat();
+    {
+        stream,
+        format,
+        get channels () = format#getChannels(),
+        get sampleRate () = format#getSampleRate(),
+        get available () = available' { stream, format },
+        get finished? () = finished?' { stream },
+        read = read' { stream, format },
+        readAll () = readAll' { stream, format },
+        readInterleaved = readInterleaved' { stream, format },
+        readAllInterleaved () = readAllInterleaved' { stream, format },
+        readMono = readMono' { stream, format },
+        readAllMono () = readAllMono' { stream, format },
+        close () = close' { stream },
+    } );
 
 {
-    open,
-    read,
-    readAll,
-    readInterleaved,
-    readAllInterleaved,
-    readMono,
-    readAllMono,
-    finished?,
-    close
+    open
 }
 
