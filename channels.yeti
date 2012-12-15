@@ -1,0 +1,68 @@
+
+module channels;
+
+vec = load fvector;
+mat = load fmatrix;
+        
+interleaved m = 
+   ({ cols, rows } = mat.dimensions m;
+    v = vec.zeros (cols * rows);
+    for [0..rows-1] do row:
+        for [0..cols-1] do col:
+            v[col * rows + row] := m[row][col];
+        done;
+    done;
+    v);
+
+deinterleaved rows v is number -> ~double[] -> array<~double[]> =
+    mat.generateMatrix do row col:
+        v[rows * col + row]
+    done rows ((vec.vectorLength v) / rows);
+
+mixedDown m =
+   (if empty? m then vec.zeros 0 else
+        { cols, rows } = mat.dimensions m;
+        v = vec.copyOfVector m[0];
+        for [1..rows-1] do row:
+            for [0..cols-1] do col:
+                v[col] := v[col] + m[row][col];
+            done;
+        done;
+        v;
+    fi);
+
+mixedDownFromInterleaved rows v is number -> ~double[] -> ~double[] =
+   (cols = ((vec.vectorLength v) / rows);
+    v' = vec.zeros cols;
+    for [0..rows-1] do row:
+        for [0..cols-1] do col:
+            v'[col] := v'[col] + v[col * rows + row];
+        done;
+    done;
+    v');
+
+mixedFromInterleavedTo targetRows rows v is number -> number -> ~double[] -> ~double[] = 
+    if targetRows == rows then
+        v;
+    elif targetRows == 1 then
+        mixedDownFromInterleaved rows v;
+    else
+        cols = ((vec.vectorLength v) / rows);
+        v' = vec.zeros (cols * targetRows);
+        for [0..targetRows-1] do target:
+            for [0..cols-1] do col:
+                if target < rows then
+                    v'[col * targetRows + target] := v[col * rows + target];
+                elif rows == 1 then
+                    v'[col * targetRows + target] := v[col * rows];
+                fi
+            done
+        done;
+        v';
+    fi;
+
+{
+    interleaved, deinterleaved,
+    mixedDown, mixedDownFromInterleaved, mixedFromInterleavedTo,
+}
+

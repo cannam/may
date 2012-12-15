@@ -1,0 +1,44 @@
+
+module syntheticstream;
+
+vec = load fvector;
+
+monoStream generator rate seconds =
+   (n = seconds * rate;
+    box = {
+        var position = 0,
+        readInterleaved count = 
+           (rc = if position + count > n then n - position else count fi;
+            result = vec.zeros rc;
+            for [0..rc-1] do i:
+                result[i] := generator ((position + i) / rate)
+            done;
+            position := position + rc;
+            result),
+        get available () = n - position,
+    };
+    { 
+        box,
+        get channels () = 1,
+        get sampleRate () = rate,
+        get available () = box.available,
+        get finished? () = n <= box.position,
+        readInterleaved = box.readInterleaved,
+        read = box.readInterleaved,
+        readMono = box.readInterleaved,
+        readAll () = box.readInterleaved box.available,
+        readAllInterleaved () = box.readInterleaved box.available,
+        readAllMono () = box.readInterleaved box.available,
+        close = id,
+    });
+
+sinusoid freq rate =
+    monoStream (sin . (* (freq / (2*pi * rate)))) rate;
+
+whiteNoise =
+    monoStream \((Math#random() * 2.0) - 1.0);
+
+{
+    monoStream, sinusoid, whiteNoise,
+}
+

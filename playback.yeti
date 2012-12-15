@@ -1,0 +1,52 @@
+
+module playback;
+
+vec = load fvector;
+fr = load framer;
+af = load audiofile;
+ch = load channels;
+
+import javax.sound.sampled:
+    AudioSystem, AudioFormat, AudioFormat$Encoding, SourceDataLine;
+
+import java.nio: ByteBuffer, ByteOrder;
+
+open rate channels = 
+   (format = new AudioFormat(AudioFormat$Encoding#PCM_SIGNED, rate, 16,
+                             channels, channels * 2, rate, false);
+    line = AudioSystem#getSourceDataLine(format);
+    line#open(format);
+    line#start();
+    {
+        line,
+        channels = line#getFormat()#getChannels(),
+        close () = line#close(),
+    });
+
+play { line is ~SourceDataLine } samples =
+   (len = vec.vectorLength samples;
+    nb = len * 2;
+    bytes = new byte[nb];
+    bb = ByteBuffer#wrap(bytes, 0, nb);
+    bb#order(ByteOrder#LITTLE_ENDIAN);
+    sb = bb#asShortBuffer();
+    for [0..len-1] do i: sb#put(i, samples[i] * 32767.0); () done;
+    println "writing \(nb) bytes";
+    actual = line#write(bytes, 0, nb); 
+    ());
+    
+playStream stream =
+   (line = open stream.sampleRate stream.channels;
+    blocksize = 10240;
+    frames = fr.frames blocksize stream;
+    for frames do frame:
+        play line (ch.mixedFromInterleavedTo line.channels stream.channels frame)
+    done;
+    line.close());
+
+playFile filename = playStream (af.open filename);
+
+{
+    open, play, playStream, playFile,
+}
+

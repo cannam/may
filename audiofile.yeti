@@ -10,6 +10,7 @@ import java.io: File, IOException;
 import java.nio: ByteBuffer, ByteOrder;
 
 mat = load fmatrix;
+ch = load channels;
 
 decode8u bytes doubles n is ~byte[] -> ~double[] -> number -> () =
    (for [0..n-1] do i:
@@ -70,13 +71,13 @@ readInterleaved' { format is ~AudioFormat, stream is ~AudioInputStream } nframes
 read' { format is ~AudioFormat, stream is ~AudioInputStream } n =
    (doubles = readInterleaved' { format, stream } n;
     channels = format#getChannels();
-    mat.deinterleaved channels doubles;
+    ch.deinterleaved channels doubles;
    );
 
 readMono' { format is ~AudioFormat, stream is ~AudioInputStream } n =
    (doubles = readInterleaved' { format, stream } n;
     channels = format#getChannels();
-    mat.mixedDownFromInterleaved channels doubles;
+    ch.mixedDownFromInterleaved channels doubles;
    );
 
 // Note, all this assumes the stream is non-blocking (i.e. available()
