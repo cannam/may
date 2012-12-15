@@ -3,7 +3,22 @@ module syntheticstream;
 
 vec = load fvector;
 
-monoStream generator rate seconds =
+makeStreamFromMono rate s n =
+    {
+        get channels () = 1,
+        get sampleRate () = rate,
+        get available () = n - s.position,
+        get finished? () = n <= s.position,
+        read = s.readInterleaved,
+        readInterleaved = s.readInterleaved,
+        readMono = s.readInterleaved,
+        readAll () = s.readInterleaved (n - s.position),
+        readAllInterleaved () = s.readInterleaved (n - s.position),
+        readAllMono () = s.readInterleaved (n - s.position),
+        close = id,
+    };
+
+monoStream rate generator seconds =
    (n = seconds * rate;
     box = {
         var position = 0,
@@ -15,30 +30,29 @@ monoStream generator rate seconds =
             done;
             position := position + rc;
             result),
+    };
+    makeStreamFromMono rate box n);
+
+sinusoid rate freq =
+    monoStream rate (sin . (* (freq / (2*pi * rate))));
+
+whiteNoise rate =
+    monoStream rate \((Math#random() * 2.0) - 1.0);
+
+precalculated rate data is number -> ~double[] -> 'a =
+   (n = vec.vectorLength data;
+    box = {
+        var position = 0,
+        readInterleaved count = 
+           (rc = if position + count > n then n - position else count fi;
+            result = vec.subVector data position rc;
+            position := position + rc;
+            result),
         get available () = n - position,
     };
-    { 
-        box,
-        get channels () = 1,
-        get sampleRate () = rate,
-        get available () = box.available,
-        get finished? () = n <= box.position,
-        readInterleaved = box.readInterleaved,
-        read = box.readInterleaved,
-        readMono = box.readInterleaved,
-        readAll () = box.readInterleaved box.available,
-        readAllInterleaved () = box.readInterleaved box.available,
-        readAllMono () = box.readInterleaved box.available,
-        close = id,
-    });
-
-sinusoid freq rate =
-    monoStream (sin . (* (freq / (2*pi * rate)))) rate;
-
-whiteNoise =
-    monoStream \((Math#random() * 2.0) - 1.0);
+    makeStreamFromMono rate box n);
 
 {
-    monoStream, sinusoid, whiteNoise,
+    monoStream, sinusoid, whiteNoise, precalculated
 }
 

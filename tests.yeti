@@ -1,0 +1,39 @@
+
+program tests;
+
+ss = load syntheticstream;
+vec = load fvector;
+fr = load framer;
+
+testStream n is number -> 'a  = ss.precalculated 1000 (vec.vector [1..n]);
+
+tests = [
+
+"framer-2x2": \( 
+    fr = fr.frames 2 (testStream 2);
+    length fr == 1
+),
+
+"framer-2x3": \( 
+    fr = fr.frames 2 (testStream 3);
+    length fr == 2
+),
+
+"framer-2x4": \( 
+    fr = fr.frames 2 (testStream 4);
+    length fr == 2
+),
+
+];
+
+var bad = 0;
+
+forHash tests do name f:
+    if not (f ()) then
+        println "\(name) failed.";
+        bad := bad + 1
+    fi
+done;
+
+total = length tests;
+println "Testing done, \(total - bad)/\(total) OK.";
