@@ -12,11 +12,11 @@ vector l is list?<number> -> ~double[] =
     for [0..len-1] do i: v[i] := arr[i] done;
     v);
 
-arrayWrap a is ~double[] -> array<number> = array(a);
+listWrap a is ~double[] -> list<number> = list a;
 
-vectorLength v = length (arrayWrap v);
+vectorLength v = length (listWrap v);
 
-copyOfVector v is ~double[] -> ~double[] = Arrays#copyOf(v, length(arrayWrap v));
+copyOfVector v is ~double[] -> ~double[] = Arrays#copyOf(v, length(listWrap v));
 
 subVector v start len is ~double[] -> number -> number -> ~double[] = Arrays#copyOfRange(v, start, start + len);
 

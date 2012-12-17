@@ -1,0 +1,37 @@
+
+module stream;
+
+vec = load fvector;
+
+monoStream box =
+   (readAll box = box.read (box.len - box.position);
+    {
+        get position () = box.position,
+        get channels () = 1,
+        get sampleRate () = box.rate,
+        get available () = box.len - box.position,
+        read = box.read,
+        readInterleaved = box.read,
+        readMono = box.read,
+        readAll = readAll box,
+        readAllInterleaved = readAll box,
+        readAllMono = readAll box,
+    });
+
+stream box = 
+   (readAll box = box.read (box.len - box.position);
+    {
+        get position () = box.position,
+        get channels () = box.channels,
+        get sampleRate () = box.rate,
+        get available () = box.len - box.position,
+        read = box.read,
+        readInterleaved = box.readInterleaved,
+        readMono = box.readMono,
+        readAll = box.read (box.len - box.position),
+        readAllInterleaved = box.readInterleaved (box.len - box.position),
+        readAllMono = box.readMono (box.len - box.position),
+    });
+
+{ monoStream, stream }
+
