@@ -1,5 +1,7 @@
 module matrix;
 
+// Basic matrices using number type (rather than primitive arrays)
+
 zeros n = array(map \0 [1..n]);
 ones  n = array(map \1 [1..n]);
 

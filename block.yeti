@@ -5,37 +5,38 @@ import java.util: Arrays;
 zeros n = 
     Block new double[n];
 
-deblock b is (Block ~double[]) -> ~double[] =
+unblock b is (Block ~double[]) -> ~double[] =
     case b of Block a: a esac;
 
 ones n = 
-   (v = deblock (zeros n);
+   (v = unblock (zeros n);
     for [0..n-1] do i: v[i] := 1.0 done;
     Block v);
 
 block l is list?<number> -> (Block ~double[]) =
    (arr = array(l);
     len = length arr;
-    v = deblock (zeros len);
+    v = unblock (zeros len);
     for [0..len-1] do i: v[i] := arr[i] done;
     Block v);
 
-arrayWrap b is (Block ~double[]) -> array<number> =
-    array(deblock b);
+norec list b is (Block ~double[]) -> list<number> =
+    list (unblock b);
 
-blockLength b = 
-    length (arrayWrap b);
+norec length b = 
+    length (list b);
 
-copyOfBlock b is (Block ~double[]) -> (Block ~double[]) = 
-   (v = deblock b;
-    Block Arrays#copyOf(v, length(arrayWrap b)));
+copyOf b is (Block ~double[]) -> (Block ~double[]) = 
+   (v = unblock b;
+    Block Arrays#copyOf(v, length b));
 
-subBlock b start len is (Block ~double[]) -> number -> number -> (Block ~double[]) = 
-    Block Arrays#copyOfRange(deblock b, start, start + len);
+subset b start len is (Block ~double[]) -> number -> number -> (Block ~double[]) = 
+    Block Arrays#copyOfRange(unblock b, start, start + len);
 
 {
-zeros, ones, block,
-blockLength,
-copyOfBlock, subBlock,
+zeros, ones,
+block, unblock,
+length,
+copyOf, subset,
 }
 

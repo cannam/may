@@ -1,0 +1,47 @@
+module blockmatrix;
+
+// Basic matrices using a Block for each row. I don't like this one,
+// it's clumsy
+
+block = load block;
+
+zeroMatrix rows cols = array (map \(block.zeros cols) [1..rows]);
+
+generateMatrix f rows cols =
+   (m = zeroMatrix rows cols;
+    for [0..rows-1] do row:
+       (rb = block.unblock m[row];
+        for [0..cols-1] do col:
+            rb[col] := f row col;
+        done);
+    done;
+    m);
+
+constMatrix n = generateMatrix do row col: n done;
+randomMatrix = generateMatrix do row col: Math#random() done;
+identityMatrix = constMatrix 1;
+
+width m = if length m > 0 then block.length m[0] else 0 fi;
+cols = width;
+
+height m = length m;
+rows = height;
+
+dimensions m = { cols = width m, rows = height m };
+
+copyOfMatrix m = array (map block.copyOf m);
+
+cell m row col = 
+   (rb = block.unblock m[col];
+    rb[row]);
+
+transposed m is array<Block ~double[]> -> array<Block ~double[]> = 
+    generateMatrix do row col: cell m row col done (cols m) (rows m);
+
+{
+generateMatrix, constMatrix, randomMatrix, zeroMatrix, identityMatrix,
+width, cols, height, rows, dimensions,
+copyOfMatrix,
+transposed,
+}
+

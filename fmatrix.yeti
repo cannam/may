@@ -1,5 +1,7 @@
 module fmatrix;
 
+// Basic matrices using primitive array of double as each row
+
 vec = load fvector;
 
 zeroMatrix rows cols = array (map \(vec.zeros cols) [1..rows]);
