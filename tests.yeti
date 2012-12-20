@@ -73,6 +73,13 @@ tests = [
     compare (length fr) 3
 ),
 
+"frames-2x5": \( 
+    fr = fr.frames 2 (testStream 5);
+    expected = array [ [1,2], [3,4], [5,0] ];
+    obtained = array (map block.list fr);
+    compare obtained expected;
+),
+
 "frames-4.3x4": \( 
     fr = fr.overlappingFrames { blocksize = 4, hop = 3 } (testStream 4);
     expected = array [ [0,1,2,3], [3,4,0,0] ];

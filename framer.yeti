@@ -9,24 +9,25 @@ blockList blocksize stream =
     if stream.finished? then
        (stream.close (); [] );
     else
-        stream.readMono blocksize :. \(blockList blocksize stream);
+        block.resizedTo blocksize (stream.readMono blocksize)
+            :. \(blockList blocksize stream);
     fi;
 
 overlappingBlockList bs hop stream valid buffer
     is number -> number -> 'a -> number -> ~double[] -> 'b =
    (b = stream.readMono hop;
-    blen = block.length b;
+    obtained = block.length b;
     samples = block.unblock b;
 
     // Shift existing buffer down by hop
     for [hop..bs-1] do i: buffer[i-hop] := buffer[i] done;
 
     // Copy hop new elements in from samples (and extra zeros if needed)
-    for [0..blen-1] do i: buffer[bs-hop+i] := samples[i] done;
-    for [blen..hop-1] do i: buffer[bs-hop+i] := 0.0 done;
+    for [0..obtained-1] do i: buffer[bs-hop+i] := samples[i] done;
+    for [obtained..hop-1] do i: buffer[bs-hop+i] := 0.0 done;
 
     // Number of "valid" elements (not tail-end zero-padding) left in buffer
-    remaining = valid - (hop - blen);
+    remaining = valid - (hop - obtained);
 
     if remaining <= 0 then
         stream.close ();

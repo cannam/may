@@ -36,12 +36,15 @@ copyOf v is ~double[] -> ~double[] =
 range v start len is ~double[] -> number -> number -> ~double[] =
     Arrays#copyOfRange(v, start, start + len);
 
+resizedTo n v is number -> ~double[] -> ~double[] =
+    Arrays#copyOf(v, n);
+
 {
 zeros, ones,
 vector,
 length = length',
 list = list',
 equal,
-copyOf, range,
+copyOf, range, resizedTo,
 }
 

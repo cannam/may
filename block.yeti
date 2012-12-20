@@ -20,8 +20,14 @@ length' b = vec.length (unblock b);
 equal b1 b2 =
     list' b1 == list' b2;
 
-copyOf b = Block (vec.copyOf (unblock b));
-range b start len = Block (vec.range (unblock b) start len);
+copyOf b =
+    Block (vec.copyOf (unblock b));
+
+range b start len =
+    Block (vec.range (unblock b) start len);
+
+resizedTo n b =
+    Block (vec.resizedTo n (unblock b));
 
 {
 zeros, ones,
@@ -30,6 +36,6 @@ fromList,
 length = length',
 list = list',
 equal,
-copyOf, range,
+copyOf, range, resizedTo,
 }
 
