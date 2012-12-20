@@ -9,8 +9,9 @@ import java.io: File, IOException;
 
 import java.nio: ByteBuffer, ByteOrder;
 
-mat = load fmatrix;
+str = load stream;
 ch = load channels;
+block = load block;
 
 decode8u bytes doubles n is ~byte[] -> ~double[] -> number -> () =
    (for [0..n-1] do i:
@@ -59,25 +60,25 @@ readInterleaved' { format is ~AudioFormat, stream is ~AudioInputStream } nframes
     bytesPerSample = format#getSampleSizeInBits() / 8;
     bytes = new byte[nframes * channels * bytesPerSample];
     bytesRead = stream#read(bytes);
-    if bytesRead <= 0 then new double[0];
+    if bytesRead <= 0 then block.zeros 0;
     else
         n = int(bytesRead / bytesPerSample);
         doubles = new double[n];
         decode { format } bytes doubles n;
-        doubles;
+        block.block doubles;
     fi;
    );
 
 read' { format is ~AudioFormat, stream is ~AudioInputStream } n =
-   (doubles = readInterleaved' { format, stream } n;
+   (b = readInterleaved' { format, stream } n;
     channels = format#getChannels();
-    ch.deinterleaved channels doubles;
+    ch.deinterleaved channels b;
    );
 
 readMono' { format is ~AudioFormat, stream is ~AudioInputStream } n =
-   (doubles = readInterleaved' { format, stream } n;
+   (b = readInterleaved' { format, stream } n;
     channels = format#getChannels();
-    ch.mixedDownFromInterleaved channels doubles;
+    ch.mixedDownFromInterleaved channels b;
    );
 
 // Note, all this assumes the stream is non-blocking (i.e. available()
@@ -105,19 +106,18 @@ open name is string -> 'a =
    (f = new File(name);
     stream = AudioSystem#getAudioInputStream(f);
     format = stream#getFormat();
-    {
+    len = available' { format, stream }; // at start of stream
+    str.stream {
         stream,
         format,
-        get channels () = format#getChannels(),
-        get sampleRate () = format#getSampleRate(),
+        len,
+        rate = format#getSampleRate(),
+        channels = format#getChannels(),
+        get position () = len - available' { stream, format },
         get available () = available' { stream, format },
-        get finished? () = finished?' { stream },
         read = read' { stream, format },
-        readAll () = readAll' { stream, format },
         readInterleaved = readInterleaved' { stream, format },
-        readAllInterleaved () = readAllInterleaved' { stream, format },
         readMono = readMono' { stream, format },
-        readAllMono () = readAllMono' { stream, format },
         close () = close' { stream },
     } );
 

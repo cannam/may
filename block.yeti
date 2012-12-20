@@ -1,42 +1,27 @@
 module block;
 
-import java.util: Arrays;
+vec = load fvector;
 
-zeros n = 
-    Block new double[n];
+zeros = Block . vec.zeros;
+ones  = Block . vec.ones;
+
+block v is ~double[] -> (Block ~double[]) = 
+    Block v;
 
 unblock b is (Block ~double[]) -> ~double[] =
     case b of Block a: a esac;
 
-ones n = 
-   (v = unblock (zeros n);
-    for [0..n-1] do i: v[i] := 1.0 done;
-    Block v);
+list' b = vec.list (unblock b);
+length' b = vec.length (unblock b);
 
-block l is list?<number> -> (Block ~double[]) =
-   (arr = array(l);
-    len = length arr;
-    v = unblock (zeros len);
-    for [0..len-1] do i: v[i] := arr[i] done;
-    Block v);
-
-norec list b is (Block ~double[]) -> list<number> =
-    list (unblock b);
-
-norec length b = 
-    length (list b);
-
-copyOf b is (Block ~double[]) -> (Block ~double[]) = 
-   (v = unblock b;
-    Block Arrays#copyOf(v, length b));
-
-subset b start len is (Block ~double[]) -> number -> number -> (Block ~double[]) = 
-    Block Arrays#copyOfRange(unblock b, start, start + len);
+copyOf b = Block (vec.copyOf (unblock b));
+subset b start len = Block (vec.subset (unblock b) start len);
 
 {
 zeros, ones,
 block, unblock,
-length,
+length = length',
+list = list',
 copyOf, subset,
 }
 

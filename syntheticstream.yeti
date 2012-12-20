@@ -3,6 +3,7 @@ module syntheticstream;
 
 str = load stream;
 vec = load fvector;
+block = load block;
 
 generated rate generator seconds =
     str.monoStream {
@@ -16,26 +17,28 @@ generated rate generator seconds =
                 result[i] := generator ((position + i) / rate)
             done;
             position := position + rc;
-            result),
+            block.block result),
+        close = \(),
         };
 
-sinusoid rate freq =
-    generated rate (sin . (* (freq / (2*pi * rate))));
+sinusoid rate freq seconds =
+    generated rate (sin . (* (freq / (2*pi * rate)))) seconds;
 
-whiteNoise rate =
-    generated rate \((Math#random() * 2.0) - 1.0);
+whiteNoise rate seconds =
+    generated rate \((Math#random() * 2.0) - 1.0) seconds;
 
 precalculated rate data is number -> ~double[] -> 'a =
-   (n = vec.vectorLength data;
+   (n = vec.length data;
     str.monoStream {
         var position = 0,
         len = n,
         rate,
         read count = 
            (rc = min count (len - position);
-            result = vec.subVector data position rc;
+            result = vec.subset data position rc;
             position := position + rc;
-            result),
+            block.block result),
+        close = \(),
     });
 
 {

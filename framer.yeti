@@ -2,6 +2,7 @@
 module framer;
 
 vec = load fvector;
+block = load block;
 af = load audiofile;
 
 blockList blocksize stream =
@@ -16,24 +17,25 @@ overlappingBlockList blocksize hopsize stream buffer
     if stream.finished? then
        (stream.close (); [] ); //!!! wrong! need unit tests! need to read from any stream, not only a file, to facilitate that
     else
-        block = stream.readMono hopsize;
-        blen = vec.vectorLength block;
-        for [0..blen-1] do i: buffer[blocksize - hopsize + i] := block[i] done;
+        b = stream.readMono hopsize;
+        samples = block.unblock b;
+        blen = block.length b;
+        for [0..blen-1] do i: buffer[blocksize - hopsize + i] := samples[i] done;
         for [blen..hopsize-1] do i: buffer[blocksize - hopsize + i] := 0.0 done;
-        v = vec.subVector buffer 0 blocksize;
+        v = Block (vec.subset buffer 0 blocksize);
         for [hopsize..blocksize-1] do i: buffer[i - hopsize] := buffer[i] done;
         v :. \(overlappingBlockList blocksize hopsize stream buffer);
     fi;
 
 overlappingFrames blocksize hopsize stream =
-    overlappingBlockList blocksize hopsize stream (new double[blocksize]);
+    overlappingBlockList blocksize hopsize stream (vec.zeros blocksize);
 
 frames blocksize stream =
     blockList blocksize stream;
 
 overlappingFramesOfFile blocksize hopsize filename =
     overlappingBlockList blocksize hopsize (af.open filename)
-        (new double[blocksize]);
+        (vec.zeros blocksize);
 
 framesOfFile blocksize filename =
     blockList blocksize (af.open filename);

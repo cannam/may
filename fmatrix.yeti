@@ -6,7 +6,7 @@ vec = load fvector;
 
 zeroMatrix rows cols = array (map \(vec.zeros cols) [1..rows]);
 
-generateMatrix f rows cols =
+generate f rows cols =
    (m = zeroMatrix rows cols;
     for [0..rows-1] do row:
         for [0..cols-1] do col:
@@ -15,11 +15,11 @@ generateMatrix f rows cols =
     done;
     m);
 
-constMatrix n = generateMatrix do row col: n done;
-randomMatrix = generateMatrix do row col: Math#random() done;
+constMatrix n = generate do row col: n done;
+randomMatrix = generate do row col: Math#random() done;
 identityMatrix = constMatrix 1;
 
-width m = if length m > 0 then vec.vectorLength m[0] else 0 fi;
+width m = if length m > 0 then vec.length m[0] else 0 fi;
 cols = width;
 
 height m = length m;
@@ -27,15 +27,15 @@ rows = height;
 
 dimensions m = { cols = width m, rows = height m };
 
-copyOfMatrix m = array (map vec.copyOfVector m);
+copyOf m = array (map vec.copyOf m);
 
 transposed m is array<~double[]> -> array<~double[]> = 
-    generateMatrix do row col: m[col][row] done (cols m) (rows m);
+    generate do row col: m[col][row] done (cols m) (rows m);
 
 {
-generateMatrix, constMatrix, randomMatrix, zeroMatrix, identityMatrix,
+generate, constMatrix, randomMatrix, zeroMatrix, identityMatrix,
 width, cols, height, rows, dimensions,
-copyOfMatrix,
+copyOf,
 transposed,
 }
 

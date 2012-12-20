@@ -2,27 +2,42 @@ module fvector;
 
 import java.util: Arrays;
 
-zeros n = new double[n];
-ones  n = (a = zeros n; for [0..n-1] do i: a[i] := 1.0 done; a);
+zeros n =
+    new double[n];
+
+ones n =
+   (a = zeros n;
+    for [0..n-1] do i:
+        a[i] := 1.0;
+    done;
+    a);
 
 vector l is list?<number> -> ~double[] =
    (arr = array(l);
     len = length arr;
     v = zeros len;
-    for [0..len-1] do i: v[i] := arr[i] done;
+    for [0..len-1] do i:
+        v[i] := arr[i];
+    done;
     v);
 
-listWrap a is ~double[] -> list<number> = list a;
+list' a is ~double[] -> list<number> =
+    list a;
 
-vectorLength v = length (listWrap v);
+length' =
+    length . list';
 
-copyOfVector v is ~double[] -> ~double[] = Arrays#copyOf(v, length(listWrap v));
+copyOf v is ~double[] -> ~double[] =
+    Arrays#copyOf(v, list' v |> length);
 
-subVector v start len is ~double[] -> number -> number -> ~double[] = Arrays#copyOfRange(v, start, start + len);
+subset v start len is ~double[] -> number -> number -> ~double[] =
+    Arrays#copyOfRange(v, start, start + len);
 
 {
-zeros, ones, vector,
-vectorLength,
-copyOfVector, subVector,
+zeros, ones,
+vector,
+length = length',
+list = list',
+copyOf, subset,
 }
 

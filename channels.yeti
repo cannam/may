@@ -2,6 +2,7 @@
 module channels;
 
 vec = load fvector;
+block = load block;
 mat = load fmatrix;
         
 interleaved m = 
@@ -12,42 +13,45 @@ interleaved m =
             v[col * rows + row] := m[row][col];
         done;
     done;
-    v);
+    block.block v);
 
-deinterleaved rows v is number -> ~double[] -> array<~double[]> =
-    mat.generateMatrix do row col:
+deinterleaved rows b =
+   (v = block.unblock b;
+    mat.generate do row col:
         v[rows * col + row]
-    done rows ((vec.vectorLength v) / rows);
+    done rows ((vec.length v) / rows));
 
 mixedDown m =
-   (if empty? m then vec.zeros 0 else
+   (if empty? m then block.zeros 0 else
         { cols, rows } = mat.dimensions m;
-        v = vec.copyOfVector m[0];
+        v = vec.copyOf m[0];
         for [1..rows-1] do row:
             for [0..cols-1] do col:
                 v[col] := v[col] + m[row][col];
             done;
         done;
-        v;
+        block.block v;
     fi);
 
-mixedDownFromInterleaved rows v is number -> ~double[] -> ~double[] =
-   (cols = ((vec.vectorLength v) / rows);
+mixedDownFromInterleaved rows b =
+   (v = block.unblock b;
+    cols = ((vec.length v) / rows);
     v' = vec.zeros cols;
     for [0..rows-1] do row:
         for [0..cols-1] do col:
             v'[col] := v'[col] + v[col * rows + row];
         done;
     done;
-    v');
+    block.block v');
 
-mixedFromInterleavedTo targetRows rows v is number -> number -> ~double[] -> ~double[] = 
+mixedFromInterleavedTo targetRows rows b = 
     if targetRows == rows then
-        v;
+        b;
     elif targetRows == 1 then
-        mixedDownFromInterleaved rows v;
+        mixedDownFromInterleaved rows b;
     else
-        cols = ((vec.vectorLength v) / rows);
+        v = block.unblock b;
+        cols = ((vec.length v) / rows);
         v' = vec.zeros (cols * targetRows);
         for [0..targetRows-1] do target:
             for [0..cols-1] do col:
@@ -58,7 +62,7 @@ mixedFromInterleavedTo targetRows rows v is number -> number -> ~double[] -> ~do
                 fi
             done
         done;
-        v';
+        block.block v';
     fi;
 
 {
