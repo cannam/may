@@ -4,7 +4,6 @@ module test.test_fvector;
 vec = load fvector;
 t = load test.test;
 
-{
 tests = [
 
 "zeros-empty": \(
@@ -99,5 +98,7 @@ tests = [
         vec.equal x' (vec.concat (vec.vector []) x')
 ),
 
-] is hash<string, () -> boolean> };
+];
+
+{ tests is hash<string, () -> boolean> };
 
