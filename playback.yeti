@@ -11,19 +11,7 @@ import javax.sound.sampled:
 
 import java.nio: ByteBuffer, ByteOrder;
 
-open { rate, channels } = 
-   (format = new AudioFormat(AudioFormat$Encoding#PCM_SIGNED, rate, 16,
-                             channels, channels * 2, rate, false);
-    line = AudioSystem#getSourceDataLine(format);
-    line#open(format);
-    line#start();
-    {
-        line,
-        channels = line#getFormat()#getChannels(),
-        close () = line#close(),
-    });
-
-playBlock { line is ~SourceDataLine } b =
+playBlock line b is ~SourceDataLine -> 'a -> () =
    (len = block.length b;
     samples = block.unblock b;
     nb = len * 2;
@@ -38,10 +26,23 @@ playBlock { line is ~SourceDataLine } b =
 
 play line blocks = for blocks (playBlock line);
     
+open { rate, channels } = 
+   (format = new AudioFormat(AudioFormat$Encoding#PCM_SIGNED, rate, 16,
+                             channels, channels * 2, rate, false);
+    line = AudioSystem#getSourceDataLine(format);
+    line#open(format);
+    line#start();
+    {
+        line,
+        play = play line,
+        channels = line#getFormat()#getChannels(),
+        close () = (line#drain(); line#close()),
+    });
+
 playStream stream =
    (line = open { rate = stream.sampleRate, channels = stream.channels };
     blocksize = 10240;
-    play line (map (ch.mixedFromInterleavedTo line.channels stream.channels)
+    line.play (map (ch.mixedFromInterleavedTo line.channels stream.channels)
                    (fr.frames blocksize stream));
     line.close());
 
