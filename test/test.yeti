@@ -25,11 +25,11 @@ failedTests testHash =
             fi 
         done testHash);
         
-runTests testHash =
+runTests group testHash =
    (failed = failedTests testHash;
-    println "\(length testHash - length failed)/\(length testHash) tests passed";
+    println "\(group): \(length testHash - length failed)/\(length testHash) tests passed";
     if not empty? failed then
-        println "Failed tests [\(length failed)]: \(strJoin ' ' failed)";
+        println "\(group): Failed tests [\(length failed)]: \(strJoin ' ' failed)";
     fi);
 
 {

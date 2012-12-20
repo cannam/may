@@ -1,0 +1,103 @@
+
+module test.test_fvector;
+
+vec = load fvector;
+t = load test.test;
+
+{
+tests = [
+
+"zeros-empty": \(
+    v = vec.zeros 0;
+    t.compare (vec.length v) 0;
+),
+
+"zeros": \(
+    v = vec.zeros 3;
+    t.compare (vec.length v) 3 and
+        t.compare v[0] 0 and
+        t.compare v[1] 0 and
+        t.compare v[2] 0;
+),
+
+"ones-empty": \(
+    v = vec.ones 0;
+    t.compare (vec.length v) 0;
+),
+
+"ones": \(
+    v = vec.ones 3;
+    t.compare (vec.length v) 3 and
+        t.compare v[0] 1 and
+        t.compare v[1] 1 and
+        t.compare v[2] 1;
+),
+
+"from-list-empty": \(
+    v = vec.vector [];
+    t.compare (vec.length v) 0;
+),
+
+"from-list": \(
+    v = vec.vector [1,2,3,4];
+    t.compare (vec.length v) 4 and
+        t.compare v[0] 1 and
+        t.compare v[1] 2 and
+        t.compare v[2] 3 and
+        t.compare v[3] 4;
+),
+
+"equal-empty": \(
+    vec.equal (vec.vector []) (vec.vector [])
+),
+
+"equal": \(
+    v = vec.vector [1,1,1,1];
+    w = vec.ones 4;
+    w' = vec.zeros 4;
+    w'' = vec.ones 3;
+    vec.equal v w and not vec.equal v w' and not vec.equal v w'';
+),
+
+"copyOf-empty": \(
+    vec.equal (vec.vector []) (vec.copyOf (vec.vector []))
+),
+
+"copyOf": \(
+    v = vec.vector [1,2,3,4];
+    w = vec.copyOf v;
+    vec.equal v w and (
+        v[0] := 0; // check result is not aliasing inputs
+        not vec.equal v w
+    );
+),
+
+"rangeOf": \(
+    v = vec.vector [1,2,3,4];
+    vec.equal (vec.rangeOf v 0 4) v and (
+        vec.equal (vec.rangeOf v 2 2) (vec.vector [3,4])
+    )
+),
+
+"resizedTo": \(
+    vec.equal (vec.resizedTo 4 (vec.vector [])) (vec.zeros 4) and
+        vec.equal (vec.resizedTo 2 (vec.vector [1,2])) (vec.vector [1,2]) and
+        vec.equal (vec.resizedTo 3 (vec.vector [1,2])) (vec.vector [1,2,0]) and
+        vec.equal (vec.resizedTo 2 (vec.vector [1,2,3])) (vec.vector [1,2]);
+),
+
+"concat": \(
+    v = vec.vector [1,2,3];
+    w = vec.vector [4,5,6];
+    x = vec.concat v w;
+    x' = vec.vector [1,2,3,4,5,6];
+    vec.equal x x' and
+       (v[0] := 0; // check result is not aliasing inputs
+        w[0] := 0;
+        vec.equal x x') and
+        vec.equal x' (vec.concat x' (vec.vector [])) and
+        vec.equal x' (vec.concat (vec.vector []) x')
+),
+
+] is hash<string, () -> boolean> };
+

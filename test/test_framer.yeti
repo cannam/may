@@ -1,5 +1,5 @@
 
-program test_framer;
+module test.test_framer;
 
 fr = load framer;
 block = load block;
@@ -93,6 +93,6 @@ tests = [
 
 ];
 
-test.runTests tests;
+{ tests is hash<string, () -> boolean> };
 
-();
+

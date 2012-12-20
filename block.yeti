@@ -29,7 +29,8 @@ rangeOf b start len =
 resizedTo n b =
     Block (vec.resizedTo n (unblock b));
 
-
+concat b1 b2 =
+    Block (vec.concat (unblock b1) (unblock b2));
 
 {
 zeros, ones,
@@ -39,5 +40,7 @@ length = length',
 list = list',
 equal,
 copyOf, rangeOf, resizedTo,
+concat,
 }
+
 

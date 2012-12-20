@@ -1,0 +1,11 @@
+
+program test.all_tests;
+
+test = load test.test;
+fr = load test.test_framer;
+vec = load test.test_fvector;
+
+test.runTests "fvector" vec.tests;
+test.runTests "framer" fr.tests;
+
+
