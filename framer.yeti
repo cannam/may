@@ -12,33 +12,43 @@ blockList blocksize stream =
         stream.readMono blocksize :. \(blockList blocksize stream);
     fi;
 
-overlappingBlockList blocksize hopsize stream buffer
-    is number -> number -> 'a -> ~double[] -> 'b =
-    if stream.finished? then
-       (stream.close (); [] ); //!!! wrong! need unit tests! need to read from any stream, not only a file, to facilitate that
-    else
-        b = stream.readMono hopsize;
-        samples = block.unblock b;
-        blen = block.length b;
-        for [0..blen-1] do i: buffer[blocksize - hopsize + i] := samples[i] done;
-        for [blen..hopsize-1] do i: buffer[blocksize - hopsize + i] := 0.0 done;
-        v = Block (vec.subset buffer 0 blocksize);
-        for [hopsize..blocksize-1] do i: buffer[i - hopsize] := buffer[i] done;
-        v :. \(overlappingBlockList blocksize hopsize stream buffer);
-    fi;
+overlappingBlockList bs hop stream valid buffer
+    is number -> number -> 'a -> number -> ~double[] -> 'b =
+   (b = stream.readMono hop;
+    blen = block.length b;
+    samples = block.unblock b;
 
-overlappingFrames blocksize hopsize stream =
-    overlappingBlockList blocksize hopsize stream (vec.zeros blocksize);
+    // Shift existing buffer down by hop
+    for [hop..bs-1] do i: buffer[i-hop] := buffer[i] done;
+
+    // Copy hop new elements in from samples (and extra zeros if needed)
+    for [0..blen-1] do i: buffer[bs-hop+i] := samples[i] done;
+    for [blen..hop-1] do i: buffer[bs-hop+i] := 0.0 done;
+
+    // Number of "valid" elements (not tail-end zero-padding) left in buffer
+    remaining = valid - (hop - blen);
+
+    if remaining <= 0 then
+        stream.close ();
+        [];
+    else
+        // Copy buffer to return
+        v = block.block (vec.copyOf buffer);
+        v :. \(overlappingBlockList bs hop stream remaining buffer);
+    fi);
 
 frames blocksize stream =
     blockList blocksize stream;
 
-overlappingFramesOfFile blocksize hopsize filename =
-    overlappingBlockList blocksize hopsize (af.open filename)
-        (vec.zeros blocksize);
-
 framesOfFile blocksize filename =
     blockList blocksize (af.open filename);
+
+overlappingFrames { blocksize, hop } stream =
+    overlappingBlockList blocksize hop stream blocksize (vec.zeros blocksize);
+
+overlappingFramesOfFile { blocksize, hop } filename =
+    overlappingBlockList blocksize hop (af.open filename)
+        blocksize (vec.zeros blocksize);
 
 { 
     frames, overlappingFrames,

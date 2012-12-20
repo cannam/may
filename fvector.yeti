@@ -27,10 +27,13 @@ list' a is ~double[] -> list<number> =
 length' =
     length . list';
 
+equal v1 v2 =
+    list' v1 == list' v2;
+
 copyOf v is ~double[] -> ~double[] =
     Arrays#copyOf(v, list' v |> length);
 
-subset v start len is ~double[] -> number -> number -> ~double[] =
+range v start len is ~double[] -> number -> number -> ~double[] =
     Arrays#copyOfRange(v, start, start + len);
 
 {
@@ -38,6 +41,7 @@ zeros, ones,
 vector,
 length = length',
 list = list',
-copyOf, subset,
+equal,
+copyOf, range,
 }
 

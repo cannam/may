@@ -11,17 +11,25 @@ block v is ~double[] -> (Block ~double[]) =
 unblock b is (Block ~double[]) -> ~double[] =
     case b of Block a: a esac;
 
+fromList l =
+    block (vec.vector l);
+
 list' b = vec.list (unblock b);
 length' b = vec.length (unblock b);
 
+equal b1 b2 =
+    list' b1 == list' b2;
+
 copyOf b = Block (vec.copyOf (unblock b));
-subset b start len = Block (vec.subset (unblock b) start len);
+range b start len = Block (vec.range (unblock b) start len);
 
 {
 zeros, ones,
 block, unblock,
+fromList,
 length = length',
 list = list',
-copyOf, subset,
+equal,
+copyOf, range,
 }
 

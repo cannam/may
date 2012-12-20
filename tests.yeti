@@ -4,24 +4,95 @@ program tests;
 ss = load syntheticstream;
 vec = load fvector;
 fr = load framer;
+block = load block;
 
 testStream n is number -> 'a  = ss.precalculated 1000 (vec.vector [1..n]);
 
+compare obtained expected =
+    if obtained == expected then
+        true;
+    else
+        println "** expected: \(expected)\n   obtained: \(obtained)";
+        false;
+    fi;
+
 tests = [
 
-"framer-2x2": \( 
+"framecount-2x2": \( 
     fr = fr.frames 2 (testStream 2);
-    length fr == 1
+    compare (length fr) 1
 ),
 
-"framer-2x3": \( 
+"framecount-2x3": \( 
     fr = fr.frames 2 (testStream 3);
-    length fr == 2
+    compare (length fr) 2
 ),
 
-"framer-2x4": \( 
+"framecount-2x4": \( 
     fr = fr.frames 2 (testStream 4);
-    length fr == 2
+    compare (length fr) 2
+),
+
+"framecount-2.1x0": \( 
+    fr = fr.overlappingFrames { blocksize = 2, hop = 1 } (testStream 0);
+    compare (length fr) 1
+),
+
+"framecount-2.1x1": \( 
+    fr = fr.overlappingFrames { blocksize = 2, hop = 1 } (testStream 1);
+    compare (length fr) 2
+),
+
+"framecount-2.1x2": \( 
+    fr = fr.overlappingFrames { blocksize = 2, hop = 1 } (testStream 2);
+    compare (length fr) 3
+),
+
+"framecount-2.1x3": \( 
+    fr = fr.overlappingFrames { blocksize = 2, hop = 1 } (testStream 3);
+    compare (length fr) 4
+),
+
+"framecount-4.1x4": \( 
+    fr = fr.overlappingFrames { blocksize = 4, hop = 1 } (testStream 4);
+    compare (length fr) 7
+),
+
+"framecount-4.3x4": \( 
+    fr = fr.overlappingFrames { blocksize = 4, hop = 3 } (testStream 4);
+    compare (length fr) 2 
+),
+
+"framecount-4.4x4": \( 
+    fr = fr.overlappingFrames { blocksize = 4, hop = 4 } (testStream 4);
+    compare (length fr) 1
+),
+
+"framecount-3.2x4": \(
+    fr = fr.overlappingFrames { blocksize = 3, hop = 2 } (testStream 4);
+    compare (length fr) 3
+),
+
+"frames-4.3x4": \( 
+    fr = fr.overlappingFrames { blocksize = 4, hop = 3 } (testStream 4);
+    expected = array [ [0,1,2,3], [3,4,0,0] ];
+    obtained = array (map block.list fr);
+    compare obtained expected;
+),
+
+"frames-3.2x4": \(
+    fr = fr.overlappingFrames { blocksize = 3, hop = 2 } (testStream 4);
+    expected = array [ [0,1,2], [2,3,4], [4,0,0] ];
+    obtained = array (map block.list fr);
+    compare obtained expected;
+),
+
+"frames-3.1x6": \(
+    fr = fr.overlappingFrames { blocksize = 3, hop = 1 } (testStream 6);
+    expected = array [ [0,0,1], [0,1,2], [1,2,3], [2,3,4],
+                       [3,4,5], [4,5,6], [5,6,0], [6,0,0] ];
+    obtained = array (map block.list fr);
+    compare obtained expected;
 ),
 
 ];
