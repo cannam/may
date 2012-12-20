@@ -20,16 +20,16 @@ blockList blocksize stream =
 
 overlappingBlockList bs hop stream valid buffer
     is number -> number -> 'a -> number -> ~double[] -> 'b =
-   (b = stream.readMono hop;
+   (
+    b = stream.readMono hop;
     obtained = block.length b;
     samples = block.unblock b;
 
-    // Shift existing buffer down by hop
-    for [hop..bs-1] do i: buffer[i-hop] := buffer[i] done;
-
-    // Copy hop new elements in from samples (and extra zeros if needed)
-    for [0..obtained-1] do i: buffer[bs-hop+i] := samples[i] done;
-    for [obtained..hop-1] do i: buffer[bs-hop+i] := 0.0 done;
+    // Retain blocksize - hop samples from old buffer, add hop samples
+    // (zero-padded if necessary) just read
+    buffer = vec.concat
+       (vec.rangeOf buffer hop (bs-hop))
+       (vec.resizedTo hop samples);
 
     // Number of "valid" elements (not tail-end zero-padding) left in buffer
     remaining = valid - (hop - obtained);
@@ -38,8 +38,7 @@ overlappingBlockList bs hop stream valid buffer
         stream.close ();
         [];
     else
-        // Copy buffer to return
-        v = block.block (vec.copyOf buffer);
+        v = block.block buffer;
         v :. \(overlappingBlockList bs hop stream remaining buffer);
     fi);
 
