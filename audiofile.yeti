@@ -87,18 +87,6 @@ readMono' { format is ~AudioFormat, stream is ~AudioInputStream } n =
 available' { format is ~AudioFormat, stream is ~AudioInputStream } =
     stream#available() / ((format#getSampleSizeInBits() / 8) * format#getChannels());
 
-readAllInterleaved' { format is ~AudioFormat, stream is ~AudioInputStream } =
-    readInterleaved' { format, stream } (available' { format, stream });
-
-readAll' { format is ~AudioFormat, stream is ~AudioInputStream } =
-    read' { format, stream } (available' { format, stream });
-
-readAllMono' { format is ~AudioFormat, stream is ~AudioInputStream } =
-    readMono' { format, stream } (available' { format, stream });
-
-finished?' { stream is ~AudioInputStream } =
-    not (stream#available() > 0);
-
 close' { stream is ~AudioInputStream } =
     stream#close();
 
