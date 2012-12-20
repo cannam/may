@@ -33,11 +33,18 @@ equal v1 v2 =
 copyOf v is ~double[] -> ~double[] =
     Arrays#copyOf(v, list' v |> length);
 
-range v start len is ~double[] -> number -> number -> ~double[] =
+rangeOf v start len is ~double[] -> number -> number -> ~double[] =
     Arrays#copyOfRange(v, start, start + len);
 
 resizedTo n v is number -> ~double[] -> ~double[] =
     Arrays#copyOf(v, n);
+
+concat v1 v2 is ~double[] -> ~double[] -> ~double[] =
+   (v1len = length' v1;
+    v2len = length' v2;
+    v = resizedTo (v1len + v2len) v1;
+    for [0..v2len-1] do i: v[v1len + i] := v2[i] done;
+    v);
 
 {
 zeros, ones,
@@ -45,6 +52,7 @@ vector,
 length = length',
 list = list',
 equal,
-copyOf, range, resizedTo,
+copyOf, rangeOf, resizedTo,
+concat
 }
 

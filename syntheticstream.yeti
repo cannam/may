@@ -35,7 +35,7 @@ precalculated rate data is number -> ~double[] -> 'a =
         rate,
         read count = 
            (rc = min count (len - position);
-            result = vec.range data position rc;
+            result = vec.rangeOf data position rc;
             position := position + rc;
             block.block result),
         close = \(),

@@ -23,11 +23,13 @@ equal b1 b2 =
 copyOf b =
     Block (vec.copyOf (unblock b));
 
-range b start len =
-    Block (vec.range (unblock b) start len);
+rangeOf b start len =
+    Block (vec.rangeOf (unblock b) start len);
 
 resizedTo n b =
     Block (vec.resizedTo n (unblock b));
+
+
 
 {
 zeros, ones,
@@ -36,6 +38,6 @@ fromList,
 length = length',
 list = list',
 equal,
-copyOf, range, resizedTo,
+copyOf, rangeOf, resizedTo,
 }
 
