@@ -20,7 +20,6 @@ playBlock line b is ~SourceDataLine -> 'a -> () =
     bb#order(ByteOrder#LITTLE_ENDIAN);
     sb = bb#asShortBuffer();
     for [0..len-1] do i: sb#put(i, samples[i] * 32767.0); () done;
-    println "writing \(nb) bytes";
     actual = line#write(bytes, 0, nb); 
     ());
 
@@ -42,9 +41,11 @@ open { rate, channels } =
 playStream stream =
    (line = open { rate = stream.sampleRate, channels = stream.channels };
     blocksize = 10240;
-    line.play (map (ch.mixedFromInterleavedTo line.channels stream.channels)
-                   (fr.frames blocksize stream));
-    line.close());
+    not stream.finished? loop
+        line.play [(ch.mixedFromInterleavedTo line.channels stream.channels
+                    (stream.readInterleaved blocksize))];
+    line.close();
+    stream.close());
 
 playFile filename = playStream (af.open filename);
 

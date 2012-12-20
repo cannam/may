@@ -1,6 +1,11 @@
 
 module framer;
 
+/**
+ * Framer expresses a stream (or a file) as a lazy list of (possibly
+ * overlapping) frames of mono data.
+ */
+
 vec = load fvector;
 block = load block;
 af = load audiofile;
