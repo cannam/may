@@ -10,25 +10,25 @@ vec = load fvector;
 block = load block;
 af = load audiofile;
 
-blockList blocksize stream =
+blockList framesize stream =
     if stream.finished? then
        (stream.close (); [] );
     else
-        block.resizedTo blocksize (stream.readMono blocksize)
-            :. \(blockList blocksize stream);
+        block.resizedTo framesize (stream.readMono framesize)
+            :. \(blockList framesize stream);
     fi;
 
-overlappingBlockList bs hop stream valid buffer
+overlappingBlockList size hop stream valid buffer
     is number -> number -> 'a -> number -> ~double[] -> 'b =
    (
     b = stream.readMono hop;
     obtained = block.length b;
     samples = block.unblock b;
 
-    // Retain blocksize - hop samples from old buffer, add hop samples
+    // Retain framesize - hop samples from old buffer, add hop samples
     // (zero-padded if necessary) just read
     buffer = vec.concat
-       (vec.rangeOf buffer hop (bs-hop))
+       (vec.rangeOf buffer hop (size-hop))
        (vec.resizedTo hop samples);
 
     // Number of "valid" elements (not tail-end zero-padding) left in buffer
@@ -39,23 +39,23 @@ overlappingBlockList bs hop stream valid buffer
         [];
     else
         v = block.block buffer;
-        v :. \(overlappingBlockList bs hop stream remaining buffer);
+        v :. \(overlappingBlockList size hop stream remaining buffer);
     fi);
 
-frames { blocksize, hop } stream =
-    if blocksize == hop then
-        blockList blocksize stream
+frames { framesize, hop } stream =
+    if framesize == hop then
+        blockList framesize stream
     else
-        overlappingBlockList blocksize hop stream 
-            blocksize (vec.zeros blocksize);
+        overlappingBlockList framesize hop stream 
+            framesize (vec.zeros framesize);
     fi;
 
-framesOfFile { blocksize, hop } filename =
-    if blocksize == hop then
-        blockList blocksize (af.open filename)
+framesOfFile { framesize, hop } filename =
+    if framesize == hop then
+        blockList framesize (af.open filename)
     else
-        overlappingBlockList blocksize hop (af.open filename)
-            blocksize (vec.zeros blocksize);
+        overlappingBlockList framesize hop (af.open filename)
+            framesize (vec.zeros framesize);
     fi;
 
 { 
