@@ -1,0 +1,39 @@
+module vamp;
+
+import org.vamp_plugins: Plugin, PluginLoader, PluginLoader$AdapterFlags;
+import java.lang: UnsatisfiedLinkError;
+
+listPlugins () =
+   (try
+        map string PluginLoader#getInstance()#listPlugins();
+    catch UnsatisfiedLinkError e:
+        eprintln "Warning: Unable to obtain plugin list:\n\(e)";
+        [];
+    yrt);
+   
+categoryOf key =
+    list PluginLoader#getInstance()#getPluginCategory(key);
+
+plugin key p is string -> ~Plugin -> 'a = {
+    plugin = p,
+    key,
+    get identifier () = p#getIdentifier(),
+    get name () = p#getName(),
+    get description () = p#getName(),
+    get maker () = p#getName(),
+    get copyright () = p#getName(),
+    get version () = p#getName(),
+    get category () = PluginLoader#getInstance()#getPluginCategory(key),
+    };
+
+loadPlugin key rate =
+    plugin key PluginLoader#getInstance()#loadPlugin(key, rate, PluginLoader$AdapterFlags#ADAPT_ALL);
+
+    ///!!! no params, programs [yet]
+
+{
+get pluginKeys = listPlugins,
+loadPlugin,
+categoryOf,
+}
+
