@@ -1,0 +1,33 @@
+
+module blockfuncs;
+
+b = load block;
+
+sum' =
+    sum . b.list;
+
+mean bl =
+    case b.length bl of
+        0: 0;
+        len: sum' bl / len
+    esac;
+
+sqr =
+    b.fromList . (map do x: x*x done) . b.list;
+
+sqrt' =
+    b.fromList . (map sqrt) . b.list;
+
+rms =
+    sqrt . mean . sqr;
+
+{
+sum = sum',
+mean,
+sqr,
+sqrt = sqrt',
+rms
+}
+
+
+        

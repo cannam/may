@@ -5,7 +5,7 @@ fr = load framer;
 block = load block;
 test = load test.test;
 
-tests = [
+test.declare [
 
 "framecount-2x2": \( 
     fr = fr.frames { framesize = 2, hop = 2 } (test.testStream 2);
@@ -89,6 +89,5 @@ tests = [
 
 ];
 
-{ tests is hash<string, () -> boolean> };
 
 

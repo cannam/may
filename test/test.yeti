@@ -32,7 +32,10 @@ runTests group testHash =
         println "\(group): Failed tests [\(length failed)]: \(strJoin ' ' failed)";
     fi);
 
+declare tests is hash<string, () -> boolean> -> 'a =
+    { tests };
+
 {
-    testStream, compare, failedTests, runTests
+    testStream, compare, failedTests, runTests, declare
 }
 

@@ -1,0 +1,45 @@
+
+module test.test_blockfuncs;
+
+stdSqrt = sqrt;
+
+{ zeros, ones, fromList, list } = load block;
+{ sum, mean, sqr, sqrt, rms } = load blockfuncs;
+{ declare, compare } = load test.test;
+
+declare [
+
+"sum": \(
+    compare ((sum . zeros) 0) 0 and
+        compare ((sum . zeros) 5) 0 and
+        compare ((sum . ones) 5) 5 and
+        compare ((sum . fromList) [1,-2,3,0]) 2
+),
+
+"mean": \(
+    compare ((mean . zeros) 0) 0 and
+        compare ((mean . zeros) 5) 0 and
+        compare ((mean . ones) 5) 1 and
+        compare ((mean . fromList) [1,-2,3,0]) 0.5
+),
+
+"sqr": \(
+    compare ((list . sqr . zeros) 0) [] and
+        compare ((list . sqr . ones) 5) [1,1,1,1,1] and
+        compare ((list . sqr . fromList) [0.5,-2,3,0]) [0.25,4,9,0]
+),
+
+"sqrt": \(
+    compare ((list . sqrt . zeros) 0) [] and
+        compare ((list . sqrt . ones) 5) [1,1,1,1,1] and
+        compare ((list . sqrt . fromList) [0.25,4,9,0]) [0.5,2,3,0]
+),
+
+"rms": \(
+    compare ((rms . zeros) 0) 0 and
+        compare ((rms . ones) 5) 1 and
+        compare ((rms . fromList) [-1,2,2]) (stdSqrt 3)
+),
+
+];
+

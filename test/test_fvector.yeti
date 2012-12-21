@@ -4,7 +4,7 @@ module test.test_fvector;
 vec = load fvector;
 t = load test.test;
 
-tests = [
+t.declare [
 
 "zeros-empty": \(
     v = vec.zeros 0;
@@ -100,5 +100,4 @@ tests = [
 
 ];
 
-{ tests is hash<string, () -> boolean> };
 

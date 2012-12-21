@@ -4,8 +4,10 @@ program test.all_tests;
 test = load test.test;
 fr = load test.test_framer;
 vec = load test.test_fvector;
+bf = load test.test_blockfuncs;
 
 test.runTests "fvector" vec.tests;
 test.runTests "framer" fr.tests;
+test.runTests "blockfuncs" bf.tests;
 
 
