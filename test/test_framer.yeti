@@ -64,31 +64,27 @@ tests = [
 
 "frames-2x5": \( 
     fr = fr.frames { blocksize = 2, hop = 2 } (test.testStream 5);
-    expected = array [ [1,2], [3,4], [5,0] ];
-    obtained = array (map block.list fr);
-    test.compare obtained expected;
+    expected = [ [1,2], [3,4], [5,0] ];
+    test.compare (map block.list fr) expected;
 ),
 
 "frames-4.3x4": \( 
     fr = fr.frames { blocksize = 4, hop = 3 } (test.testStream 4);
-    expected = array [ [0,1,2,3], [3,4,0,0] ];
-    obtained = array (map block.list fr);
-    test.compare obtained expected;
+    expected = [ [0,1,2,3], [3,4,0,0] ];
+    test.compare (map block.list fr) expected;
 ),
 
 "frames-3.2x4": \(
     fr = fr.frames { blocksize = 3, hop = 2 } (test.testStream 4);
-    expected = array [ [0,1,2], [2,3,4], [4,0,0] ];
-    obtained = array (map block.list fr);
-    test.compare obtained expected;
+    expected = [ [0,1,2], [2,3,4], [4,0,0] ];
+    test.compare (map block.list fr) expected;
 ),
 
 "frames-3.1x6": \(
     fr = fr.frames { blocksize = 3, hop = 1 } (test.testStream 6);
-    expected = array [ [0,0,1], [0,1,2], [1,2,3], [2,3,4],
-                       [3,4,5], [4,5,6], [5,6,0], [6,0,0] ];
-    obtained = array (map block.list fr);
-    test.compare obtained expected;
+    expected = [ [0,0,1], [0,1,2], [1,2,3], [2,3,4],
+                 [3,4,5], [4,5,6], [5,6,0], [6,0,0] ];
+    test.compare (map block.list fr) expected;
 ),
 
 ];
