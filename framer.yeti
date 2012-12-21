@@ -42,21 +42,24 @@ overlappingBlockList bs hop stream valid buffer
         v :. \(overlappingBlockList bs hop stream remaining buffer);
     fi);
 
-frames blocksize stream =
-    blockList blocksize stream;
+frames { blocksize, hop } stream =
+    if blocksize == hop then
+        blockList blocksize stream
+    else
+        overlappingBlockList blocksize hop stream 
+            blocksize (vec.zeros blocksize);
+    fi;
 
-framesOfFile blocksize filename =
-    blockList blocksize (af.open filename);
-
-overlappingFrames { blocksize, hop } stream =
-    overlappingBlockList blocksize hop stream blocksize (vec.zeros blocksize);
-
-overlappingFramesOfFile { blocksize, hop } filename =
-    overlappingBlockList blocksize hop (af.open filename)
-        blocksize (vec.zeros blocksize);
+framesOfFile { blocksize, hop } filename =
+    if blocksize == hop then
+        blockList blocksize (af.open filename)
+    else
+        overlappingBlockList blocksize hop (af.open filename)
+            blocksize (vec.zeros blocksize);
+    fi;
 
 { 
-    frames, overlappingFrames,
-    framesOfFile, overlappingFramesOfFile,
+    frames,
+    framesOfFile,
 }
 
