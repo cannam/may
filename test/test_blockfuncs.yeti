@@ -3,8 +3,8 @@ module test.test_blockfuncs;
 
 stdSqrt = sqrt;
 
-{ zeros, ones, fromList, list } = load block;
-{ sum, mean, sqr, sqrt, rms } = load blockfuncs;
+{ zeros, consts, ones, fromList, list } = load block;
+{ sum, mean, multiply, sqr, sqrt, rms } = load blockfuncs;
 { declare, compare } = load test.test;
 
 declare [
@@ -21,6 +21,11 @@ declare [
         compare ((mean . zeros) 5) 0 and
         compare ((mean . ones) 5) 1 and
         compare ((mean . fromList) [1,-2,3,0]) 0.5
+),
+
+"multiply": \(
+    compare (list (multiply (zeros 0) (ones 5))) [] and
+        compare (list (multiply (consts (-3) 4) (fromList [1,2,3]))) [-3,-6,-9]
 ),
 
 "sqr": \(

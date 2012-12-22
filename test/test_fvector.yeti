@@ -19,6 +19,19 @@ t.declare [
         t.compare v[2] 0;
 ),
 
+"consts-empty": \(
+    v = vec.consts 4 0;
+    t.compare (vec.length v) 0;
+),
+
+"consts": \(
+    v = vec.consts 4 3;
+    t.compare (vec.length v) 3 and
+        t.compare v[0] 4 and
+        t.compare v[1] 4 and
+        t.compare v[2] 4;
+),
+
 "ones-empty": \(
     v = vec.ones 0;
     t.compare (vec.length v) 0;

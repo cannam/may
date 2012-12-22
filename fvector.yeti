@@ -5,12 +5,14 @@ import java.util: Arrays;
 zeros n =
     new double[n];
 
-ones n =
+consts m n =
    (a = zeros n;
     for [0..n-1] do i:
-        a[i] := 1.0;
+        a[i] := m;
     done;
     a);
+
+ones = consts 1.0;
 
 vector l is list?<number> -> ~double[] =
    (arr = array(l);
@@ -51,7 +53,7 @@ concat vv is list?<~double[]> -> ~double[] =
     vout);
 
 {
-zeros, ones,
+zeros, consts, ones,
 vector,
 length = length',
 list = list',

@@ -3,7 +3,8 @@ module block;
 vec = load fvector;
 
 zeros = Block . vec.zeros;
-ones  = Block . vec.ones;
+consts m  = Block . (vec.consts m);
+ones = Block . vec.ones;
 
 block v is ~double[] -> (Block ~double[]) = 
     Block v;
@@ -33,7 +34,7 @@ concat blocks =
     Block (vec.concat (map unblock blocks));
 
 {
-zeros, ones,
+zeros, consts, ones,
 block, unblock,
 fromList,
 length = length',
