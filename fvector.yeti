@@ -39,12 +39,16 @@ rangeOf v start len is ~double[] -> number -> number -> ~double[] =
 resizedTo n v is number -> ~double[] -> ~double[] =
     Arrays#copyOf(v, n);
 
-concat v1 v2 is ~double[] -> ~double[] -> ~double[] =
-   (v1len = length' v1;
-    v2len = length' v2;
-    v = resizedTo (v1len + v2len) v1;
-    for [0..v2len-1] do i: v[v1len + i] := v2[i] done;
-    v);
+concat vv is list?<~double[]> -> ~double[] =
+   (len = sum (map length' vv);
+    vout = zeros len;
+    var base = 0;
+    for vv do v: 
+        vlen = length' v;
+        for [0..vlen-1] do i: vout[base + i] := v[i] done;
+        base := base + vlen;
+    done;
+    vout);
 
 {
 zeros, ones,

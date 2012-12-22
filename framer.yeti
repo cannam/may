@@ -28,8 +28,8 @@ overlappingBlockList size hop stream valid buffer
     // Retain framesize - hop samples from old buffer, add hop samples
     // (zero-padded if necessary) just read
     buffer = vec.concat
-       (vec.rangeOf buffer hop (size-hop))
-       (vec.resizedTo hop samples);
+       [vec.rangeOf buffer hop (size-hop),
+        vec.resizedTo hop samples];
 
     // Number of "valid" elements (not tail-end zero-padding) left in buffer
     remaining = valid - (hop - obtained);

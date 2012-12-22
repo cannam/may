@@ -29,8 +29,8 @@ rangeOf b start len =
 resizedTo n b =
     Block (vec.resizedTo n (unblock b));
 
-concat b1 b2 =
-    Block (vec.concat (unblock b1) (unblock b2));
+concat blocks =
+    Block (vec.concat (map unblock blocks));
 
 {
 zeros, ones,

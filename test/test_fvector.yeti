@@ -85,17 +85,25 @@ t.declare [
         vec.equal (vec.resizedTo 2 (vec.vector [1,2,3])) (vec.vector [1,2]);
 ),
 
-"concat": \(
+"concat2": \(
     v = vec.vector [1,2,3];
     w = vec.vector [4,5,6];
-    x = vec.concat v w;
+    x = vec.concat [v, w];
     x' = vec.vector [1,2,3,4,5,6];
     vec.equal x x' and
        (v[0] := 0; // check result is not aliasing inputs
         w[0] := 0;
         vec.equal x x') and
-        vec.equal x' (vec.concat x' (vec.vector [])) and
-        vec.equal x' (vec.concat (vec.vector []) x')
+        vec.equal x' (vec.concat [x', vec.vector []]) and
+        vec.equal x' (vec.concat [vec.vector [], x'])
+),
+
+"concatn": \(
+    v = vec.vector [1,2,3];
+    w = vec.vector [4,5,6];
+    vec.equal (vec.concat []) (vec.zeros 0) and
+        vec.equal (vec.concat [v]) v and
+        vec.equal (vec.concat [v,w,v]) (vec.vector [1,2,3,4,5,6,1,2,3])
 ),
 
 ];

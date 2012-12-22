@@ -27,10 +27,13 @@ failedTests testHash =
         
 runTests group testHash =
    (failed = failedTests testHash;
-    println "\(group): \(length testHash - length failed)/\(length testHash) tests passed";
+    good = (length testHash - length failed);
+    bad = length failed;
+    println "\(group): \(good)/\(good+bad) tests passed";
     if not empty? failed then
-        println "\(group): Failed tests [\(length failed)]: \(strJoin ' ' failed)";
-    fi);
+        println "\(group): Failed tests [\(bad)]: \(strJoin ' ' failed)";
+    fi;
+    bad);
 
 declare tests is hash<string, () -> boolean> -> 'a =
     { tests };

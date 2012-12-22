@@ -6,8 +6,19 @@ fr = load test.test_framer;
 vec = load test.test_fvector;
 bf = load test.test_blockfuncs;
 
-test.runTests "fvector" vec.tests;
-test.runTests "framer" fr.tests;
-test.runTests "blockfuncs" bf.tests;
+tests = [
+"fvector": vec.tests,
+"framer": fr.tests,
+"blockfuncs": bf.tests,
+];
+
+bad = sum (mapHash do name tests: test.runTests name tests done tests);
+
+if (bad > 0) then
+    println "\n** \(bad) test(s) failed!";
+else
+    ()
+fi
+
 
 
