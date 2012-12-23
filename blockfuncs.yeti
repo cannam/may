@@ -2,7 +2,6 @@
 module blockfuncs;
 
 b = load block;
-vec = load fvector;
 
 sum' =
     sum . b.list;
@@ -14,12 +13,7 @@ mean bl =
     esac;
 
 multiply b1 b2 =
-   (v1 = b.unblock b1;
-    v2 = b.unblock b2;
-    len = min (vec.length v1) (vec.length v2);
-    v = vec.zeros len;
-    for [0..len-1] do i: v[i] := v1[i] * v2[i] done;
-    b.block v);
+    b.fromList (map2 (*) (b.list b1) (b.list b2));
 
 sqr bl =
     multiply bl bl;
