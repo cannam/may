@@ -5,11 +5,13 @@ test = load test.test;
 fr = load test.test_framer;
 vec = load test.test_fvector;
 bf = load test.test_blockfuncs;
+fft = load test.test_fft;
 
 tests = [
 "fvector": vec.tests,
 "framer": fr.tests,
 "blockfuncs": bf.tests,
+"fft": fft.tests,
 ];
 
 bad = sum (mapHash do name tests: test.runTests name tests done tests);

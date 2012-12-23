@@ -1,0 +1,42 @@
+
+module test.test_fft;
+
+{ fft } = load fft;
+{ fromList, list } = load block;
+{ declare, compare } = load test.test;
+
+declare [
+
+"dc": \(
+    out = fft 4 (fromList [1,1,1,1]);
+    compare out (array [{re=4, im=0}, {re=0, im=0}, {re=0, im=0}])
+),
+
+"sine": \(
+    out = fft 4 (fromList [0,1,0,-1]);
+    compare out (array [{re=0, im=0}, {re=0, im=(-2)}, {re=0, im=0}])
+),
+
+"cosine": \(
+    out = fft 4 (fromList [1,0,-1,0]);
+    compare out (array [{re=0, im=0}, {re=2, im=0}, {re=0, im=0}])
+),
+
+"sineCosine": \(
+    out = fft 4 (fromList [0.5,1,-0.5,-1]);
+    compare out (array [{re=0, im=0}, {re=1, im=(-2)}, {re=0, im=0}])
+),
+
+"nyquist": \(
+    out = fft 4 (fromList [1,-1,1,-1]);
+    compare out (array [{re=0, im=0}, {re=0, im=0}, {re=4, im=0}])
+),
+
+"dirac": \(
+    out = fft 4 (fromList [1,0,0,0]);
+    compare out (array [{re=1, im=0}, {re=1, im=0}, {re=1, im=0}])
+),
+
+];
+
+

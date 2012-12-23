@@ -1,0 +1,27 @@
+
+module fft;
+
+import edu.emory.mathcs.jtransforms.fft: DoubleFFT_1D;
+
+b = load block;
+ch = load channels;
+
+unpack p =
+   (m = ch.deinterleaved 2 p;
+    unpacked = array (map2 do re im: { re, im } done m[0] m[1]);
+    push unpacked { re = unpacked[0].im, im = 0 };
+    unpacked[0] := unpacked[0] with { im = 0 };
+    unpacked);
+
+fft n = 
+   (d = new DoubleFFT_1D(n);
+    do bl:
+        v = b.unblock (b.copyOf bl);
+        d#realForward(v);
+        unpack (b.block v);
+    done);
+
+{
+fft
+}
+
