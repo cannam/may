@@ -4,7 +4,7 @@ module test.test_blockfuncs;
 stdSqrt = sqrt;
 
 { zeros, consts, ones, fromList, list } = load block;
-{ sum, mean, multiply, sqr, sqrt, rms } = load blockfuncs;
+{ sum, mean, multiply, sqr, sqrt, rms, fftshift, ifftshift } = load blockfuncs;
 { declare, compare } = load test.test;
 
 declare [
@@ -44,6 +44,18 @@ declare [
     compare ((rms . zeros) 0) 0 and
         compare ((rms . ones) 5) 1 and
         compare ((rms . fromList) [-1,2,2]) (stdSqrt 3)
+),
+
+"fftshift": \(
+    compare ((list . fftshift . zeros) 0) [] and 
+        compare ((list . fftshift . fromList) [1,2,3,4]) [3,4,1,2] and
+        compare ((list . fftshift . fromList) [1,2,3,4,5]) [4,5,1,2,3]
+),
+
+"ifftshift": \(
+    compare ((list . ifftshift . zeros) 0) [] and 
+        compare ((list . ifftshift . fromList) [3,4,1,2]) [1,2,3,4] and
+        compare ((list . ifftshift . fromList) [4,5,1,2,3]) [1,2,3,4,5]
 ),
 
 ];

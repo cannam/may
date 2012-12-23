@@ -21,21 +21,33 @@ multiply b1 b2 =
     for [0..len-1] do i: v[i] := v1[i] * v2[i] done;
     b.block v);
 
-sqr b =
-    multiply b b;
+sqr bl =
+    multiply bl bl;
+
+rms =
+    sqrt . mean . sqr;
 
 sqrt' =
     b.fromList . (map sqrt) . b.list;
 
-rms =
-    sqrt . mean . sqr;
+fftshift bl =
+   (len = b.length bl;
+    half = int(len/2 + 0.5); // round up for odd-length sequences
+    b.concat [b.rangeOf bl half (len-half), b.rangeOf bl 0 half]);
+
+ifftshift bl =
+   (len = b.length bl;
+    half = int(len/2); // round down for odd-length sequences
+    b.concat [b.rangeOf bl half (len-half), b.rangeOf bl 0 half]);
 
 {
 sum = sum',
 mean,
 multiply, sqr,
 sqrt = sqrt',
-rms
+rms,
+fftshift,
+ifftshift,
 }
 
 
