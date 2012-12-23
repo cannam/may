@@ -15,6 +15,9 @@ mean bl =
 multiply b1 b2 =
     b.fromList (map2 (*) (b.list b1) (b.list b2));
 
+divideBy n bl =
+    b.fromList (map (/ n) (b.list bl));
+
 sqr bl =
     multiply bl bl;
 
@@ -37,7 +40,7 @@ ifftshift bl =
 {
 sum = sum',
 mean,
-multiply, sqr,
+multiply, divideBy, sqr,
 sqrt = sqrt',
 rms,
 fftshift,

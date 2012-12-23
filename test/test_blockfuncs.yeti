@@ -4,7 +4,7 @@ module test.test_blockfuncs;
 stdSqrt = sqrt;
 
 { zeros, consts, ones, fromList, list } = load block;
-{ sum, mean, multiply, sqr, sqrt, rms, fftshift, ifftshift } = load blockfuncs;
+{ sum, mean, multiply, divideBy, sqr, sqrt, rms, fftshift, ifftshift } = load blockfuncs;
 { declare, compare } = load test.test;
 
 declare [
@@ -26,6 +26,11 @@ declare [
 "multiply": \(
     compare (list (multiply (zeros 0) (ones 5))) [] and
         compare (list (multiply (consts (-3) 4) (fromList [1,2,3]))) [-3,-6,-9]
+),
+
+"divideBy": \(
+    compare (list (divideBy 5 (ones 0))) [] and
+        compare (list (divideBy 5 (fromList [1,2,-3]))) [0.2,0.4,-0.6]
 ),
 
 "sqr": \(
