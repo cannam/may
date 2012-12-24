@@ -1,0 +1,22 @@
+
+module complex;
+
+class Complex(float real, float imag)
+    int getReal()
+        real,
+    int getImag()
+        imag,
+    String toString()
+        "\(real) + \(imag)i",
+end;
+
+typedef opaque cplx = ~Complex;
+
+complex re im is number -> number -> ~Complex = new Complex(re, im);
+
+{
+   complex 
+} as {
+   complex is number -> number -> cplx
+}
+
