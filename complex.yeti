@@ -1,7 +1,7 @@
 
 module complex;
 
-class Complex(float real, float imag)
+class Complex(double real, double imag)
     int getReal()
         real,
     int getImag()
