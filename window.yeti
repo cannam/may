@@ -2,6 +2,7 @@
 module window;
 
 b = load block;
+bf = load blockfuncs;
 
 cosinewin a0 a1 a2 a3 n =
     b.fromList
@@ -31,7 +32,16 @@ bartlett n =
                 done [0..m-1]
             ]);
 
+windowedFrames windowFunc frames =
+    case frames of
+        []: frames;
+         _: (first = head frames;
+             window = windowFunc (b.length first);
+             map (bf.multiply window) frames);
+    esac;
+
 {
-cosinewin, hann, hamming, blackman, nuttall, blackmanHarris, boxcar, bartlett
+cosinewin, hann, hamming, blackman, nuttall, blackmanHarris, boxcar, bartlett,
+windowedFrames
 };
 
