@@ -1,5 +1,5 @@
 
-program test.all_tests;
+program test.all;
 
 test = load test.test;
 fr = load test.test_framer;

@@ -4,38 +4,40 @@ module test.test_fft;
 { fft } = load fft;
 { fromList } = load block;
 { list } = load fvector;
+{ complex } = load complex;
+
 { declare, compare } = load test.test;
 
 declare [
 
 "dc": \(
-    out = map list (fft 4 (fromList [1,1,1,1]));
-    compare out [[4,0,0], [0,0,0]]
+    out = fft 4 (fromList [1,1,1,1]);
+    compare out (array (map2 complex [4,0,0] [0,0,0]))
 ),
 
 "sine": \(
-    out = map list (fft 4 (fromList [0,1,0,-1]));
-    compare out [[0,0,0], [0,-2,0]]
+    out = fft 4 (fromList [0,1,0,-1]);
+    compare out (array (map2 complex [0,0,0] [0,-2,0]))
 ),
 
 "cosine": \(
-    out = map list (fft 4 (fromList [1,0,-1,0]));
-    compare out [[0,2,0], [0,0,0]]
+    out = fft 4 (fromList [1,0,-1,0]);
+    compare out (array (map2 complex [0,2,0] [0,0,0]))
 ),
 
 "sineCosine": \(
-    out = map list (fft 4 (fromList [0.5,1,-0.5,-1]));
-    compare out [[0,1,0], [0,-2,0]]
+    out = fft 4 (fromList [0.5,1,-0.5,-1]);
+    compare out (array (map2 complex [0,1,0] [0,-2,0]))
 ),
 
 "nyquist": \(
-    out = map list (fft 4 (fromList [1,-1,1,-1]));
-    compare out [[0,0,4], [0,0,0]]
+    out = fft 4 (fromList [1,-1,1,-1]);
+    compare out (array (map2 complex [0,0,4] [0,0,0]))
 ),
 
 "dirac": \(
-    out = map list (fft 4 (fromList [1,0,0,0]));
-    compare out [[1,1,1], [0,0,0]]
+    out = fft 4 (fromList [1,0,0,0]);
+    compare out (array (map2 complex [1,1,1] [0,0,0]))
 ),
 
 ];

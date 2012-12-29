@@ -5,15 +5,16 @@ import edu.emory.mathcs.jtransforms.fft: DoubleFFT_1D;
 
 b = load block;
 vec = load fvector;
-ch = load channels;
+complex = load complex;
 
 unpack p =
-   (m = ch.deinterleaved 2 (b.block p);
-    m[0] := vec.concat [m[0], vec.consts m[1][0] 1];
-    m[1] := vec.concat [m[1], vec.zeros 1];
-    m[1][0] := 0;
-    m;
-    );
+   (n = (vec.length p) / 2;
+    array
+       (map do i:
+            re = if i == n then p[1] else p[i*2] fi;
+            im = if i == 0 or i == n then 0 else p[i*2+1] fi;
+            complex.complex re im;
+        done [0..n]));
 
 fft n = 
    (d = new DoubleFFT_1D(n);
@@ -24,6 +25,6 @@ fft n =
     done);
 
 {
-fft
+fft,
 }
 
