@@ -1,47 +1,41 @@
+
 module block;
 
 vec = load fvector;
 
-zeros = Block . vec.zeros;
-consts m  = Block . (vec.consts m);
-ones = Block . vec.ones;
-
-block v is ~double[] -> (Block ~double[]) = 
-    Block v;
-
-unblock b is (Block ~double[]) -> ~double[] =
-    case b of Block a: a esac;
-
-fromList l =
-    block (vec.vector l);
-
-list' b = vec.list (unblock b);
-length' b = vec.length (unblock b);
-
-equal b1 b2 =
-    list' b1 == list' b2;
-
-copyOf b =
-    Block (vec.copyOf (unblock b));
-
-rangeOf b start len =
-    Block (vec.rangeOf (unblock b) start len);
-
-resizedTo n b =
-    Block (vec.resizedTo n (unblock b));
-
-concat blocks =
-    Block (vec.concat (map unblock blocks));
+typedef opaque block = ~double[];
 
 {
-zeros, consts, ones,
-block, unblock,
-fromList,
-length = length',
-list = list',
-equal,
-copyOf, rangeOf, resizedTo,
-concat,
+zeros = vec.zeros,
+consts = vec.consts,
+ones = vec.ones,
+block v = v,
+data b = b,
+vector b = vec.copyOf b,
+fromList l = vec.vector l,
+list = vec.list,
+length = vec.length,
+equal = vec.equal,
+copyOf = vec.copyOf,
+rangeOf = vec.rangeOf,
+resizedTo = vec.resizedTo,
+concat = vec.concat,
+} as {
+zeros is number -> block,
+consts is number -> number -> block,
+ones is number -> block,
+block is ~double[] -> block,
+data is block -> ~double[],
+vector is block -> ~double[],
+fromList is list?<number> -> block,
+list is block -> list<number>,
+length is block -> number,
+equal is block -> block -> boolean,
+copyOf is block -> block,
+rangeOf is block -> number -> number -> block,
+resizedTo is number -> block -> block,
+concat is list?<block> -> block,
 }
+
 
 

@@ -16,7 +16,7 @@ interleaved m =
     block.block v);
 
 deinterleaved rows b =
-   (v = block.unblock b;
+   (v = block.data b;
     mat.generate do row col:
         v[rows * col + row]
     done rows ((vec.length v) / rows));
@@ -34,7 +34,7 @@ mixedDown m =
     fi);
 
 mixedDownFromInterleaved rows b =
-   (v = block.unblock b;
+   (v = block.data b;
     cols = ((vec.length v) / rows);
     v' = vec.zeros cols;
     for [0..rows-1] do row:
@@ -50,7 +50,7 @@ mixedFromInterleavedTo targetRows rows b =
     elif targetRows == 1 then
         mixedDownFromInterleaved rows b;
     else
-        v = block.unblock b;
+        v = block.data b;
         cols = ((vec.length v) / rows);
         v' = vec.zeros (cols * targetRows);
         for [0..targetRows-1] do target:

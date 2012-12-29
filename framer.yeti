@@ -6,7 +6,6 @@ module framer;
  * overlapping) frames of mono data.
  */
 
-vec = load fvector;
 block = load block;
 af = load audiofile;
 
@@ -18,18 +17,16 @@ blockList framesize stream =
             :. \(blockList framesize stream);
     fi;
 
-overlappingBlockList size hop stream valid buffer
-    is number -> number -> 'a -> number -> ~double[] -> 'b =
+overlappingBlockList size hop stream valid buffer =
    (
     b = stream.readMono hop;
     obtained = block.length b;
-    samples = block.unblock b;
 
     // Retain framesize - hop samples from old buffer, add hop samples
     // (zero-padded if necessary) just read
-    buffer = vec.concat
-       [vec.rangeOf buffer hop (size-hop),
-        vec.resizedTo hop samples];
+    buffer = block.concat
+       [block.rangeOf buffer hop (size-hop),
+        block.resizedTo hop b];
 
     // Number of "valid" elements (not tail-end zero-padding) left in buffer
     remaining = valid - (hop - obtained);
@@ -38,8 +35,7 @@ overlappingBlockList size hop stream valid buffer
         stream.close ();
         [];
     else
-        v = block.block buffer;
-        v :. \(overlappingBlockList size hop stream remaining buffer);
+        buffer :. \(overlappingBlockList size hop stream remaining buffer);
     fi);
 
 frames { framesize, hop } stream =
@@ -47,7 +43,7 @@ frames { framesize, hop } stream =
         blockList framesize stream
     else
         overlappingBlockList framesize hop stream 
-            framesize (vec.zeros framesize);
+            framesize (block.zeros framesize);
     fi;
 
 framesOfFile { framesize, hop } filename =
@@ -55,7 +51,7 @@ framesOfFile { framesize, hop } filename =
         blockList framesize (af.open filename)
     else
         overlappingBlockList framesize hop (af.open filename)
-            framesize (vec.zeros framesize);
+            framesize (block.zeros framesize);
     fi;
 
 { 

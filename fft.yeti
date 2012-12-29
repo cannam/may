@@ -19,7 +19,7 @@ unpack p =
 fft n = 
    (d = new DoubleFFT_1D(n);
     do bl:
-        v = b.unblock (b.copyOf bl);
+        v = b.vector bl;
         d#realForward(v);
         unpack v;
     done);
