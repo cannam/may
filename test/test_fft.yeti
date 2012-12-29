@@ -1,43 +1,44 @@
 
 module test.test_fft;
 
-{ fft } = load fft;
-{ fromList } = load block;
-{ list } = load fvector;
+{ realForward, realInverse } = load fft;
+{ list, fromList } = load block;
 { complex } = load complex;
 
 { declare, compare } = load test.test;
 
+testFFT orig reals imags =
+   (out = realForward (length orig) (fromList orig);
+    back = realInverse (length orig) out;
+    compare out (array (map2 complex reals imags)) and compare orig (list back));
+
 declare [
 
 "dc": \(
-    out = fft 4 (fromList [1,1,1,1]);
-    compare out (array (map2 complex [4,0,0] [0,0,0]))
+    testFFT [1,1,1,1] [4,0,0] [0,0,0];
 ),
 
 "sine": \(
-    out = fft 4 (fromList [0,1,0,-1]);
-    compare out (array (map2 complex [0,0,0] [0,-2,0]))
+    testFFT [0,1,0,-1] [0,0,0] [0,-2,0];
 ),
 
 "cosine": \(
-    out = fft 4 (fromList [1,0,-1,0]);
-    compare out (array (map2 complex [0,2,0] [0,0,0]))
+    testFFT [1,0,-1,0] [0,2,0] [0,0,0];
 ),
 
 "sineCosine": \(
-    out = fft 4 (fromList [0.5,1,-0.5,-1]);
-    compare out (array (map2 complex [0,1,0] [0,-2,0]))
+    testFFT [0.5,1,-0.5,-1] [0,1,0] [0,-2,0];
 ),
 
 "nyquist": \(
-    out = fft 4 (fromList [1,-1,1,-1]);
-    compare out (array (map2 complex [0,0,4] [0,0,0]))
+    testFFT [1,-1,1,-1] [0,0,4] [0,0,0];
 ),
 
 "dirac": \(
-    out = fft 4 (fromList [1,0,0,0]);
-    compare out (array (map2 complex [1,1,1] [0,0,0]))
+    testFFT [1,0,0,0] [1,1,1] [0,0,0] and
+        testFFT [0,1,0,0] [1,0,-1] [0,-1,0] and
+        testFFT [0,0,1,0] [1,-1,1] [0,0,0] and
+        testFFT [0,0,0,1] [1,0,-1] [0,1,0];
 ),
 
 ];

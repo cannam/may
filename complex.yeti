@@ -9,7 +9,19 @@ class Complex(double real, double imag)
     int getImag()
         imag,
     String toString()
-        "\(real) + \(imag)i",
+        if real == int real and imag == int imag then
+            if imag < 0 then
+                " \(int real) - \(int (-imag))i"
+            else 
+                " \(int real) + \(int imag)i"
+            fi
+        else
+            if imag < 0 then
+                " \(real) - \((-imag))i"
+            else 
+                " \(real) + \(imag)i"
+            fi
+        fi,
     int hashCode()
         Double#valueOf(real)#hashCode() + Double#valueOf(imag)#hashCode(),
     boolean equals(Object other)
