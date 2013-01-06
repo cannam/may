@@ -1,7 +1,13 @@
 module vamp;
 
-import org.vamp_plugins: Plugin, PluginLoader, PluginLoader$AdapterFlags;
+import org.vamp_plugins:
+       Plugin, Plugin$InputDomain,
+       PluginLoader, PluginLoader$AdapterFlags,
+       ParameterDescriptor, OutputDescriptor;
+
 import java.lang: UnsatisfiedLinkError;
+
+block = load block;
 
 listPlugins () =
    (try
@@ -14,22 +20,74 @@ listPlugins () =
 categoryOf key =
     list PluginLoader#getInstance()#getPluginCategory(key);
 
+parameterDescriptor pd is ~ParameterDescriptor -> 'a = {
+    identifier = pd#identifier,
+    name = pd#name,
+    description = pd#description,
+    unit = pd#unit,
+    minValue = pd#minValue,
+    maxValue = pd#maxValue,
+    defaultValue = pd#defaultValue,
+    isQuantized = pd#isQuantized,
+    quantizeStep = pd#quantizeStep,
+    valueNames = map string pd#valueNames
+    };
+
+outputDescriptor od is ~OutputDescriptor -> 'a = {
+    identifier = od#identifier,
+    name = od#name,
+    description = od#description,
+    unit = od#unit,
+    hasFixedBinCount = od#hasFixedBinCount,
+    binCount = od#binCount,
+    binNames = map string od#binNames,
+    hasKnownExtents = od#hasKnownExtents,
+    minValue = od#minValue,
+    maxValue = od#maxValue,
+    isQuantized = od#isQuantized,
+    quantizeStep = od#quantizeStep,
+    sampleType = od#sampleType,
+    sampleRate = od#sampleRate,
+    hasDuration = od#hasDuration,
+    };
+
 plugin key p is string -> ~Plugin -> 'a = {
     plugin = p,
     key,
+    get apiVersion () = p#getVampApiVersion(),
     get identifier () = p#getIdentifier(),
     get name () = p#getName(),
-    get description () = p#getName(),
-    get maker () = p#getName(),
-    get copyright () = p#getName(),
-    get version () = p#getName(),
+    get description () = p#getDescription(),
+    get maker () = p#getMaker(),
+    get copyright () = p#getCopyright(),
+    get version () = p#getPluginVersion(),
     get category () = PluginLoader#getInstance()#getPluginCategory(key),
+    get parameters () = map parameterDescriptor p#getParameterDescriptors(),
+    parameter identifier = p#getParameter(identifier),
+    setParameter identifier value = p#setParameter(identifier, value),
+    get programs () = map string p#getPrograms(),
+    get currentProgram () = p#getCurrentProgram(),
+    selectProgram pr = p#selectProgram(pr),
+    get inputDomain () = p#getInputDomain(),
+    get preferredBlockSize () = p#getPreferredBlockSize(),
+    get preferredStepSize () = p#getPreferredStepSize(),
+    get minChannelCount () = p#getMinChannelCount(),
+    get maxChannelCount () = p#getMaxChannelCount(),
+    initialise channels step hop = p#initialise(channels, step, hop),
+    reset () = p#reset(),
+    get outputs () = map outputDescriptor p#getOutputDescriptors(),
+    processBlock b time =  // Handle only a single channel, for now
+       (ff = new Object[1];
+        ff[0] := block.vector b as ~Object;
+        p#process(ff unsafely_as ~float[][], 0, time)),
     };
 
 loadPlugin key rate =
     plugin key PluginLoader#getInstance()#loadPlugin(key, rate, PluginLoader$AdapterFlags#ADAPT_ALL);
 
-    ///!!! no params, programs [yet]
+//process key stream =
+//   (p = loadPlugin key stream.sampleRate;
+//    map p#
 
 {
 get pluginKeys = listPlugins,
