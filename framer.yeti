@@ -7,7 +7,10 @@ module framer;
  */
 
 block = load block;
+bf = load blockfuncs;
 af = load audiofile;
+win = load window;
+fft = load fft;
 
 blockList framesize stream =
     if stream.finished? then
@@ -46,16 +49,26 @@ frames { framesize, hop } stream =
             framesize (block.zeros framesize);
     fi;
 
-framesOfFile { framesize, hop } filename =
-    if framesize == hop then
-        blockList framesize (af.open filename)
-    else
-        overlappingBlockList framesize hop (af.open filename)
-            framesize (block.zeros framesize);
-    fi;
+windowedFrames { framesize, hop, window } stream =
+   (win = window framesize;
+    map (bf.multiply win) (frames { framesize, hop } stream));
+
+frequencyDomainFrames { framesize, hop } stream =
+   (f = fft.realForward framesize;
+    map f (windowedFrames { framesize, hop, window = win.hann } stream));
 
 { 
     frames,
-    framesOfFile,
+    windowedFrames,
+    frequencyDomainFrames,
+
+    framesOfFile parameters filename =
+        frames parameters (af.open filename),
+
+    windowedFramesOfFile parameters filename = 
+        windowedFrames parameters (af.open filename),
+
+    frequencyDomainFramesOfFile parameters filename = 
+        frequencyDomainFrames parameters (af.open filename),
 }
 

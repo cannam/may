@@ -32,7 +32,7 @@ bartlett n =
                 done [0..m-1]
             ]);
 
-windowedFrames windowFunc frames =
+windowed windowFunc frames =
     case frames of
         []: frames;
          _: (first = head frames;
@@ -42,6 +42,6 @@ windowedFrames windowFunc frames =
 
 {
 cosinewin, hann, hamming, blackman, nuttall, blackmanHarris, boxcar, bartlett,
-windowedFrames
+windowed
 };
 
