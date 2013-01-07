@@ -4,9 +4,11 @@ import org.vamp_plugins:
        Plugin, Plugin$InputDomain,
        PluginLoader, PluginLoader$AdapterFlags,
        ParameterDescriptor, OutputDescriptor,
-       RealTime;
+       RealTime, Feature;
 
 import java.lang: UnsatisfiedLinkError;
+
+import java.util: TreeMap, AbstractList;
 
 block = load block;
 fr = load framer;
@@ -82,9 +84,46 @@ plugin key p is string -> ~Plugin -> 'a = {
     process floats time is ~float[][] -> ~RealTime -> 'a = p#process(floats, 0, time),
     dispose () = p#dispose(),
     };
+/*
+realTime r is ~RealTime -> 'a = {
+    get sec () = r#sec(),
+    get nsec () = r#nsec(),
+    get toString () = r#toString(),
+    };
+*/
+
+realTime r is ~RealTime -> number = r#sec() + (r#nsec() / 1000000000);
+
+//!!!
+foldHash f h l is ('a -> hash<'b, 'c>) -> hash<'b, 'c> -> list?<'a> -> hash<'b, 'c> =
+   ( for l do x: insertHash h (f x) done; h; );
+
+//!!!
+hashFromKeys f kk is ('a -> 'b) -> list?<'a> -> hash<'a, 'b> =
+    foldHash do k: [ k: f k ] done [:] kk;
+
+numberOf n is ~Object -> number = (n unsafely_as ~Integer)#intValue();
+
+feature f is ~Feature -> 'a = {
+    get timestamp () = if f#hasTimestamp then Time (realTime f#timestamp) else Untimed () fi,
+    get duration () = if f#hasDuration then Time (realTime f#duration) else Untimed () fi,
+    get values () = list f#values,
+    get label () = f#label,
+    };
+
+featureList fl is ~Object -> 'a =
+   (a = fl unsafely_as ~AbstractList;
+    result = array [];
+    itr = a#iterator();
+    itr#hasNext() loop (push result (feature (itr#next() unsafely_as ~Feature)));
+    list result);
+
+featureSet f is ~TreeMap -> 'a =
+    hashFromKeys do k: featureList f#get(k as ~Integer) done
+       (map do n: numberOf n done (list f#keySet()#toArray()));
 
 loadPlugin key rate =
-    plugin key PluginLoader#getInstance()#loadPlugin(key, rate, PluginLoader$AdapterFlags#ADAPT_ALL);
+    plugin key PluginLoader#getInstance()#loadPlugin(key, rate, PluginLoader$AdapterFlags#ADAPT_INPUT_DOMAIN + PluginLoader$AdapterFlags#ADAPT_CHANNEL_COUNT);
 
 processed { p, sampleRate, hop } frames count =
     case frames of
@@ -99,15 +138,18 @@ processed { p, sampleRate, hop } frames count =
             []);
     esac;
 
+converted = map featureSet;
+
 process key stream =
    (p = loadPlugin key stream.sampleRate;
     blockSize = p.preferredBlockSize;
     hop = p.preferredStepSize;
     if p.initialise 1 blockSize hop then
-        processed
+        converted
+           (processed
             { p, sampleRate = stream.sampleRate, hop } 
             (fr.frames { framesize = blockSize, hop } stream)
-            0;
+            0);
     else
         p.dispose();
         [];
@@ -119,10 +161,11 @@ processFile key filename =
     blockSize = p.preferredBlockSize;
     hop = p.preferredStepSize;
     if p.initialise 1 blockSize hop then
-        processed
+        converted
+           (processed
             { p, sampleRate = stream.sampleRate, hop } 
             (fr.frames { framesize = blockSize, hop } stream)
-            0;
+            0);
     else
         p.dispose();
         stream.close();
