@@ -3,11 +3,14 @@ module vamp;
 import org.vamp_plugins:
        Plugin, Plugin$InputDomain,
        PluginLoader, PluginLoader$AdapterFlags,
-       ParameterDescriptor, OutputDescriptor;
+       ParameterDescriptor, OutputDescriptor,
+       RealTime;
 
 import java.lang: UnsatisfiedLinkError;
 
 block = load block;
+fr = load framer;
+af = load audiofile;
 
 listPlugins () =
    (try
@@ -73,25 +76,64 @@ plugin key p is string -> ~Plugin -> 'a = {
     get preferredStepSize () = p#getPreferredStepSize(),
     get minChannelCount () = p#getMinChannelCount(),
     get maxChannelCount () = p#getMaxChannelCount(),
-    initialise channels step hop = p#initialise(channels, step, hop),
+    initialise channels blocksize hop = p#initialise(channels, blocksize, hop),
     reset () = p#reset(),
     get outputs () = map outputDescriptor p#getOutputDescriptors(),
-    processBlock b time =  // Handle only a single channel, for now
-       (ff = new Object[1];
-        ff[0] := block.vector b as ~Object;
-        p#process(ff unsafely_as ~float[][], 0, time)),
+    process floats time is ~float[][] -> ~RealTime -> 'a = p#process(floats, 0, time),
+    dispose () = p#dispose(),
     };
 
 loadPlugin key rate =
     plugin key PluginLoader#getInstance()#loadPlugin(key, rate, PluginLoader$AdapterFlags#ADAPT_ALL);
 
-//process key stream =
-//   (p = loadPlugin key stream.sampleRate;
-//    map p#
+processed { p, sampleRate, hop } frames count =
+    case frames of
+        this::rest:
+            p.process
+                ([block.floats this] as ~float[][])
+                RealTime#frame2RealTime(count, sampleRate)
+            :.
+            \(processed { p, sampleRate, hop } rest (count + hop));
+        _: 
+           (p.dispose ();
+            []);
+    esac;
+
+process key stream =
+   (p = loadPlugin key stream.sampleRate;
+    blockSize = p.preferredBlockSize;
+    hop = p.preferredStepSize;
+    if p.initialise 1 blockSize hop then
+        processed
+            { p, sampleRate = stream.sampleRate, hop } 
+            (fr.frames { framesize = blockSize, hop } stream)
+            0;
+    else
+        p.dispose();
+        [];
+    fi);
+
+processFile key filename =
+   (stream = af.open filename;
+    p = loadPlugin key stream.sampleRate;
+    blockSize = p.preferredBlockSize;
+    hop = p.preferredStepSize;
+    if p.initialise 1 blockSize hop then
+        processed
+            { p, sampleRate = stream.sampleRate, hop } 
+            (fr.frames { framesize = blockSize, hop } stream)
+            0;
+    else
+        p.dispose();
+        stream.close();
+        [];
+    fi);
 
 {
 get pluginKeys = listPlugins,
 loadPlugin,
 categoryOf,
+process,
+processFile,
 }
 
