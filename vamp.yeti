@@ -84,23 +84,15 @@ plugin key p is string -> ~Plugin -> 'a = {
     process floats time is ~float[][] -> ~RealTime -> 'a = p#process(floats, 0, time),
     dispose () = p#dispose(),
     };
-/*
-realTime r is ~RealTime -> 'a = {
-    get sec () = r#sec(),
-    get nsec () = r#nsec(),
-    get toString () = r#toString(),
-    };
-*/
 
 realTime r is ~RealTime -> number = r#sec() + (r#nsec() / 1000000000);
 
-//!!!
-foldHash f h l is ('a -> hash<'b, 'c>) -> hash<'b, 'c> -> list?<'a> -> hash<'b, 'c> =
-   ( for l do x: insertHash h (f x) done; h; );
-
-//!!!
-hashFromKeys f kk is ('a -> 'b) -> list?<'a> -> hash<'a, 'b> =
-    foldHash do k: [ k: f k ] done [:] kk;
+hashFromKeys f kk = 
+   (r = [:];
+    for kk do k:
+        r[k] := f k;
+    done;
+    r);
 
 numberOf n is ~Object -> number = (n unsafely_as ~Integer)#intValue();
 
