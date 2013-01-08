@@ -5,14 +5,14 @@ module test.test_fft;
 { list, fromList } = load block;
 { complex } = load complex;
 
-{ declare, compare } = load test.test;
+{ compare } = load test.test;
 
 testFFT orig reals imags =
    (out = realForward (length orig) (fromList orig);
     back = realInverse (length orig) out;
     compare out (array (map2 complex reals imags)) and compare orig (list back));
 
-declare [
+[
 
 "dc": \(
     testFFT [1,1,1,1] [4,0,0] [0,0,0];
@@ -41,6 +41,6 @@ declare [
         testFFT [0,0,0,1] [1,0,-1] [0,1,0];
 ),
 
-];
+] is hash<string, () -> boolean>;
 
 

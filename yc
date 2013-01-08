@@ -1,3 +1,3 @@
 #!/bin/sh
-YETI_LIBDIR=/usr/local/lib/yeti
+YETI_LIBDIR=../yeti
 rlwrap $JAVA_HOME/bin/java -classpath $YETI_LIBDIR/yeti.jar:$YETI_LIBDIR/yeti-lib.jar:jtransforms-2.4.jar yeti.lang.compiler.yeti "$@"

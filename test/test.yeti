@@ -35,10 +35,7 @@ runTests group testHash =
     fi;
     bad);
 
-declare tests is hash<string, () -> boolean> -> 'a =
-    { tests };
-
 {
-    testStream, compare, failedTests, runTests, declare
+    testStream, compare, failedTests, runTests
 }
 

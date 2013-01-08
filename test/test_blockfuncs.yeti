@@ -5,9 +5,9 @@ stdSqrt = sqrt;
 
 { zeros, consts, ones, fromList, list } = load block;
 { sum, mean, multiply, divideBy, sqr, sqrt, rms, fftshift, ifftshift } = load blockfuncs;
-{ declare, compare } = load test.test;
+{ compare } = load test.test;
 
-declare [
+[
 
 "sum": \(
     compare ((sum . zeros) 0) 0 and
@@ -63,5 +63,6 @@ declare [
         compare ((list . ifftshift . fromList) [4,5,1,2,3]) [1,2,3,4,5]
 ),
 
-];
+] is hash<string, () -> boolean>;
+
 

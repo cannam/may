@@ -8,6 +8,10 @@ class Complex(double real, double imag)
         real,
     int getImag()
         imag,
+    double getMagnitude()
+        sqrt (real * real + imag * imag),
+    double getAngle()
+        Math#atan2(imag, real),
     String toString()
         if real == int real and imag == int imag then
             if imag < 0 then
@@ -44,6 +48,12 @@ imaginary c1 is ~Complex -> number =
 complex re im is number -> number -> ~Complex =
     new Complex(re, im);
 
+magnitude c is ~Complex -> number =
+    c#getMagnitude();
+
+angle c is ~Complex -> number =
+    c#getAngle();
+
 add c1 c2 is ~Complex -> ~Complex -> ~Complex =
     complex (real c1 + real c2) (imaginary c1 + imaginary c2);
 
@@ -54,6 +64,8 @@ scale r c is number -> ~Complex -> ~Complex =
    real,
    imaginary,
    complex,
+   magnitude,
+   angle,
    add,
    scale,
    i = complex 0 1,
@@ -63,6 +75,8 @@ scale r c is number -> ~Complex -> ~Complex =
    real is cplx -> number,
    imaginary is cplx -> number,
    complex is number -> number -> cplx,
+   magnitude is cplx -> number,
+   angle is cplx -> number,
    add is cplx -> cplx -> cplx,
    scale is number -> cplx -> cplx,
    i is cplx,

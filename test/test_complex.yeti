@@ -1,0 +1,52 @@
+module test.test_complex;
+
+{ i, one, zero, real, imaginary, complex, magnitude, angle, add, scale }
+   = load complex;
+
+{ compare } = load test.test;
+
+[
+
+"complex": \( 
+    compare (complex 1 2) (complex 1 2) and
+        complex (-1) 2 != complex 1 2
+),
+
+"real": \(
+    compare (real (complex 3 2)) 3
+),
+
+"imaginary": \(
+    compare (imaginary (complex 3 4)) 4
+),
+
+"magnitude": \(
+    compare (magnitude (complex (-3) 4)) 5
+),
+
+"angle": \(
+    compare (angle (complex 1 0)) 0 and
+        compare (angle (complex 1 1)) (pi/4) and
+        compare (angle (complex 0 1)) (pi/2) and
+        compare (angle (complex (-1) 0)) pi and
+        compare (angle (complex 0 (-1))) (-pi/2)
+),
+
+"add": \(
+    compare (add (complex 2 3) (complex (-4) 5)) (complex (-2) 8)
+),
+
+"scale": \(
+    compare (scale 4 (complex 2 3)) (complex 8 12)
+),
+
+"constants": \(
+    compare (complex 0 1) i and
+        compare (complex 1 0) one and
+        compare (complex 0 0) zero
+),
+
+] is hash<string, () -> boolean>;
+
+
+

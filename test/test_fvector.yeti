@@ -2,61 +2,62 @@
 module test.test_fvector;
 
 vec = load fvector;
-t = load test.test;
 
-t.declare [
+{ compare } = load test.test;
+
+[
 
 "zeros-empty": \(
     v = vec.zeros 0;
-    t.compare (vec.length v) 0;
+    compare (vec.length v) 0;
 ),
 
 "zeros": \(
     v = vec.zeros 3;
-    t.compare (vec.length v) 3 and
-        t.compare v[0] 0 and
-        t.compare v[1] 0 and
-        t.compare v[2] 0;
+    compare (vec.length v) 3 and
+        compare v[0] 0 and
+        compare v[1] 0 and
+        compare v[2] 0;
 ),
 
 "consts-empty": \(
     v = vec.consts 4 0;
-    t.compare (vec.length v) 0;
+    compare (vec.length v) 0;
 ),
 
 "consts": \(
     v = vec.consts 4 3;
-    t.compare (vec.length v) 3 and
-        t.compare v[0] 4 and
-        t.compare v[1] 4 and
-        t.compare v[2] 4;
+    compare (vec.length v) 3 and
+        compare v[0] 4 and
+        compare v[1] 4 and
+        compare v[2] 4;
 ),
 
 "ones-empty": \(
     v = vec.ones 0;
-    t.compare (vec.length v) 0;
+    compare (vec.length v) 0;
 ),
 
 "ones": \(
     v = vec.ones 3;
-    t.compare (vec.length v) 3 and
-        t.compare v[0] 1 and
-        t.compare v[1] 1 and
-        t.compare v[2] 1;
+    compare (vec.length v) 3 and
+        compare v[0] 1 and
+        compare v[1] 1 and
+        compare v[2] 1;
 ),
 
 "from-list-empty": \(
     v = vec.vector [];
-    t.compare (vec.length v) 0;
+    compare (vec.length v) 0;
 ),
 
 "from-list": \(
     v = vec.vector [1,2,3,4];
-    t.compare (vec.length v) 4 and
-        t.compare v[0] 1 and
-        t.compare v[1] 2 and
-        t.compare v[2] 3 and
-        t.compare v[3] 4;
+    compare (vec.length v) 4 and
+        compare v[0] 1 and
+        compare v[1] 2 and
+        compare v[2] 3 and
+        compare v[3] 4;
 ),
 
 "equal-empty": \(
@@ -119,6 +120,7 @@ t.declare [
         vec.equal (vec.concat [v,w,v]) (vec.vector [1,2,3,4,5,6,1,2,3])
 ),
 
-];
+] is hash<string, () -> boolean>;
+
 
 
