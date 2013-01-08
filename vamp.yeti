@@ -87,15 +87,6 @@ plugin key p is string -> ~Plugin -> 'a = {
 
 realTime r is ~RealTime -> number = r#sec() + (r#nsec() / 1000000000);
 
-hashFromKeys f kk = 
-   (r = [:];
-    for kk do k:
-        r[k] := f k;
-    done;
-    r);
-
-numberOf n is ~Object -> number = (n unsafely_as ~Integer)#intValue();
-
 feature f is ~Feature -> 'a = {
     get timestamp () = if f#hasTimestamp then Time (realTime f#timestamp) else Untimed () fi,
     get duration () = if f#hasDuration then Time (realTime f#duration) else Untimed () fi,
@@ -104,17 +95,26 @@ feature f is ~Feature -> 'a = {
     };
 
 featureList fl is ~Object -> 'a =
-   (a = fl unsafely_as ~AbstractList;
-    result = array [];
-    itr = a#iterator();
-    itr#hasNext() loop (push result (feature (itr#next() unsafely_as ~Feature)));
-    list result);
+    if nullptr? fl then []
+    else
+        a = fl unsafely_as ~AbstractList;
+        result = array [];
+        itr = a#iterator();
+        itr#hasNext() loop (push result (feature (itr#next() unsafely_as ~Feature)));
+        list result
+    fi;
 
-featureSet f is ~TreeMap -> 'a =
-    hashFromKeys do k: featureList f#get(k as ~Integer) done
-       (map do n: numberOf n done (list f#keySet()#toArray()));
+featuresFromSet outputNo f is number -> ~TreeMap -> 'a =
+    featureList (f#get(outputNo as ~Integer));
 
-loadPlugin key rate =
+converted outputNo fl is number -> list?<~TreeMap> -> 'a =
+    map (featuresFromSet outputNo) fl;
+
+outputNumberByName p name =
+   (outputs = p.outputs;
+    index (head (find ((== name) . (.identifier)) outputs)) outputs);
+
+loadPlugin rate key =
     plugin key PluginLoader#getInstance()#loadPlugin(key, rate, PluginLoader$AdapterFlags#ADAPT_INPUT_DOMAIN + PluginLoader$AdapterFlags#ADAPT_CHANNEL_COUNT);
 
 processed { p, sampleRate, hop } frames count =
@@ -130,30 +130,13 @@ processed { p, sampleRate, hop } frames count =
             []);
     esac;
 
-converted = map featureSet;
-
-process key stream =
-   (p = loadPlugin key stream.sampleRate;
+process key output stream =
+   (p = loadPlugin stream.sampleRate key;
     blockSize = p.preferredBlockSize;
     hop = p.preferredStepSize;
+    outputNo = outputNumberByName p output;
     if p.initialise 1 blockSize hop then
-        converted
-           (processed
-            { p, sampleRate = stream.sampleRate, hop } 
-            (fr.frames { framesize = blockSize, hop } stream)
-            0);
-    else
-        p.dispose();
-        [];
-    fi);
-
-processFile key filename =
-   (stream = af.open filename;
-    p = loadPlugin key stream.sampleRate;
-    blockSize = p.preferredBlockSize;
-    hop = p.preferredStepSize;
-    if p.initialise 1 blockSize hop then
-        converted
+        converted outputNo
            (processed
             { p, sampleRate = stream.sampleRate, hop } 
             (fr.frames { framesize = blockSize, hop } stream)
@@ -163,6 +146,8 @@ processFile key filename =
         stream.close();
         [];
     fi);
+
+processFile key output filename = process key output (af.open filename);
 
 {
 get pluginKeys = listPlugins,
