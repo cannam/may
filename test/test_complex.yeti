@@ -1,6 +1,6 @@
 module test.test_complex;
 
-{ i, one, zero, real, imaginary, complex, magnitude, angle, add, scale }
+{ real, imaginary, complex, magnitude, angle, add, scale }
    = load complex;
 
 { compare } = load test.test;
@@ -38,12 +38,6 @@ module test.test_complex;
 
 "scale": \(
     compare (scale 4 (complex 2 3)) (complex 8 12)
-),
-
-"constants": \(
-    compare (complex 0 1) i and
-        compare (complex 1 0) one and
-        compare (complex 0 0) zero
 ),
 
 ] is hash<string, () -> boolean>;
