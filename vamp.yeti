@@ -122,7 +122,7 @@ plugin key p is string -> ~Plugin -> 'a = {
     get preferredStepSize () = p#getPreferredStepSize(),
     get minChannelCount () = p#getMinChannelCount(),
     get maxChannelCount () = p#getMaxChannelCount(),
-    initialise { channels, blocksize, hop } = p#initialise(channels, blocksize, hop),
+    initialise { channels, blocksize, hop } = p#initialise(channels, hop, blocksize),
     reset () = p#reset(),
     get outputs () = array (map outputDescriptor p#getOutputDescriptors()),
     process blocks time is 'a -> ~RealTime -> 'b = 
@@ -132,9 +132,6 @@ plugin key p is string -> ~Plugin -> 'a = {
     };
 
 featuresFromSet outputNo f = if outputNo in f then f[outputNo] else [] fi;
-
-converted outputNo fl =
-    map (featuresFromSet outputNo) fl;
 
 outputNumberByName p name =
    (outputs = p.outputs;
@@ -155,17 +152,21 @@ processed { p, sampleRate, hop } frames count =
             [rf]);
     esac;
 
+converted { p, sampleRate, hop } outputNo fl =
+    map (featuresFromSet outputNo) fl;
+
 process key output stream =
    (p = loadPlugin stream.sampleRate key;
     blockSize = p.preferredBlockSize;
     hop = p.preferredStepSize;
     outputNo = outputNumberByName p output;
-    if p.initialise { channels = 1, blocksize = blockSize, hop } then
-        converted outputNo
-           (processed
-            { p, sampleRate = stream.sampleRate, hop } 
-            (fr.frames { framesize = blockSize, hop } stream)
-            0);
+    params = {
+        p,
+        sampleRate = stream.sampleRate, channels = 1,
+        framesize = blockSize, blocksize = blockSize, hop
+    };
+    if p.initialise params then
+        converted params outputNo(processed params (fr.frames params stream) 0);
         // If processing completed successfully, then p is disposed by
         // processed and stream is closed by the framer
     else
