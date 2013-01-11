@@ -8,7 +8,7 @@ import org.vamp_plugins:
 
 import java.lang: UnsatisfiedLinkError;
 
-import java.util: TreeMap, AbstractList;
+import java.util: Map, List;
 
 block = load block;
 fr = load framer;
@@ -26,7 +26,7 @@ feature f is ~Feature -> 'a = {
 featureList fl is ~Object -> 'a =
     if nullptr? fl then []
     else
-        a = fl unsafely_as ~AbstractList;
+        a = fl unsafely_as ~List;
         result = array [];
         itr = a#iterator();
         itr#hasNext() loop (push result (feature (itr#next() unsafely_as ~Feature)));
@@ -36,7 +36,7 @@ featureList fl is ~Object -> 'a =
 numberOf n is ~Object -> number =
    (n unsafely_as ~Integer)#intValue();
 
-featureSet fs is ~TreeMap -> 'a =
+featureSet fs is ~Map -> 'a =
    (s = [:];
     kk = list fs#keySet()#toArray(); //!!! ugh
     for kk do k: s[numberOf k] := featureList fs#get(k) done;
