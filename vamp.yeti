@@ -68,8 +68,7 @@ parameterDescriptor pd is ~ParameterDescriptor -> 'a = {
     minValue = pd#minValue,
     maxValue = pd#maxValue,
     defaultValue = pd#defaultValue,
-    isQuantized = pd#isQuantized,
-    quantizeStep = pd#quantizeStep,
+    get quantize () = if pd#isQuantized then QuantizeStep pd#quantizeStep else Unquantized () fi,
     valueNames = map string pd#valueNames
     };
 
