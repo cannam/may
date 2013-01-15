@@ -81,6 +81,30 @@ sampleType t is ~OutputDescriptor$SampleType -> 'a =
         VariableSampleRate ()
     fi;
 
+structureOf od is ~OutputDescriptor -> 'a = 
+    if od#hasFixedBinCount and od#binCount == 0 then
+        Instants ();
+    elif od#hasDuration then
+        if od#hasFixedBinCount then
+            if od#binCount > 1 then
+                Notes ();
+            elif od#unit == "Hz" or strIndexOf (strLower od#unit) "midi" 0 >= 0 then
+                Notes ();
+            else
+                Regions ();
+            fi
+        else
+            Unknown ();
+        fi
+    elif od#hasFixedBinCount and od#binCount == 1 then
+        //!!! Could be a segmentation -- how do we tell?
+        Curve ();
+    elif od#sampleType != OutputDescriptor$SampleType#VariableSampleRate then
+        Grid ();
+    else
+        Unknown ();
+    fi;
+
 outputDescriptor od is ~OutputDescriptor -> 'a = {
     identifier = od#identifier,
     name = od#name,
@@ -93,6 +117,7 @@ outputDescriptor od is ~OutputDescriptor -> 'a = {
     sampleType = sampleType od#sampleType,
     sampleRate = od#sampleRate,
     hasDuration = od#hasDuration,
+    get inferredStructure () = structureOf od,
     };
 
 plugin key p is string -> ~Plugin -> 'a = {
