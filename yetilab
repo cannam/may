@@ -1,0 +1,7 @@
+#!/bin/sh
+MYDIR=`dirname $0`
+YETII_DIR=../yetii
+YETI_LIBDIR=${YETI_LIBDIR:=../yeti}
+JVAMP_DIR=../jvamp
+export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$JVAMP_DIR
+YETI_MODULE_SOURCE_PATH=$YETI_LIBDIR/modules $JAVA_HOME/bin/java -classpath $YETI_LIBDIR/yeti.jar:$YETI_LIBDIR/yeti-lib.jar:$YETII_DIR/libreadline-java.jar:$YETII_DIR/yetii.jar:$JVAMP_DIR/jvamp.jar:./jtransforms-2.4.jar yeti.lang.compiler.yeti $YETII_DIR/yetii.yeti "$@"
