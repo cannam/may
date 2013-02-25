@@ -42,6 +42,14 @@ featureSet fs is ~Map -> 'a =
     for kk do k: s[numberOf k] := featureList fs#get(k) done;
     s);
 
+getPluginPath () =
+   (try
+        map string PluginLoader#getInstance()#getPluginPath();
+    catch UnsatisfiedLinkError e:
+        eprintln "Warning: Unable to obtain plugin path:\n\(e)";
+        [];
+    yrt);
+
 listPlugins () =
    (try
         map string PluginLoader#getInstance()#listPlugins();
@@ -198,6 +206,7 @@ process key output stream =
 processFile key output filename = process key output (af.open filename);
 
 {
+get pluginPath = getPluginPath,
 get pluginKeys = listPlugins,
 loadPlugin,
 categoryOf,
