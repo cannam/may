@@ -1,0 +1,39 @@
+
+module vamprdf;
+
+vamp = load vamp;
+
+read = load yertle.read;
+store = load yertle.store;
+
+import java.io: File;
+
+listVampRdfFiles () =
+    concat
+       (map do p:
+            map ((p ^ File#separator ^) . (.name))
+               (filter do entry:
+                    entry.file? and
+                       (lc = strLower entry.name;
+                        (strEnds? lc ".ttl") or
+                        (strEnds? lc ".n3") or
+                        (strEnds? lc ".nt"))
+                    done (listDirectory false p))
+            done (vamp.pluginPath));
+
+loadVampRdfStore () =
+   (st = store.newStore ();
+    for (listVampRdfFiles ()) do file:
+        case read.loadTurtleFile st ("file://" ^ file) file of
+        OK (): ();
+        Error e: eprintln
+            "WARNING: Failed to load Vamp plugin RDF file \"\(file)\": \(e)";
+        esac
+    done;
+    st);
+
+{
+get vampRdfFiles = listVampRdfFiles,
+loadVampRdfStore,
+}
+
