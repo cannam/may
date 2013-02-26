@@ -3,7 +3,7 @@ module complex;
 
 import java.lang: ClassCastException;
 
-class Complex(double real, double imag)
+class Cplx(double real, double imag)
     int getReal()
         real,
     int getImag()
@@ -30,34 +30,34 @@ class Complex(double real, double imag)
         Double#valueOf(real)#hashCode() + Double#valueOf(imag)#hashCode(),
     boolean equals(Object other)
         try
-            c = other unsafely_as ~Complex;
+            c = other unsafely_as ~Cplx;
             c#getReal() == real and c#getImag() == imag
         catch ClassCastException:
             false
         yrt,
 end;
 
-typedef opaque cplx = ~Complex;
+typedef opaque cplx = ~Cplx;
 
-real c1 is ~Complex -> number =
+real c1 is ~Cplx -> number =
     c1#getReal();
 
-imaginary c1 is ~Complex -> number =
+imaginary c1 is ~Cplx -> number =
     c1#getImag();
 
-complex re im is number -> number -> ~Complex =
-    new Complex(re, im);
+complex re im is number -> number -> ~Cplx =
+    new Cplx(re, im);
 
-magnitude c is ~Complex -> number =
+magnitude c is ~Cplx -> number =
     c#getMagnitude();
 
-angle c is ~Complex -> number =
+angle c is ~Cplx -> number =
     c#getAngle();
 
-add c1 c2 is ~Complex -> ~Complex -> ~Complex =
+add c1 c2 is ~Cplx -> ~Cplx -> ~Cplx =
     complex (real c1 + real c2) (imaginary c1 + imaginary c2);
 
-scale r c is number -> ~Complex -> ~Complex =
+scale r c is number -> ~Cplx -> ~Cplx =
     complex (r * real c) (r * imaginary c);
 
 {
