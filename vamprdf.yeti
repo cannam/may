@@ -4,7 +4,7 @@ module vamprdf;
 vamp = load vamp;
 
 read = load yertle.read;
-store = load yertle.store;
+{ newRdfStore } = load yertle.store;
 
 import java.io: File;
 
@@ -21,19 +21,131 @@ listVampRdfFiles () =
                     done (listDirectory false p))
             done (vamp.pluginPath));
 
-loadVampRdfStore () =
-   (st = store.newStore ();
+loadVampRdfStore store =
     for (listVampRdfFiles ()) do file:
-        case read.loadTurtleFile st ("file://" ^ file) file of
+        case read.loadTurtleFile store ("file://" ^ file) file of
         OK (): ();
         Error e: eprintln
             "WARNING: Failed to load Vamp plugin RDF file \"\(file)\": \(e)";
         esac
     done;
-    st);
+
+addVampPrefixes store =
+   (store.addPrefix "vamp" "http://purl.org/ontology/vamp/";
+    store.addPrefix "dc" "http://purl.org/dc/elements/1.1/";
+    store.addPrefix "foaf" "http://xmlns.com/foaf/0.1/";
+    store.addPrefix "owl" "http://www.w3.org/2002/07/owl#");
+
+store = newRdfStore ();
+var loaded = false;
+
+getSystemVampRdfStore () =
+    synchronized store do:
+        if not loaded then
+            addVampPrefixes store;
+            loadVampRdfStore store;
+            loaded := true;
+        fi;
+        store
+    done;
+
+filterIRIsFromNodes nodes =
+    map do r: case r of IRI iri: iri; esac done
+       (filter do r: case r of IRI iri: true; _: false esac done nodes);
+
+subjects = map (.s);
+
+iriTypes = map do t: case t of IRI iri: IRI iri; Blank n: Blank n esac done;
+
+iriSubjects = iriTypes . subjects;
+
+libraryNodes store =
+    iriSubjects
+       (store.match {
+            s = Wildcard (),
+            p = Known (store.expand "a"),
+            o = Known (store.expand "vamp:PluginLibrary")
+            });
+
+pluginNodes store =
+    iriSubjects
+       (store.match {
+            s = Wildcard (),
+            p = Known (store.expand "a"),
+            o = Known (store.expand "vamp:Plugin")
+            });
+
+pluginsWithId store id = 
+    iriTypes
+       (filter do pnode:
+        store.contains {
+            s = pnode,
+            p = store.expand "vamp:identifier",
+            o = Literal { value = id, type = "", language = "" }
+            }
+        done (pluginNodes store));
+
+librariesWithId store id =
+    iriTypes
+       (filter do lnode:
+        store.contains {
+            s = lnode,
+            p = store.expand "vamp:identifier",
+            o = Literal { value = id, type = "", language = "" }
+            }
+        done (libraryNodes store));
+
+pluginNodesById store libraryId pluginId =
+   (candidatePlugins = pluginsWithId store pluginId;
+    candidateLibraries = librariesWithId store libraryId;
+    filter do pnode:
+        any do lnode:
+            store.contains {
+                s = lnode,
+                p = store.expand "vamp:available_plugin",
+                o = pnode
+                }
+            done candidateLibraries
+        done candidatePlugins
+    );
+
+textProperty store subject name =
+    case store.match {
+        s = Known subject, p = Known (store.expand name), o = Wildcard ()
+        } of
+        { o = Literal { value = text } }::others: text;
+         _: "";
+    esac;
+
+inputDomainOf store pluginIRI =
+   case store.match {
+        s = Known pluginIRI, p = Known (store.expand "vamp:input_domain"), o = Wildcard ()
+        } of
+        { o = IRI iri }::others:
+            if IRI iri == store.expand "vamp:FrequencyDomain"
+            then FrequencyDomain ()
+            else TimeDomain ()
+            fi;
+         _: TimeDomain ();
+    esac;
+
+getPluginData store pluginIRI = {
+    get apiVersion () = textProperty store pluginIRI "vamp:vamp_API_version", //!!! number not text
+    get identifier () = textProperty store pluginIRI "vamp:identifier",
+    get name () = textProperty store pluginIRI "dc:title",
+    get description () = textProperty store pluginIRI "dc:description",
+    get maker () = textProperty store pluginIRI "foaf:maker", //!!! is an IRI or blank node
+    get copyright () = textProperty store pluginIRI "dc:rights",
+    get version () = textProperty store pluginIRI "owl:versionInfo",
+    get category () = textProperty store pluginIRI "vamp:category",
+    get inputDomain () = inputDomainOf store pluginIRI
+};
 
 {
-get vampRdfFiles = listVampRdfFiles,
-loadVampRdfStore,
+getSystemVampRdfStore,
+vampPluginNodes = pluginNodes,
+vampLibraryNodes = libraryNodes,
+vampPluginNodesById = pluginNodesById,
+vampPluginData = getPluginData,
 }
 
