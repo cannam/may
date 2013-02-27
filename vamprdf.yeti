@@ -49,6 +49,30 @@ getSystemVampRdfStore () =
         store
     done;
 
+getGlobalPluginIndex () =
+    list (strSplit "\n" (fetchURL [ Timeout 10 ] (Handle getContents)
+                         "http://www.vamp-plugins.org/rdf/plugins/index.txt"));
+
+//!!! need to cache these retrievals
+parseGlobalVampRdf () =
+   (parse urls =
+        case urls of
+        url::rest:
+           (doc = fetchURL [ Timeout 10 ] (Handle getContents) url;
+            parsed = read.parseTurtleString url doc;
+            { url, parsed } :. \(parse rest));
+         _: [];
+        esac;
+    parse (getGlobalPluginIndex ()));
+
+loadGlobalVampRdf store =
+    for (parseGlobalVampRdf ()) do { url, parsed }:
+        case read.loadParsedTriples store parsed of
+        OK (): ();
+        Error e: eprintln "WARNING: Failed to load Vamp RDF from URL \(url): \(e)";
+        esac;
+    done;
+
 filterIRIsFromNodes nodes =
     map do r: case r of IRI iri: iri; esac done
        (filter do r: case r of IRI iri: true; _: false esac done nodes);
@@ -141,7 +165,11 @@ getPluginData store pluginIRI = {
     get inputDomain () = inputDomainOf store pluginIRI
 };
 
+//!!! reconsider these names
 {
+getGlobalPluginIndex,
+parseGlobalVampRdf,
+loadGlobalVampRdf,
 getSystemVampRdfStore,
 vampPluginNodes = pluginNodes,
 vampLibraryNodes = libraryNodes,
