@@ -36,6 +36,11 @@ addVampPrefixes store =
     store.addPrefix "foaf" "http://xmlns.com/foaf/0.1/";
     store.addPrefix "owl" "http://www.w3.org/2002/07/owl#");
 
+
+//!!! no, should not have both a global singleton store *and* a
+//function that only really exists to modify it!
+//(i.e. loadGlobalVampRdf) -- better to load on demand
+
 store = newRdfStore ();
 var loaded = false;
 
@@ -119,6 +124,7 @@ librariesWithId store id =
             }
         done (libraryNodes store));
 
+//!!! better if it took a plugin key? (the soname:label form)
 pluginNodesById store libraryId pluginId =
    (candidatePlugins = pluginsWithId store pluginId;
     candidateLibraries = librariesWithId store libraryId;
@@ -133,37 +139,118 @@ pluginNodesById store libraryId pluginId =
         done candidatePlugins
     );
 
+libraryFor store pluginNode =
+    case store.match {
+        s = Wildcard (), p = Known (store.expand "vamp:available_plugin"), o = Known pluginNode
+        } of
+    { s = IRI iri }::others: IRI iri;
+    { s = Blank n }::others: Blank n;
+     _: None ();
+    esac;
+
 textProperty store subject name =
     case store.match {
         s = Known subject, p = Known (store.expand name), o = Wildcard ()
         } of
-        { o = Literal { value = text } }::others: text;
-         _: "";
+    { o = Literal { value = text } }::others: text;
+     _: "";
     esac;
 
-inputDomainOf store pluginIRI =
-   case store.match {
-        s = Known pluginIRI, p = Known (store.expand "vamp:input_domain"), o = Wildcard ()
+iriProperty store subject name =
+    case store.match {
+        s = Known subject, p = Known (store.expand name), o = Wildcard ()
         } of
-        { o = IRI iri }::others:
-            if IRI iri == store.expand "vamp:FrequencyDomain"
-            then FrequencyDomain ()
-            else TimeDomain ()
-            fi;
-         _: TimeDomain ();
+    { o = IRI iri }::others: IRI iri;
+     _: None ();
     esac;
 
-getPluginData store pluginIRI = {
-    get apiVersion () = textProperty store pluginIRI "vamp:vamp_API_version", //!!! number not text
-    get identifier () = textProperty store pluginIRI "vamp:identifier",
-    get name () = textProperty store pluginIRI "dc:title",
-    get description () = textProperty store pluginIRI "dc:description",
-    get maker () = textProperty store pluginIRI "foaf:maker", //!!! is an IRI or blank node
-    get copyright () = textProperty store pluginIRI "dc:rights",
-    get version () = textProperty store pluginIRI "owl:versionInfo",
-    get category () = textProperty store pluginIRI "vamp:category",
-    get inputDomain () = inputDomainOf store pluginIRI
-};
+inputDomainOf store pluginNode =
+   case store.match {
+        s = Known pluginNode, p = Known (store.expand "vamp:input_domain"), o = Wildcard ()
+        } of
+    { o = IRI iri }::others:
+        if IRI iri == store.expand "vamp:FrequencyDomain"
+        then FrequencyDomain ()
+        else TimeDomain ()
+        fi;
+     _: TimeDomain ();
+    esac;
+
+outputDescriptor store outputNode =
+   (tprop abbr = textProperty store outputNode abbr;
+    iprop abbr = iriProperty store outputNode abbr;
+    bprop abbr deflt =
+       (b = strLower (textProperty store outputNode abbr);
+        if b == "true" then true elif b == "false" then false else deflt fi);
+    nprop abbr =
+        try number (textProperty store outputNode abbr); catch Exception _: 0 yrt;
+    {
+        get identifier () = tprop "vamp:identifier",
+        get name () = tprop "dc:title",
+        get description () = tprop "dc:description",
+        get rdfType () = case iprop "a" of IRI iri: iri; _: "" esac,
+        get valueUnit () = tprop "vamp:unit",
+        get binCount () = 
+            if bprop "vamp:fixed_bin_count" false
+            then Known (nprop "vamp:bin_count")
+            else Unknown ()
+            fi,
+        get computes () =
+            case iprop "vamp:computes_event_type" of
+            IRI iri: Event iri;
+             _: case iprop "vamp:computes_signal_type" of
+                IRI iri: Signal iri;
+                 _: case iprop "vamp:computes_feature_type" of
+                    IRI iri: Feature iri;
+                     _: Unknown ();
+                    esac
+                esac
+            esac,
+        //!!! and some other properties
+    });
+
+getPluginData store pluginNode =
+   (tprop abbr = textProperty store pluginNode abbr;
+    {
+    //!!! a plugin key property (i.e. the soname:label thing used to load it) would be handy
+        get apiVersion () = tprop "vamp:vamp_API_version", //!!! number not text
+        get identifier () = tprop "vamp:identifier",
+        get name () = tprop "dc:title",
+        get description () = tprop "dc:description",
+        get maker () = tprop "foaf:maker", //!!! is an IRI or blank node with a foaf:name property
+        get copyright () = tprop "dc:rights",
+        get version () = tprop "owl:versionInfo",
+        get category () = tprop "vamp:category",
+        get inputDomain () = inputDomainOf store pluginNode,
+        get infoURL () =
+           (case iriProperty store pluginNode "foaf:page" of
+            IRI iri: iri;
+            None ():
+                case libraryFor store pluginNode of
+                None (): "";
+                IRI iri:
+                    case iriProperty store (IRI iri) "foaf:page" of
+                    IRI iri: iri;
+                    None (): "";
+                    esac;
+                Blank n:
+                    case iriProperty store (Blank n) "foaf:page" of
+                    IRI iri: iri;
+                    None (): "";
+                    esac;
+                esac;
+            esac),
+        get outputs () = 
+           (matches = store.match { s = Known pluginNode,
+                                    p = Known (store.expand "vamp:output"), 
+                                    o = Wildcard () };
+            array (map do t:
+                       case t.o of
+                       IRI iri: outputDescriptor store (IRI iri);
+                       Blank n: outputDescriptor store (Blank n);
+                       esac
+                       done matches)),
+    });
 
 //!!! reconsider these names
 {
