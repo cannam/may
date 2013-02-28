@@ -8,7 +8,7 @@ read = load yertle.read;
 
 import java.io: File;
 
-listVampRdfFiles () =
+systemVampRdfFiles () =
     concat
        (map do p:
             map ((p ^ File#separator ^) . (.name))
@@ -21,38 +21,21 @@ listVampRdfFiles () =
                     done (listDirectory false p))
             done (vamp.pluginPath));
 
-loadVampRdfStore store =
-    for (listVampRdfFiles ()) do file:
-        case read.loadTurtleFile store ("file://" ^ file) file of
-        OK (): ();
-        Error e: eprintln
-            "WARNING: Failed to load Vamp plugin RDF file \"\(file)\": \(e)";
-        esac
-    done;
-
 addVampPrefixes store =
    (store.addPrefix "vamp" "http://purl.org/ontology/vamp/";
     store.addPrefix "dc" "http://purl.org/dc/elements/1.1/";
     store.addPrefix "foaf" "http://xmlns.com/foaf/0.1/";
     store.addPrefix "owl" "http://www.w3.org/2002/07/owl#");
 
-
-//!!! no, should not have both a global singleton store *and* a
-//function that only really exists to modify it!
-//(i.e. loadGlobalVampRdf) -- better to load on demand
-
-store = newRdfStore ();
-var loaded = false;
-
-getSystemVampRdfStore () =
-    synchronized store do:
-        if not loaded then
-            addVampPrefixes store;
-            loadVampRdfStore store;
-            loaded := true;
-        fi;
-        store
-    done;
+loadSystemVampRdf store =
+   (addVampPrefixes store;
+    for (systemVampRdfFiles ()) do file:
+        case read.loadTurtleFile store ("file://" ^ file) file of
+        OK (): ();
+        Error e: eprintln
+            "WARNING: Failed to load Vamp plugin RDF file \"\(file)\": \(e)";
+        esac
+    done);
 
 getGlobalPluginIndex () =
     list (strSplit "\n" (fetchURL [ Timeout 10 ] (Handle getContents)
@@ -88,7 +71,7 @@ iriTypes = map do t: case t of IRI iri: IRI iri; Blank n: Blank n esac done;
 
 iriSubjects = iriTypes . subjects;
 
-libraryNodes store =
+allLibraryNodes store =
     iriSubjects
        (store.match {
             s = Wildcard (),
@@ -96,7 +79,7 @@ libraryNodes store =
             o = Known (store.expand "vamp:PluginLibrary")
             });
 
-pluginNodes store =
+allPluginNodes store =
     iriSubjects
        (store.match {
             s = Wildcard (),
@@ -112,7 +95,7 @@ pluginsWithId store id =
             p = store.expand "vamp:identifier",
             o = Literal { value = id, type = "", language = "" }
             }
-        done (pluginNodes store));
+        done (allPluginNodes store));
 
 librariesWithId store id =
     iriTypes
@@ -122,29 +105,36 @@ librariesWithId store id =
             p = store.expand "vamp:identifier",
             o = Literal { value = id, type = "", language = "" }
             }
-        done (libraryNodes store));
+        done (allLibraryNodes store));
 
-//!!! better if it took a plugin key? (the soname:label form)
-pluginNodesById store libraryId pluginId =
-   (candidatePlugins = pluginsWithId store pluginId;
-    candidateLibraries = librariesWithId store libraryId;
-    filter do pnode:
-        any do lnode:
-            store.contains {
-                s = lnode,
-                p = store.expand "vamp:available_plugin",
-                o = pnode
-                }
-            done candidateLibraries
-        done candidatePlugins
-    );
+splitPluginKey key =
+   (bits = strSplit ":" key;
+    reversed = reverse bits;
+    soname = strJoin ":" (reverse (tail reversed));
+    identifier = head reversed;
+    { soname, identifier });
 
-libraryFor store pluginNode =
+pluginNodesByKey store key =
+   (case splitPluginKey key of { soname, identifier }:
+        candidatePlugins = pluginsWithId store identifier;
+        candidateLibraries = librariesWithId store soname;
+        filter do pnode:
+            any do lnode:
+                store.contains {
+                    s = lnode,
+                    p = store.expand "vamp:available_plugin",
+                    o = pnode
+                    }
+                done candidateLibraries
+            done candidatePlugins
+    esac);
+
+libraryNodeFor store pluginNode =
     case store.match {
         s = Wildcard (), p = Known (store.expand "vamp:available_plugin"), o = Known pluginNode
         } of
-    { s = IRI iri }::others: IRI iri;
-    { s = Blank n }::others: Blank n;
+    { s = IRI iri }::others: Some (IRI iri);
+    { s = Blank n }::others: Some (Blank n);
      _: None ();
     esac;
 
@@ -161,6 +151,15 @@ iriProperty store subject name =
         s = Known subject, p = Known (store.expand name), o = Wildcard ()
         } of
     { o = IRI iri }::others: IRI iri;
+     _: None ();
+    esac;
+
+nodeProperty store subject name =
+    case store.match {
+        s = Known subject, p = Known (store.expand name), o = Wildcard ()
+        } of
+    { o = IRI iri }::others: Some (IRI iri);
+    { o = Blank n }::others: Some (Blank n);
      _: None ();
     esac;
 
@@ -185,17 +184,17 @@ outputDescriptor store outputNode =
     nprop abbr =
         try number (textProperty store outputNode abbr); catch Exception _: 0 yrt;
     {
-        get identifier () = tprop "vamp:identifier",
-        get name () = tprop "dc:title",
-        get description () = tprop "dc:description",
-        get rdfType () = case iprop "a" of IRI iri: iri; _: "" esac,
-        get valueUnit () = tprop "vamp:unit",
-        get binCount () = 
+        identifier = tprop "vamp:identifier",
+        name = tprop "dc:title",
+        description = tprop "dc:description",
+        rdfType = case iprop "a" of IRI iri: iri; _: "" esac,
+        valueUnit = tprop "vamp:unit",
+        binCount = 
             if bprop "vamp:fixed_bin_count" false
             then Known (nprop "vamp:bin_count")
             else Unknown ()
             fi,
-        get computes () =
+        computes =
             case iprop "vamp:computes_event_type" of
             IRI iri: Event iri;
              _: case iprop "vamp:computes_signal_type" of
@@ -209,38 +208,50 @@ outputDescriptor store outputNode =
         //!!! and some other properties
     });
 
-getPluginData store pluginNode =
+pluginData store pluginNode =
    (tprop abbr = textProperty store pluginNode abbr;
+    nprop abbr =
+        try number (textProperty store pluginNode abbr); catch Exception _: 0 yrt;
+    soname =
+        case libraryNodeFor store pluginNode of
+        None (): "";
+        Some n: textProperty store n "vamp:identifier";
+        esac;
     {
-    //!!! a plugin key property (i.e. the soname:label thing used to load it) would be handy
-        get apiVersion () = tprop "vamp:vamp_API_version", //!!! number not text
-        get identifier () = tprop "vamp:identifier",
-        get name () = tprop "dc:title",
-        get description () = tprop "dc:description",
-        get maker () = tprop "foaf:maker", //!!! is an IRI or blank node with a foaf:name property
-        get copyright () = tprop "dc:rights",
-        get version () = tprop "owl:versionInfo",
-        get category () = tprop "vamp:category",
-        get inputDomain () = inputDomainOf store pluginNode,
-        get infoURL () =
+        pluginKey = soname ^ ":" ^ tprop "vamp:identifier",
+        soname,
+        apiVersion = nprop "vamp:vamp_API_version",
+        identifier = tprop "vamp:identifier",
+        name = tprop "dc:title",
+        description = tprop "dc:description",
+        maker =
+           (tmaker = tprop "foaf:maker";
+            if tmaker == "" then
+                case nodeProperty store pluginNode "foaf:maker" of
+                Some n: textProperty store n "foaf:name";
+                None (): "";
+                esac
+            else
+                tmaker
+            fi),
+        copyright = tprop "dc:rights",
+        version = tprop "owl:versionInfo",
+        category = tprop "vamp:category",
+        inputDomain = inputDomainOf store pluginNode,
+        infoURL =
            (case iriProperty store pluginNode "foaf:page" of
             IRI iri: iri;
             None ():
-                case libraryFor store pluginNode of
+                case libraryNodeFor store pluginNode of
                 None (): "";
-                IRI iri:
-                    case iriProperty store (IRI iri) "foaf:page" of
-                    IRI iri: iri;
-                    None (): "";
-                    esac;
-                Blank n:
-                    case iriProperty store (Blank n) "foaf:page" of
+                Some n:
+                    case iriProperty store n "foaf:page" of
                     IRI iri: iri;
                     None (): "";
                     esac;
                 esac;
             esac),
-        get outputs () = 
+        outputs = 
            (matches = store.match { s = Known pluginNode,
                                     p = Known (store.expand "vamp:output"), 
                                     o = Wildcard () };
@@ -252,15 +263,12 @@ getPluginData store pluginNode =
                        done matches)),
     });
 
-//!!! reconsider these names
 {
-getGlobalPluginIndex,
-parseGlobalVampRdf,
+loadSystemVampRdf,
 loadGlobalVampRdf,
-getSystemVampRdfStore,
-vampPluginNodes = pluginNodes,
-vampLibraryNodes = libraryNodes,
-vampPluginNodesById = pluginNodesById,
-vampPluginData = getPluginData,
+allPluginNodes,
+allLibraryNodes,
+pluginNodesByKey,
+pluginData,
 }
 
