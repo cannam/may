@@ -32,7 +32,8 @@ addVampPrefixes store =
    (store.addPrefix "vamp" "http://purl.org/ontology/vamp/";
     store.addPrefix "dc" "http://purl.org/dc/elements/1.1/";
     store.addPrefix "foaf" "http://xmlns.com/foaf/0.1/";
-    store.addPrefix "owl" "http://www.w3.org/2002/07/owl#");
+    store.addPrefix "owl" "http://www.w3.org/2002/07/owl#";
+    store.addPrefix "af" "http://purl.org/ontology/af/");
 
 loadSystemVampRdf store =
    (addVampPrefixes store;

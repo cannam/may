@@ -41,21 +41,21 @@ numberOf n is ~Object -> number =
 
 featureSet fs is ~Map -> 'a =
    (s = [:];
-    kk = list fs#keySet()#toArray(); //!!! ugh
+    kk = list fs#keySet()#toArray();
     for kk do k: s[numberOf k] := featureList fs#get(k) done;
     s);
 
-standardStore = store.newRdfStore ();
-var standardStoreLoaded = false;
-
-getStandardStore () =
-   (synchronized standardStore do:
-        if not standardStoreLoaded then
-            vamprdf.loadSystemVampRdf standardStore;
-            standardStoreLoaded := true
-        fi;
-        standardStore
-    done);
+getStandardStore =
+   (s = store.newRdfStore ();
+    var loaded = false;
+    \(synchronized s do:
+          if not loaded then
+            vamprdf.loadSystemVampRdf s;
+            loaded := true
+          fi;
+          s
+      done)
+    );
 
 getPluginPath () =
    (try
@@ -104,29 +104,38 @@ sampleType t is ~OutputDescriptor$SampleType -> 'a =
         VariableSampleRate ()
     fi;
 
-structureOf od is ~OutputDescriptor -> 'a = 
+structureOf rdfOutputData od is 'a -> ~OutputDescriptor -> 'b = 
+   (computes = case rdfOutputData of Some d: d.computes; None (): Unknown () esac;
+    s = getStandardStore ();
+    noteIRI = case s.expand "af:Note" of IRI iri: iri; _: "" esac;
     if od#hasFixedBinCount and od#binCount == 0 then
         Instants ();
     elif od#hasDuration then
-        if od#hasFixedBinCount then
-            if od#binCount > 1 then
-                Notes ();
-            elif od#unit == "Hz" or strIndexOf (strLower od#unit) "midi" 0 >= 0 then
-                Notes ();
-            else
-                Regions ();
+        if computes != Unknown () then
+            if computes == Event noteIRI then Notes ();
+            else Regions ();
+            fi
+        elif od#hasFixedBinCount then
+            if od#binCount > 1 then Notes ();
+            elif od#unit == "Hz" or strIndexOf (strLower od#unit) "midi" 0 >= 0 then Notes ();
+            else Regions ();
             fi
         else
             Unknown ();
         fi
     elif od#hasFixedBinCount and od#binCount == 1 then
-        //!!! Could be a segmentation -- how do we tell?
-        Curve ();
+        case computes of
+        Event e:
+            if strEnds? e "Segment" then Segmentation ();
+            else Curve ();
+            fi;
+        _: Curve ();
+        esac;
     elif od#sampleType != OutputDescriptor$SampleType#VariableSampleRate then
         Grid ();
     else
         Unknown ();
-    fi;
+    fi);
 
 outputDescriptor rdfOutputData od is 'a -> ~OutputDescriptor -> 'b = {
     identifier = od#identifier,
@@ -141,7 +150,7 @@ outputDescriptor rdfOutputData od is 'a -> ~OutputDescriptor -> 'b = {
     sampleRate = od#sampleRate,
     hasDuration = od#hasDuration,
     get computes () = case rdfOutputData of Some data: data.computes; None (): Unknown () esac,
-    get inferredStructure () = structureOf od,
+    get inferredStructure () = structureOf rdfOutputData od,
     };
 
 plugin key p is string -> ~Plugin -> 'a =
@@ -157,6 +166,7 @@ plugin key p is string -> ~Plugin -> 'a =
     get copyright () = p#getCopyright(),
     get version () = p#getPluginVersion(),
     get category () = PluginLoader#getInstance()#getPluginCategory(key),
+    get hasRdfDescription () = (rdfData != None ()),
     get infoURL () = case rdfData of Some data: data.infoURL; None (): "" esac,
     get parameters () = array (map parameterDescriptor p#getParameterDescriptors()),
     parameter identifier = p#getParameter(identifier),
