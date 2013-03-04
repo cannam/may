@@ -1,12 +1,19 @@
 
 module vamprdf;
 
-vamp = load vamp;
-
 read = load yertle.read;
 { newRdfStore } = load yertle.store;
 
 import java.io: File;
+
+import org.vamp_plugins: PluginLoader;
+
+import java.lang: UnsatisfiedLinkError;
+
+getPluginPath () =
+   (try map string PluginLoader#getInstance()#getPluginPath();
+    catch UnsatisfiedLinkError e: [];
+    yrt);
 
 systemVampRdfFiles () =
     concat
@@ -19,7 +26,7 @@ systemVampRdfFiles () =
                         (strEnds? lc ".n3") or
                         (strEnds? lc ".nt"))
                     done (listDirectory false p))
-            done (vamp.pluginPath));
+            done (getPluginPath ()));
 
 addVampPrefixes store =
    (store.addPrefix "vamp" "http://purl.org/ontology/vamp/";
@@ -67,7 +74,12 @@ filterIRIsFromNodes nodes =
 
 subjects = map (.s);
 
-iriTypes = map do t: case t of IRI iri: IRI iri; Blank n: Blank n esac done;
+iriTypes =
+    map do t:
+        case t of
+        IRI iri: IRI iri;
+        Blank n: Blank n;
+        esac done;
 
 iriSubjects = iriTypes . subjects;
 
@@ -208,7 +220,7 @@ outputDescriptor store outputNode =
         //!!! and some other properties
     });
 
-pluginData store pluginNode =
+pluginDataByNode store pluginNode =
    (tprop abbr = textProperty store pluginNode abbr;
     nprop abbr =
         try number (textProperty store pluginNode abbr); catch Exception _: 0 yrt;
@@ -263,12 +275,19 @@ pluginData store pluginNode =
                        done matches)),
     });
 
+pluginDataByKey store key =
+    case pluginNodesByKey store key of
+    node::others: Some (pluginDataByNode store node);
+    _: None ()
+    esac;
+
 {
 loadSystemVampRdf,
 loadGlobalVampRdf,
 allPluginNodes,
 allLibraryNodes,
 pluginNodesByKey,
-pluginData,
+pluginDataByNode,
+pluginDataByKey,
 }
 

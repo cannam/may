@@ -13,6 +13,9 @@ import java.util: Map, List;
 block = load block;
 fr = load framer;
 af = load audiofile;
+vamprdf = load vamprdf;
+
+store = load yertle.store;
 
 realTime r is ~RealTime -> number = r#sec() + (r#nsec() / 1000000000);
 
@@ -41,6 +44,18 @@ featureSet fs is ~Map -> 'a =
     kk = list fs#keySet()#toArray(); //!!! ugh
     for kk do k: s[numberOf k] := featureList fs#get(k) done;
     s);
+
+standardStore = store.newRdfStore ();
+var standardStoreLoaded = false;
+
+getStandardStore () =
+   (synchronized standardStore do:
+        if not standardStoreLoaded then
+            vamprdf.loadSystemVampRdf standardStore;
+            standardStoreLoaded := true
+        fi;
+        standardStore
+    done);
 
 getPluginPath () =
    (try
@@ -113,7 +128,7 @@ structureOf od is ~OutputDescriptor -> 'a =
         Unknown ();
     fi;
 
-outputDescriptor od is ~OutputDescriptor -> 'a = {
+outputDescriptor rdfData od is 'a -> ~OutputDescriptor -> 'b = {
     identifier = od#identifier,
     name = od#name,
     description = od#description,
@@ -125,10 +140,13 @@ outputDescriptor od is ~OutputDescriptor -> 'a = {
     sampleType = sampleType od#sampleType,
     sampleRate = od#sampleRate,
     hasDuration = od#hasDuration,
+    computes = case rdfData of Some data: data.computes; None (): Unknown () esac,
     get inferredStructure () = structureOf od,
     };
 
-plugin key p is string -> ~Plugin -> 'a = {
+plugin key p is string -> ~Plugin -> 'a =
+   (rdfData = vamprdf.pluginDataByKey (getStandardStore ()) key;
+    {
     plugin = p,
     key,
     get apiVersion () = p#getVampApiVersion(),
@@ -139,6 +157,7 @@ plugin key p is string -> ~Plugin -> 'a = {
     get copyright () = p#getCopyright(),
     get version () = p#getPluginVersion(),
     get category () = PluginLoader#getInstance()#getPluginCategory(key),
+    get infoURL () = case rdfData of Some data: data.infoURL; None (): "" esac,
     get parameters () = array (map parameterDescriptor p#getParameterDescriptors()),
     parameter identifier = p#getParameter(identifier),
     setParameter identifier value = p#setParameter(identifier, value),
@@ -152,12 +171,12 @@ plugin key p is string -> ~Plugin -> 'a = {
     get maxChannelCount () = p#getMaxChannelCount(),
     initialise { channels, blocksize, hop } = p#initialise(channels, hop, blocksize),
     reset () = p#reset(),
-    get outputs () = array (map outputDescriptor p#getOutputDescriptors()),
+    get outputs () = array (map (outputDescriptor rdfData) p#getOutputDescriptors()),
     process blocks time is 'a -> ~RealTime -> 'b = 
         featureSet p#process((map block.floats blocks) as ~float[][], 0, time),
     getRemainingFeatures () = featureSet p#getRemainingFeatures(),
     dispose () = p#dispose(),
-    };
+    });
 
 featuresFromSet outputNo f = if outputNo in f then f[outputNo] else [] fi;
 
