@@ -128,7 +128,7 @@ structureOf od is ~OutputDescriptor -> 'a =
         Unknown ();
     fi;
 
-outputDescriptor rdfData od is 'a -> ~OutputDescriptor -> 'b = {
+outputDescriptor rdfOutputData od is 'a -> ~OutputDescriptor -> 'b = {
     identifier = od#identifier,
     name = od#name,
     description = od#description,
@@ -140,7 +140,7 @@ outputDescriptor rdfData od is 'a -> ~OutputDescriptor -> 'b = {
     sampleType = sampleType od#sampleType,
     sampleRate = od#sampleRate,
     hasDuration = od#hasDuration,
-    computes = case rdfData of Some data: data.computes; None (): Unknown () esac,
+    get computes () = case rdfOutputData of Some data: data.computes; None (): Unknown () esac,
     get inferredStructure () = structureOf od,
     };
 
@@ -171,7 +171,11 @@ plugin key p is string -> ~Plugin -> 'a =
     get maxChannelCount () = p#getMaxChannelCount(),
     initialise { channels, blocksize, hop } = p#initialise(channels, hop, blocksize),
     reset () = p#reset(),
-    get outputs () = array (map (outputDescriptor rdfData) p#getOutputDescriptors()),
+    get outputs () =
+        array case rdfData of
+        Some data: map2 outputDescriptor (map Some data.outputs) p#getOutputDescriptors();
+        None (): map (outputDescriptor (None ())) p#getOutputDescriptors();
+        esac,
     process blocks time is 'a -> ~RealTime -> 'b = 
         featureSet p#process((map block.floats blocks) as ~float[][], 0, time),
     getRemainingFeatures () = featureSet p#getRemainingFeatures(),
