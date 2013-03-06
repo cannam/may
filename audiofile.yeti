@@ -91,23 +91,27 @@ close' { stream is ~AudioInputStream } =
     stream#close();
 
 open name is string -> 'a = 
-   (f = new File(name);
-    stream = AudioSystem#getAudioInputStream(f);
-    format = stream#getFormat();
-    len = available' { format, stream }; // at start of stream
-    str.stream {
-        stream,
-        format,
-        len,
-        rate = format#getSampleRate(),
-        channels = format#getChannels(),
-        get position () = len - available' { stream, format },
-        get available () = available' { stream, format },
-        read = read' { stream, format },
-        readInterleaved = readInterleaved' { stream, format },
-        readMono = readMono' { stream, format },
-        close () = close' { stream },
-    } );
+    try
+        f = new File(name);
+        stream = AudioSystem#getAudioInputStream(f);
+        format = stream#getFormat();
+        len = available' { format, stream }; // at start of stream
+        Stream (str.stream {
+            stream,
+            format,
+            len,
+            rate = format#getSampleRate(),
+            channels = format#getChannels(),
+            get position () = len - available' { stream, format },
+            get available () = available' { stream, format },
+            read = read' { stream, format },
+            readInterleaved = readInterleaved' { stream, format },
+            readMono = readMono' { stream, format },
+            close () = close' { stream },
+        });
+    catch Exception e:
+        Error "Failed to open audio file \"\(name)\": \(e)";
+    yrt;
 
 {
     open

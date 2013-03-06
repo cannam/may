@@ -36,11 +36,9 @@ featureList fl is ~Object -> 'a =
         list result
     fi;
 
-numberOf n is ~Object -> number =
-   (n unsafely_as ~Integer)#intValue();
-
 featureSet fs is ~Map -> 'a =
-   (s = [:];
+   (numberOf n is ~Object -> number = (n unsafely_as ~Integer)#intValue();
+    s = [:];
     kk = list fs#keySet()#toArray();
     for kk do k: s[numberOf k] := featureList fs#get(k) done;
     s);
@@ -168,8 +166,8 @@ plugin key p is string -> ~Plugin -> 'a =
     get hasRdfDescription () = (rdfData != None ()),
     get infoURL () = case rdfData of Some data: data.infoURL; None (): "" esac,
     get parameters () = array (map parameterDescriptor p#getParameterDescriptors()),
-    parameter identifier = p#getParameter(identifier),
-    setParameter identifier value = p#setParameter(identifier, value),
+    parameterValue identifier = p#getParameter(identifier),
+    setParameterValue identifier value = p#setParameter(identifier, value),
     get programs () = array (map string p#getPrograms()),
     get currentProgram () = p#getCurrentProgram(),
     selectProgram pr = p#selectProgram(pr),
@@ -178,7 +176,7 @@ plugin key p is string -> ~Plugin -> 'a =
     get preferredStepSize () = p#getPreferredStepSize(),
     get minChannelCount () = p#getMinChannelCount(),
     get maxChannelCount () = p#getMaxChannelCount(),
-    initialise { channels, blocksize, hop } = p#initialise(channels, hop, blocksize),
+    initialise { channels, hop, blockSize } = p#initialise(channels, hop, blockSize),
     reset () = p#reset(),
     get outputs () =
         array case rdfData of
@@ -207,7 +205,7 @@ loadPlugin rate key =
                 PluginLoader$AdapterFlags#ADAPT_INPUT_DOMAIN +
                 PluginLoader$AdapterFlags#ADAPT_CHANNEL_COUNT))
     catch PluginLoader$LoadFailedException _:
-        Error "Failed to load Vamp plugin with key '\(key)'"
+        Error "Failed to load Vamp plugin with key \(key)"
     yrt;
 
 processed { p, sampleRate, hop } frames count =
@@ -232,28 +230,40 @@ process key output stream =
         outputNo = outputNumberByName p output;
         if outputNo >= 0 then
             blockSize = p.preferredBlockSize;
-            hop = p.preferredStepSize;
+            stepSize = p.preferredStepSize;
+            channels = 1;
             params = {
                 p, sampleRate = stream.sampleRate, channels = 1,
-                framesize = blockSize, blocksize = blockSize, hop
+                framesize = blockSize, blockSize, hop = stepSize
             };
             if p.initialise params then
-                OK (converted params outputNo
-                       (processed params (fr.frames params stream) 0));
+                OK {
+                key = key,
+                output = p.outputs[outputNo],
+                parameters = mapIntoHash id p.parameterValue (map (.identifier) p.parameters),
+                config = { channels, blockSize, stepSize,
+                           sampleRate = stream.sampleRate },
+                features = converted params outputNo
+                   (processed params (fr.frames params stream) 0)
+                };
                 // If processing completed successfully, then p is
                 // disposed by processed and stream is closed by the
                 // framer
             else
-                errorReturn "Failed to initialise plugin '\(key)' with parameters \(params)";
+                errorReturn "Failed to initialise plugin \(key) with channels = \(channels), blockSize = \(blockSize), stepSize = \(stepSize)";
             fi;
         else
             outputNames = strJoin ", " (map (.identifier) p.outputs);
-            errorReturn "Plugin '\(key)' has no output named '\(output)' (outputs are \(outputNames))"
+            errorReturn "Plugin \(key) has no output named \(output) (outputs are \(outputNames))"
         fi;
     Error e: Error e;
     esac;
 
-processFile key output filename = process key output (af.open filename);
+processFile key output filename = 
+    case af.open filename of
+    Stream s: process key output s;
+    Error e: Error e;
+    esac;
 
 {
 get pluginPath = getPluginPath,
