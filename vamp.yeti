@@ -2,7 +2,7 @@ module vamp;
 
 import org.vamp_plugins:
        Plugin, Plugin$InputDomain,
-       PluginLoader, PluginLoader$AdapterFlags,
+       PluginLoader, PluginLoader$AdapterFlags, PluginLoader$LoadFailedException,
        ParameterDescriptor, OutputDescriptor, OutputDescriptor$SampleType,
        RealTime, Feature;
 
@@ -95,13 +95,13 @@ parameterDescriptor pd is ~ParameterDescriptor -> 'a = {
     valueNames = map string pd#valueNames
     };
 
-sampleType t is ~OutputDescriptor$SampleType -> 'a =
+sampleType t rate is ~OutputDescriptor$SampleType -> number -> 'a =
     if t == OutputDescriptor$SampleType#OneSamplePerStep then
         OneSamplePerStep ()
     elif t == OutputDescriptor$SampleType#FixedSampleRate then
-        FixedSampleRate ()
+        FixedSampleRate rate
     else
-        VariableSampleRate ()
+        VariableSampleRate rate
     fi;
 
 structureOf rdfOutputData od is 'a -> ~OutputDescriptor -> 'b = 
@@ -146,8 +146,7 @@ outputDescriptor rdfOutputData od is 'a -> ~OutputDescriptor -> 'b = {
     get valueQuantize () = if od#isQuantized then QuantizeStep od#quantizeStep else Unquantized () fi,
     valueUnit = od#unit,
     binNames = array (map string od#binNames),
-    sampleType = sampleType od#sampleType,
-    sampleRate = od#sampleRate,
+    sampleType = sampleType od#sampleType od#sampleRate,
     hasDuration = od#hasDuration,
     get computes () = case rdfOutputData of Some data: data.computes; None (): Unknown () esac,
     get inferredStructure () = structureOf rdfOutputData od,
@@ -196,10 +195,20 @@ featuresFromSet outputNo f = if outputNo in f then f[outputNo] else [] fi;
 
 outputNumberByName p name =
    (outputs = p.outputs;
-    index (head (find ((== name) . (.identifier)) outputs)) outputs);
+    case find ((== name) . (.identifier)) outputs of
+    first::rest: index first outputs;
+    _: -1;
+    esac);
 
 loadPlugin rate key =
-    plugin key PluginLoader#getInstance()#loadPlugin(key, rate, PluginLoader$AdapterFlags#ADAPT_INPUT_DOMAIN + PluginLoader$AdapterFlags#ADAPT_CHANNEL_COUNT);
+    try
+        OK (plugin key 
+            PluginLoader#getInstance()#loadPlugin(key, rate,
+                PluginLoader$AdapterFlags#ADAPT_INPUT_DOMAIN +
+                PluginLoader$AdapterFlags#ADAPT_CHANNEL_COUNT))
+    catch PluginLoader$LoadFailedException _:
+        Error "Failed to load Vamp plugin with key '\(key)'"
+    yrt;
 
 processed { p, sampleRate, hop } frames count =
     case frames of
@@ -217,24 +226,32 @@ converted { p, sampleRate, hop } outputNo fl =
     map (featuresFromSet outputNo) fl;
 
 process key output stream =
-   (p = loadPlugin stream.sampleRate key;
-    blockSize = p.preferredBlockSize;
-    hop = p.preferredStepSize;
-    outputNo = outputNumberByName p output;
-    params = {
-        p,
-        sampleRate = stream.sampleRate, channels = 1,
-        framesize = blockSize, blocksize = blockSize, hop
-    };
-    if p.initialise params then
-        converted params outputNo(processed params (fr.frames params stream) 0);
-        // If processing completed successfully, then p is disposed by
-        // processed and stream is closed by the framer
-    else
-        p.dispose();
-        stream.close();
-        [];
-    fi);
+    case loadPlugin stream.sampleRate key of
+    OK p:
+        errorReturn text = (p.dispose (); stream.close (); Error text);
+        outputNo = outputNumberByName p output;
+        if outputNo >= 0 then
+            blockSize = p.preferredBlockSize;
+            hop = p.preferredStepSize;
+            params = {
+                p, sampleRate = stream.sampleRate, channels = 1,
+                framesize = blockSize, blocksize = blockSize, hop
+            };
+            if p.initialise params then
+                OK (converted params outputNo
+                       (processed params (fr.frames params stream) 0));
+                // If processing completed successfully, then p is
+                // disposed by processed and stream is closed by the
+                // framer
+            else
+                errorReturn "Failed to initialise plugin '\(key)' with parameters \(params)";
+            fi;
+        else
+            outputNames = strJoin ", " (map (.identifier) p.outputs);
+            errorReturn "Plugin '\(key)' has no output named '\(output)' (outputs are \(outputNames))"
+        fi;
+    Error e: Error e;
+    esac;
 
 processFile key output filename = process key output (af.open filename);
 
