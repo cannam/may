@@ -223,38 +223,59 @@ processed { p, sampleRate, hop } frames count =
 converted { p, sampleRate, hop } outputNo fl =
     map (featuresFromSet outputNo) fl;
 
+returnErrorFrom p stream text = (p.dispose (); stream.close (); Error text);
+
+processWith key p outputNo stream =
+   (blockSize = p.preferredBlockSize;
+    stepSize = p.preferredStepSize;
+    channels = 1;
+    params = {
+        p, sampleRate = stream.sampleRate, channels = 1,
+        framesize = blockSize, blockSize, hop = stepSize
+    };
+    if p.initialise params then
+        OK {
+        key = key,
+        output = p.outputs[outputNo],
+        parameters = mapIntoHash id p.parameterValue (map (.identifier) p.parameters),
+        config = { channels, blockSize, stepSize,
+                   sampleRate = stream.sampleRate },
+        features = converted params outputNo
+           (processed params (fr.frames params stream) 0)
+        };
+        // If processing completed successfully, then p is
+        // disposed by processed and stream is closed by the
+        // framer
+    else
+        returnErrorFrom p stream "Failed to initialise plugin \(key) with channels = \(channels), blockSize = \(blockSize), stepSize = \(stepSize)";
+    fi);
+
+outputsOf p = strJoin ", " (map (.identifier) p.outputs);
+
 process key output stream =
     case loadPlugin stream.sampleRate key of
     OK p:
-        errorReturn text = (p.dispose (); stream.close (); Error text);
         outputNo = outputNumberByName p output;
         if outputNo >= 0 then
-            blockSize = p.preferredBlockSize;
-            stepSize = p.preferredStepSize;
-            channels = 1;
-            params = {
-                p, sampleRate = stream.sampleRate, channels = 1,
-                framesize = blockSize, blockSize, hop = stepSize
-            };
-            if p.initialise params then
-                OK {
-                key = key,
-                output = p.outputs[outputNo],
-                parameters = mapIntoHash id p.parameterValue (map (.identifier) p.parameters),
-                config = { channels, blockSize, stepSize,
-                           sampleRate = stream.sampleRate },
-                features = converted params outputNo
-                   (processed params (fr.frames params stream) 0)
-                };
-                // If processing completed successfully, then p is
-                // disposed by processed and stream is closed by the
-                // framer
-            else
-                errorReturn "Failed to initialise plugin \(key) with channels = \(channels), blockSize = \(blockSize), stepSize = \(stepSize)";
-            fi;
+            processWith key p outputNo stream
         else
-            outputNames = strJoin ", " (map (.identifier) p.outputs);
-            errorReturn "Plugin \(key) has no output named \(output) (outputs are \(outputNames))"
+            returnErrorFrom p stream "Plugin \(key) has no output named \(output) (outputs are \(outputsOf p))"
+        fi;
+    Error e: Error e;
+    esac;
+
+structuredProcessor plugin outputNo =
+    id; //!!! fill in!
+
+processStructured key output stream =
+    case loadPlugin stream.sampleRate key of
+    OK p:
+        outputNo = outputNumberByName p output;
+        if outputNo >= 0 then  //??? exception better?
+            arranger = structuredProcessor p outputNo;
+            arranger (processWith key p outputNo stream);
+        else
+            returnErrorFrom p stream "Plugin \(key) has no output named \(output) (outputs are \(outputsOf p))"
         fi;
     Error e: Error e;
     esac;
