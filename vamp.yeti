@@ -20,10 +20,10 @@ store = load yertle.store;
 realTime r is ~RealTime -> number = r#sec() + (r#nsec() / 1000000000);
 
 feature f is ~Feature -> 'a = {
-    get timestamp () = if f#hasTimestamp then Time (realTime f#timestamp) else Untimed () fi,
-    get duration () = if f#hasDuration then Time (realTime f#duration) else Untimed () fi,
-    get values () = list f#values,
-    get label () = f#label,
+    timestamp = if f#hasTimestamp then Time (realTime f#timestamp) else Untimed () fi,
+    duration = if f#hasDuration then Time (realTime f#duration) else Untimed () fi,
+    values = list f#values,
+    label = f#label,
     };
 
 featureList fl is ~Object -> 'a =
@@ -264,25 +264,56 @@ process key output stream =
     Error e: Error e;
     esac;
 
-structureArranger plugin outputNo results =
+flattenTimestamps { output, config, features } =
+   (stepTime n =
+        case output.sampleType of
+        OneSamplePerStep ():
+           (n * config.stepSize) / config.sampleRate;
+        //!!! Not right: this will advance the FixedSampleRate counter for each input step (not each feature actually found) -- unit tests would help here
+        FixedSampleRate rate:
+           (n * config.stepSize) / rate;
+        VariableSampleRate rate:
+           0; //!!!
+        esac;
+    flattenTimestamps' n pending features =
+        case pending of
+        feature::rest:
+            case feature.timestamp of
+            Time t:
+                feature;
+            Untimed ():
+               (feature with { timestamp = Time (stepTime n) });
+            esac :. \(flattenTimestamps' n rest features);
+         _:
+            case features of
+            here::rest:
+                flattenTimestamps' (n+1) here rest;
+             _:
+                [];
+            esac;
+        esac;
+    flattenTimestamps' (-1) [] features);
+
+structure results =
     case results of
     OK data:
-        case plugin.outputs[outputNo].inferredStructure of
-        Curve ():
-            Curve data;
-        Grid ():
-            Grid data;
-        Instants ():
-            Instants data;
-        Notes ():
-            Notes data;
-        Regions ():
-            Regions data;
-        Segmentation ():
-            Segmentation data;
-        Unknown ():
-            Unknown data;
-        esac;
+       (flattened = flattenTimestamps data;
+        case data.output.inferredStructure of
+        Curve ():               // No duration, one value
+            Curve flattened;
+        Grid ():                // No duration, >1 value, not variable rate
+            Grid flattened;
+        Instants ():            // Zero-valued features
+            Instants flattened;
+        Notes ():               // Duration, at least one value (pitch or freq)
+            Notes flattened;
+        Regions ():             // Duration, zero or more values
+            Regions flattened;
+        Segmentation ():        // No duration, one value, segment type in RDF
+            Segmentation flattened;
+        Unknown ():             // Other
+            Unknown flattened;
+        esac);
     Error e:
         Error e;
     esac;
@@ -291,9 +322,8 @@ processStructured key output stream =
     case loadPlugin stream.sampleRate key of
     OK p:
         outputNo = outputNumberByName p output;
-        if outputNo >= 0 then  //??? exception better?
-            arranger = structureArranger p outputNo;
-            arranger (processWith key p outputNo stream);
+        if outputNo >= 0 then
+            structure (processWith key p outputNo stream);
         else
             returnErrorFrom p stream "Plugin \(key) has no output named \(output) (outputs are \(outputsOf p))"
         fi;
