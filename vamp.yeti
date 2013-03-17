@@ -264,15 +264,35 @@ process key output stream =
     Error e: Error e;
     esac;
 
-structuredProcessor plugin outputNo =
-    id; //!!! fill in!
+structureArranger plugin outputNo results =
+    case results of
+    OK data:
+        case plugin.outputs[outputNo].inferredStructure of
+        Curve ():
+            Curve data;
+        Grid ():
+            Grid data;
+        Instants ():
+            Instants data;
+        Notes ():
+            Notes data;
+        Regions ():
+            Regions data;
+        Segmentation ():
+            Segmentation data;
+        Unknown ():
+            Unknown data;
+        esac;
+    Error e:
+        Error e;
+    esac;
 
 processStructured key output stream =
     case loadPlugin stream.sampleRate key of
     OK p:
         outputNo = outputNumberByName p output;
         if outputNo >= 0 then  //??? exception better?
-            arranger = structuredProcessor p outputNo;
+            arranger = structureArranger p outputNo;
             arranger (processWith key p outputNo stream);
         else
             returnErrorFrom p stream "Plugin \(key) has no output named \(output) (outputs are \(outputsOf p))"
@@ -286,6 +306,12 @@ processFile key output filename =
     Error e: Error e;
     esac;
 
+processFileStructured key output filename = 
+    case af.open filename of
+    Stream s: processStructured key output s;
+    Error e: Error e;
+    esac;
+
 {
 get pluginPath = getPluginPath,
 get pluginKeys = listPlugins,
@@ -293,5 +319,7 @@ loadPlugin,
 categoryOf,
 process,
 processFile,
+processStructured,
+processFileStructured,
 }
 
