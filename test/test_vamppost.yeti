@@ -7,6 +7,18 @@ vp = load vamppost;
 untimed n = { timestamp = Untimed (), values = [n] };
 timed t n = { timestamp = Time t, values = [n] };
 
+testdata =  {
+    output = { sampleType = OneSamplePerStep () },
+    config = { sampleRate = 1000, stepSize = 100 },
+    features = [
+        [],
+        [ untimed 1 ],
+        [ untimed 1, untimed 2 ],
+        [],
+        [ timed 1.1 1, untimed 2, timed 4 3 ]
+    ]
+};
+
 [
 
 "fillOneSamplePerStep": \(
@@ -14,17 +26,8 @@ timed t n = { timestamp = Time t, values = [n] };
     // a single sub-list of the feature list) should be given the same
     // timestamp; the timestamp increments according to the config
     // step size between sub-lists
-    filled = vp.fillTimestamps {
-        output = { sampleType = OneSamplePerStep () },
-        config = { sampleRate = 1000, stepSize = 100 },
-        features = [
-            [],
-            [ untimed 1 ],
-            [ untimed 1, untimed 2 ],
-            [],
-            [ timed 1 1, untimed 2, timed 4 3 ]
-        ]
-    };
+    filled = vp.fillTimestamps
+       (testdata with { output = { sampleType = OneSamplePerStep () } });
     compare filled [
         timed 0.1 1 ,
         timed 0.2 1, timed 0.2 2 ,
@@ -42,17 +45,8 @@ timed t n = { timestamp = Time t, values = [n] };
     // the [output descriptor's] sample rate". Note that the time is
     // based on that of the previous feature, not that of the previous
     // process cycle (as is the case with OneSamplePerStep features).
-    filled = vp.fillTimestamps {
-        output = { sampleType = FixedSampleRate 5 },
-        config = { sampleRate = 1000, stepSize = 100 },
-        features = [
-            [],
-            [ untimed 1 ],
-            [ untimed 1, untimed 2 ],
-            [],
-            [ timed 1.1 1, untimed 2, timed 4 3 ]
-        ]
-    };
+    filled = vp.fillTimestamps
+       (testdata with { output = { sampleType = FixedSampleRate 5 } });
     compare filled [
         timed 0 1 ,
         timed 0.2 1, timed 0.4 2 ,
@@ -65,21 +59,12 @@ timed t n = { timestamp = Time t, values = [n] };
     // be left entirely alone by fillTimestamps -- it's an error for
     // the plugin to return any features without valid timestamps,
     // but it isn't the job of fillTimestamps to handle that error
-    filled = vp.fillTimestamps {
-        output = { sampleType = VariableSampleRate 5 },
-        config = { sampleRate = 1000, stepSize = 100 },
-        features = [
-            [],
-            [ untimed 1 ],
-            [ untimed 1, untimed 2 ],
-            [],
-            [ timed 1 1, untimed 2, timed 4 3 ]
-        ]
-    };
+    filled = vp.fillTimestamps
+       (testdata with { output = { sampleType = VariableSampleRate 5 } });
     compare filled [
         untimed 1 ,
         untimed 1, untimed 2 ,
-        timed 1.0 1, untimed 2, timed 4.0 3
+        timed 1.1 1, untimed 2, timed 4.0 3
     ];
 ),
 
