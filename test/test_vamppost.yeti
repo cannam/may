@@ -10,6 +10,10 @@ timed t n = { timestamp = Time t, values = [n] };
 [
 
 "fillOneSamplePerStep": \(
+    // All features returned within a single process call (i.e. within
+    // a single sub-list of the feature list) should be given the same
+    // timestamp; the timestamp increments according to the config
+    // step size between sub-lists
     filled = vp.fillTimestamps {
         output = { sampleType = OneSamplePerStep () },
         config = { sampleRate = 1000, stepSize = 100 },
@@ -35,7 +39,9 @@ timed t n = { timestamp = Time t, values = [n] };
     // the output descriptor's sampleRate field [...] If
     // [hasTimestamp] is false, its time will be implicitly calculated
     // by incrementing the time of the previous feature according to
-    // the [output descriptor's] sample rate"
+    // the [output descriptor's] sample rate". Note that the time is
+    // based on that of the previous feature, not that of the previous
+    // process cycle (as is the case with OneSamplePerStep features).
     filled = vp.fillTimestamps {
         output = { sampleType = FixedSampleRate 5 },
         config = { sampleRate = 1000, stepSize = 100 },
