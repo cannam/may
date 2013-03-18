@@ -129,7 +129,8 @@ structureOf rdfOutputData od is 'a -> ~OutputDescriptor -> 'b =
             fi;
         _: Curve ();
         esac;
-    elif od#sampleType != OutputDescriptor$SampleType#VariableSampleRate then
+    elif od#hasFixedBinCount and
+         od#sampleType != OutputDescriptor$SampleType#VariableSampleRate then
         Grid ();
     else
         Unknown ();

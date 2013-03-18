@@ -1,5 +1,7 @@
 module vamppost;
 
+fmat = load fmatrix;
+
 fillOneSamplePerStep config features =
    (fill' n pending features =
         case pending of
@@ -42,12 +44,33 @@ fillTimestamps { output, config, features } =
         concat features;
     esac;
 
-structure type features =
+structureGrid binCount features =
+    if empty? features then
+        fmat.constMatrix binCount 0 0;
+    else
+        fmat.generate
+            do row col:
+                features[col].values[row];
+            done binCount (length features);
+    fi;
+
+structure data =
+   (type = data.output.inferredStructure;
+    features =
+        case type of
+        Grid (): concat data.features;
+        _: fillTimestamps data;
+        esac;
+    binCount = 
+        case data.output.binCount of
+        Fixed n: n;
+        _: 0;
+        esac;
     case type of
     Curve ():               // No duration, one value
         Curve features;
     Grid ():                // No duration, >1 value, not variable rate
-        Grid features;
+        Grid (structureGrid binCount (array features));
     Instants ():            // Zero-valued features
         Instants features;
     Notes ():               // Duration, at least one value (pitch or freq)
@@ -58,13 +81,12 @@ structure type features =
         Segmentation features;
     Unknown ():             // Other
         Unknown features;
-    esac;
+    esac);
 
 postprocess data =
     case data of
     OK data:
-        filled = fillTimestamps data;
-        structure data.output.inferredStructure filled;
+        structure data;
     Error e:
         Error e;
     esac;
