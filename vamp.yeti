@@ -250,8 +250,6 @@ processWith key p outputNo stream =
         returnErrorFrom p stream "Failed to initialise plugin \(key) with channels = \(channels), blockSize = \(blockSize), stepSize = \(stepSize)";
     fi);
 
-outputsOf p = strJoin ", " (map (.identifier) p.outputs);
-
 process key output stream =
     case loadPlugin stream.sampleRate key of
     OK p:
@@ -259,73 +257,8 @@ process key output stream =
         if outputNo >= 0 then
             processWith key p outputNo stream
         else
-            returnErrorFrom p stream "Plugin \(key) has no output named \(output) (outputs are \(outputsOf p))"
-        fi;
-    Error e: Error e;
-    esac;
-
-flattenTimestamps { output, config, features } =
-   (stepTime n =
-        case output.sampleType of
-        OneSamplePerStep ():
-           (n * config.stepSize) / config.sampleRate;
-        //!!! Not right: this will advance the FixedSampleRate counter for each input step (not each feature actually found) -- unit tests would help here
-        FixedSampleRate rate:
-           (n * config.stepSize) / rate;
-        VariableSampleRate rate:
-           0; //!!!
-        esac;
-    flattenTimestamps' n pending features =
-        case pending of
-        feature::rest:
-            case feature.timestamp of
-            Time t:
-                feature;
-            Untimed ():
-               (feature with { timestamp = Time (stepTime n) });
-            esac :. \(flattenTimestamps' n rest features);
-         _:
-            case features of
-            here::rest:
-                flattenTimestamps' (n+1) here rest;
-             _:
-                [];
-            esac;
-        esac;
-    flattenTimestamps' (-1) [] features);
-
-structure results =
-    case results of
-    OK data:
-       (flattened = flattenTimestamps data;
-        case data.output.inferredStructure of
-        Curve ():               // No duration, one value
-            Curve flattened;
-        Grid ():                // No duration, >1 value, not variable rate
-            Grid flattened;
-        Instants ():            // Zero-valued features
-            Instants flattened;
-        Notes ():               // Duration, at least one value (pitch or freq)
-            Notes flattened;
-        Regions ():             // Duration, zero or more values
-            Regions flattened;
-        Segmentation ():        // No duration, one value, segment type in RDF
-            Segmentation flattened;
-        Unknown ():             // Other
-            Unknown flattened;
-        esac);
-    Error e:
-        Error e;
-    esac;
-
-processStructured key output stream =
-    case loadPlugin stream.sampleRate key of
-    OK p:
-        outputNo = outputNumberByName p output;
-        if outputNo >= 0 then
-            structure (processWith key p outputNo stream);
-        else
-            returnErrorFrom p stream "Plugin \(key) has no output named \(output) (outputs are \(outputsOf p))"
+            outputs = strJoin ", " (map (.identifier) p.outputs);
+            returnErrorFrom p stream "Plugin \(key) has no output named \(output) (outputs are \(outputs))"
         fi;
     Error e: Error e;
     esac;
@@ -336,12 +269,6 @@ processFile key output filename =
     Error e: Error e;
     esac;
 
-processFileStructured key output filename = 
-    case af.open filename of
-    Stream s: processStructured key output s;
-    Error e: Error e;
-    esac;
-
 {
 get pluginPath = getPluginPath,
 get pluginKeys = listPlugins,
@@ -349,7 +276,5 @@ loadPlugin,
 categoryOf,
 process,
 processFile,
-processStructured,
-processFileStructured,
 }
 

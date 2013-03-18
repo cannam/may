@@ -1,0 +1,64 @@
+module vamppost;
+
+fillOneSamplePerStep config features =
+   (stepTime n = (n * config.stepSize) / config.sampleRate;
+    fillTimestamps' n pending features =
+        case pending of
+        feature::rest:
+           (feature with { timestamp = Time (stepTime n) })
+                :. \(fillTimestamps' n rest features);
+         _:
+            case features of
+            here::rest:
+                fillTimestamps' (n+1) here rest;
+             _:
+                [];
+            esac;
+        esac;
+    fillTimestamps' (-1) [] features);
+
+fillFixedSampleRate config rate features = concat features;
+
+fillTimestamps { output, config, features } =
+    case output.sampleType of
+    OneSamplePerStep ():
+        fillOneSamplePerStep config features;
+    FixedSampleRate rate:
+        fillFixedSampleRate config rate features;
+    VariableSampleRate _:
+        concat features;
+    esac;
+
+structure type features =
+    case type of
+    Curve ():               // No duration, one value
+        Curve features;
+    Grid ():                // No duration, >1 value, not variable rate
+        Grid features;
+    Instants ():            // Zero-valued features
+        Instants features;
+    Notes ():               // Duration, at least one value (pitch or freq)
+        Notes features;
+    Regions ():             // Duration, zero or more values
+        Regions features;
+    Segmentation ():        // No duration, one value, segment type in RDF
+        Segmentation features;
+    Unknown ():             // Other
+        Unknown features;
+    esac;
+
+postprocess data =
+    case data of
+    OK data:
+        filled = fillTimestamps data;
+        structure data.output.inferredStructure filled;
+    Error e:
+        Error e;
+    esac;
+
+{
+fillTimestamps,
+postprocess
+}
+
+

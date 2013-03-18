@@ -9,6 +9,7 @@ tests = [
 "blockfuncs" : load test.test_blockfuncs,
 "complex"    : load test.test_complex,
 "fft"        : load test.test_fft,
+"vamppost"   : load test.test_vamppost,
 ];
 
 bad = sum (mapHash do name testHash: runTests name testHash done tests);
