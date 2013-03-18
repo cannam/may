@@ -1,23 +1,36 @@
 module vamppost;
 
 fillOneSamplePerStep config features =
-   (stepTime n = (n * config.stepSize) / config.sampleRate;
-    fillTimestamps' n pending features =
+   (fill' n pending features =
         case pending of
         feature::rest:
-           (feature with { timestamp = Time (stepTime n) })
-                :. \(fillTimestamps' n rest features);
-         _:
-            case features of
-            here::rest:
-                fillTimestamps' (n+1) here rest;
-             _:
-                [];
-            esac;
+            stamped = feature with
+               { timestamp = Time ((n * config.stepSize) / config.sampleRate) };
+            stamped :. \(fill' n rest features);
+        _:
+            if empty? features then []
+            else fill' (n+1) (head features) (tail features);
+            fi;
         esac;
-    fillTimestamps' (-1) [] features);
+    fill' (-1) [] features);
 
-fillFixedSampleRate config rate features = concat features;
+fillFixedSampleRate config rate features =
+   (eps = 0.0001;
+    fill' n pending features =
+        case pending of
+        feature::rest:
+            n = case feature.timestamp of
+                Untimed (): n + 1;
+                Time t: int (t * rate + eps);
+                esac;
+            stamped = feature with { timestamp = Time (n / rate) };
+            stamped :. \(fill' n rest features);
+        _:
+            if empty? features then []
+            else fill' n (head features) (tail features);
+            fi;
+        esac;
+    fill' (-1) [] features);
 
 fillTimestamps { output, config, features } =
     case output.sampleType of
