@@ -22,7 +22,7 @@ realTime r is ~RealTime -> number = r#sec() + (r#nsec() / 1000000000);
 feature f is ~Feature -> 'a = {
     timestamp = if f#hasTimestamp then Time (realTime f#timestamp) else Untimed () fi,
     duration = if f#hasDuration then Time (realTime f#duration) else Untimed () fi,
-    values = list f#values,
+    values = f#values,
     label = f#label,
     };
 
@@ -209,16 +209,27 @@ loadPlugin rate key =
         Error "Failed to load Vamp plugin with key \(key)"
     yrt;
 
-processed { p, sampleRate, hop } frames count =
+processed { p, sampleRate, hop } frames count 
+    // I don't know why this type declaration is necessary. Without
+    // it, yeti records the return type as 'a and can't do anything
+    // useful with it (giving IncompatibleClassChangeError when
+    // e.g. accessing the values array)
+    is 'a -> 'b -> 'c ->
+        list<hash<number,
+                  list<{ timestamp is Time number | Untimed (), 
+                         duration  is Time number | Untimed (),
+                         label is string,
+                         values is ~float[]
+                       }>>> =
     case frames of
-        frame::rest:
-            p.process [frame] RealTime#frame2RealTime(count, sampleRate)
-            :.
-            \(processed { p, sampleRate, hop } rest (count + hop));
-        _: 
-           (rf = p.getRemainingFeatures ();
-            p.dispose ();
-            [rf]);
+    frame::rest:
+        p.process [frame] RealTime#frame2RealTime(count, sampleRate)
+        :.
+        \(processed { p, sampleRate, hop } rest (count + hop));
+    _: 
+       (rf = p.getRemainingFeatures ();
+        p.dispose ();
+        [rf]);
     esac;
 
 converted { p, sampleRate, hop } outputNo fl =
@@ -236,13 +247,16 @@ processWith key p outputNo stream =
     };
     if p.initialise params then
         OK {
-        key = key,
-        output = p.outputs[outputNo],
-        parameters = mapIntoHash id p.parameterValue (map (.identifier) p.parameters),
-        config = { channels, blockSize, stepSize,
-                   sampleRate = stream.sampleRate },
-        features = converted params outputNo
-           (processed params (fr.frames params stream) 0)
+            key = key,
+            output = p.outputs[outputNo],
+            parameters = mapIntoHash id p.parameterValue
+               (map (.identifier) p.parameters),
+            config = {
+                channels, blockSize, stepSize,
+                sampleRate = stream.sampleRate
+            },
+            features = converted params outputNo
+               (processed params (fr.frames params stream) 0)
         };
         // If processing completed successfully, then p is
         // disposed by processed and stream is closed by the
