@@ -37,6 +37,14 @@ floats a is ~double[] -> ~float[] =
     done;
     f);
 
+fromFloats ff is ~float[] -> ~double[] =
+   (len = length (list ff);
+    a = new double[len];
+    for [0..len-1] do i:
+        a[i] := ff[i];
+    done;
+    a);
+
 equal v1 v2 =
     list' v1 == list' v2;
 
@@ -65,7 +73,7 @@ zeros, consts, ones,
 vector,
 length = length',
 list = list',
-floats,
+floats, fromFloats,
 equal,
 copyOf, rangeOf, resizedTo,
 concat,
