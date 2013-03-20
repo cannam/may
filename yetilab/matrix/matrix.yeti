@@ -14,31 +14,41 @@ module yetilab.matrix.matrix;
 vec = load yetilab.block.fvector;
 
 newMatrix data = {
-    m = data,
     get cols () =
-        case m of
+        case data of
         RowMajor d: if length d > 0 then vec.length d[0] else 0 fi;
         ColMajor d: length d;
         esac,
     get rows () =
-        case m of
+        case data of
         RowMajor d: length d;
         ColMajor d: if length d > 0 then vec.length d[0] else 0 fi;
         esac,
     col j =
-        case m of
-        RowMajor d: fvec.vector (map do i: d[i][j] done [1..length d]);
+        case data of
+        RowMajor d: vec.vector (map do i: at i j done [1..length d]);
         ColMajor d: d[j];
         esac,
     row i =
-        case m of
+        case data of
         RowMajor d: d[i];
-        ColMajor d: fvec.vector (map do n: d[j][i] done [1..length d]);
+        ColMajor d: vec.vector (map do j: at i j done [1..length d]);
         esac,
+    at row col =
+        case data of
+        RowMajor d: r = d[row]; (r is ~double[])[col];
+        ColMajor d: c = d[col]; (c is ~double[])[row];
+        esac,
+    get isRowMajor? () =
+        case data of
+        RowMajor _: true;
+        ColMajor _: false;
+        esac,
+    norec data () = data,
     };
 
 newStorage rows cols = 
-    array (map \(vec.zeros rows)) [1..cols];
+    array (map \(vec.zeros rows) [1..cols]);
 
 zeroMatrix rows cols = 
     newMatrix (ColMajor (newStorage rows cols));
@@ -60,23 +70,31 @@ width m = m.cols;
 height m = m.rows;
 dimensions m = { cols = m.cols, rows = m.rows };
 
-tagOf m = case m.m of RowMajor _: RowMajor; ColMajor _: ColMajor esac;
+copyOf m =
+   (copyOfData d = (array (map vec.copyOf d));
+    newMatrix
+       (case m.data of
+        RowMajor d: RowMajor (copyOfData d);
+        ColMajor d: ColMajor (copyOfData d);
+        esac));
 
-copyOf m = m with { m = ((tagOf m) (array (map vec.copyOf m));
+transposed m =
+    newMatrix
+       (case m.data of
+        RowMajor d: ColMajor d;
+        ColMajor d: RowMajor d;
+        esac);
 
-transposed m = m with {
-    case m.m of
-    RowMajor d: ColMajor d;
-    ColMajor d: RowMajor d;
-    esac,
-    };
-
+/*
 flippedStorageOrder m is array<~double[]> -> array<~double[]> = 
     generate do row col: m[col][row] done (cols m) (rows m);
+*/
 
 {
 generate, constMatrix, randomMatrix, zeroMatrix, identityMatrix,
-width, cols, height, rows, dimensions,
+width, // cols,
+height, // rows, 
+dimensions,
 copyOf,
 transposed,
 }
