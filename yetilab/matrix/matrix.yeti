@@ -59,7 +59,9 @@ make d = {
     };
 
 newStorage rows cols = 
-    array (map \(vec.zeros rows) [1..cols]);
+    if rows < 1 then array []
+    else array (map \(vec.zeros rows) [1..cols])
+    fi;
 
 zeroMatrix rows cols = 
     make (ColM (newStorage rows cols));
@@ -79,6 +81,16 @@ identityMatrix = constMatrix 1;
 
 width m = m.size.columns;
 height m = m.size.rows;
+
+equal m1 m2 =
+   (compare d1 d2 =
+        all id (map2 vec.equal d1 d2);
+    case m1.data of
+    RowM d1:
+        case m2.data of RowM d2: compare d1 d2; _: false; esac;
+    ColM d1:
+        case m2.data of ColM d2: compare d1 d2; _: false; esac;
+    esac);
 
 copyOf m =
    (copyOfData d = (array (map vec.copyOf d));
@@ -103,7 +115,7 @@ flipped m =
 
 newMatrix type data is RowMajor () | ColumnMajor () -> list?<list?<number>> -> 'a =
    (tagger = case type of RowMajor (): RowM; ColumnMajor (): ColM esac;
-    if empty? data
+    if empty? data or empty? (head data)
     then zeroMatrix 0 0
     else make (tagger (array (map vec.vector data)))
     fi);
@@ -115,9 +127,10 @@ newColumnVector data =
     newMatrix (ColumnMajor ()) [data];
 
 {
-generate,
 constMatrix, randomMatrix, zeroMatrix, identityMatrix,
+generate,
 width, height,
+equal,
 copyOf,
 transposed,
 flipped,

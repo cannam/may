@@ -10,6 +10,7 @@ tests = [
 "framer"     : load yetilab.stream.test.test_framer,
 "fft"        : load yetilab.transform.test.test_fft,
 "vamppost"   : load yetilab.vamp.test.test_vamppost,
+"matrix"     : load yetilab.matrix.test.test_matrix
 ];
 
 bad = sum (mapHash do name testHash: runTests name testHash done tests);
