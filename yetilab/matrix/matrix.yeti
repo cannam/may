@@ -4,54 +4,65 @@ module yetilab.matrix.matrix;
 // A matrix is an array of fvectors (i.e. primitive double[]s).
 
 // A matrix can be either RowMajor, akin to a C multidimensional array
-// in which each row is a separate fvector, or ColMajor, akin to a
+// in which each row is a separate fvector, or ColumnMajor, akin to a
 // FORTAN multidimensional array in which each column is a separate
-// fvector. The default is ColMajor. Storage order is an efficiency
+// fvector. The default is ColumnMajor. Storage order is an efficiency
 // concern only, all operations behave identically regardless.  (The
 // transpose function just switches the row/column order without
 // moving the elements.)
 
 vec = load yetilab.block.fvector;
+block = load yetilab.block.block;
 
-newMatrix data = {
-    get cols () =
-        case data of
-        RowMajor d: if length d > 0 then vec.length d[0] else 0 fi;
-        ColMajor d: length d;
+make d = {
+    get data () = d,
+    get size () =
+        case d of
+        RowM r:
+            major = length r;
+            { 
+                rows = major, 
+                columns = if major > 0 then vec.length r[0] else 0 fi,
+            };
+        ColM c:
+            major = length c;
+            { 
+                rows = if major > 0 then vec.length c[0] else 0 fi,
+                columns = major, 
+            };
         esac,
-    get rows () =
-        case data of
-        RowMajor d: length d;
-        ColMajor d: if length d > 0 then vec.length d[0] else 0 fi;
+    getColumn j =
+        case d of
+        RowM rows: block.fromList (map do i: getAt i j done [0..length rows-1]);
+        ColM cols: block.block cols[j];
         esac,
-    col j =
-        case data of
-        RowMajor d: vec.vector (map do i: at i j done [1..length d]);
-        ColMajor d: d[j];
+    getRow i =
+        case d of
+        RowM rows: block.block rows[i];
+        ColM cols: block.fromList (map do j: getAt i j done [0..length cols-1]);
         esac,
-    row i =
-        case data of
-        RowMajor d: d[i];
-        ColMajor d: vec.vector (map do j: at i j done [1..length d]);
+    getAt row col =
+        case d of
+        RowM rows: r = rows[row]; (r is ~double[])[col];
+        ColM cols: c = cols[col]; (c is ~double[])[row];
         esac,
-    at row col =
-        case data of
-        RowMajor d: r = d[row]; (r is ~double[])[col];
-        ColMajor d: c = d[col]; (c is ~double[])[row];
+    setAt row col n =
+        case d of
+        RowM rows: r = rows[row]; (r is ~double[])[col] := n;
+        ColM cols: c = cols[col]; (c is ~double[])[row] := n;
         esac,
     get isRowMajor? () =
-        case data of
-        RowMajor _: true;
-        ColMajor _: false;
+        case d of
+        RowM _: true;
+        ColM _: false;
         esac,
-    norec data () = data,
     };
 
 newStorage rows cols = 
     array (map \(vec.zeros rows) [1..cols]);
 
 zeroMatrix rows cols = 
-    newMatrix (ColMajor (newStorage rows cols));
+    make (ColM (newStorage rows cols));
 
 generate f rows cols =
    (m = newStorage rows cols;
@@ -60,42 +71,56 @@ generate f rows cols =
             m[col][row] := f row col;
         done;
     done;
-    newMatrix (ColMajor m));
+    make (ColM m));
 
 constMatrix n = generate do row col: n done;
 randomMatrix = generate do row col: Math#random() done;
 identityMatrix = constMatrix 1;
 
-width m = m.cols;
-height m = m.rows;
-dimensions m = { cols = m.cols, rows = m.rows };
+width m = m.size.columns;
+height m = m.size.rows;
 
 copyOf m =
    (copyOfData d = (array (map vec.copyOf d));
-    newMatrix
+    make
        (case m.data of
-        RowMajor d: RowMajor (copyOfData d);
-        ColMajor d: ColMajor (copyOfData d);
+        RowM d: RowM (copyOfData d);
+        ColM d: ColM (copyOfData d);
         esac));
 
 transposed m =
-    newMatrix
+    make
        (case m.data of
-        RowMajor d: ColMajor d;
-        ColMajor d: RowMajor d;
+        RowM d: ColM d;
+        ColM d: RowM d;
         esac);
 
-/*
-flippedStorageOrder m is array<~double[]> -> array<~double[]> = 
-    generate do row col: m[col][row] done (cols m) (rows m);
-*/
+//!!! Change storage from column to row major order (or back
+//again). Is there a word for this?
+flipped m =
+    if m.isRowMajor? then id else transposed fi
+       (generate do row col: m.getAt col row done m.size.columns m.size.rows);
+
+newMatrix type data is RowMajor () | ColumnMajor () -> list?<list?<number>> -> 'a =
+   (tagger = case type of RowMajor (): RowM; ColumnMajor (): ColM esac;
+    if empty? data
+    then zeroMatrix 0 0
+    else make (tagger (array (map vec.vector data)))
+    fi);
+
+newRowVector data = 
+    newMatrix (RowMajor ()) [data];
+
+newColumnVector data = 
+    newMatrix (ColumnMajor ()) [data];
 
 {
-generate, constMatrix, randomMatrix, zeroMatrix, identityMatrix,
-width, // cols,
-height, // rows, 
-dimensions,
+generate,
+constMatrix, randomMatrix, zeroMatrix, identityMatrix,
+width, height,
 copyOf,
 transposed,
+flipped,
+newMatrix, newRowVector, newColumnVector
 }
 
