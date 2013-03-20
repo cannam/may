@@ -1,0 +1,83 @@
+
+module yetilab.matrix.matrix;
+
+// A matrix is an array of fvectors (i.e. primitive double[]s).
+
+// A matrix can be either RowMajor, akin to a C multidimensional array
+// in which each row is a separate fvector, or ColMajor, akin to a
+// FORTAN multidimensional array in which each column is a separate
+// fvector. The default is ColMajor. Storage order is an efficiency
+// concern only, all operations behave identically regardless.  (The
+// transpose function just switches the row/column order without
+// moving the elements.)
+
+vec = load yetilab.block.fvector;
+
+newMatrix data = {
+    m = data,
+    get cols () =
+        case m of
+        RowMajor d: if length d > 0 then vec.length d[0] else 0 fi;
+        ColMajor d: length d;
+        esac,
+    get rows () =
+        case m of
+        RowMajor d: length d;
+        ColMajor d: if length d > 0 then vec.length d[0] else 0 fi;
+        esac,
+    col j =
+        case m of
+        RowMajor d: fvec.vector (map do i: d[i][j] done [1..length d]);
+        ColMajor d: d[j];
+        esac,
+    row i =
+        case m of
+        RowMajor d: d[i];
+        ColMajor d: fvec.vector (map do n: d[j][i] done [1..length d]);
+        esac,
+    };
+
+newStorage rows cols = 
+    array (map \(vec.zeros rows)) [1..cols];
+
+zeroMatrix rows cols = 
+    newMatrix (ColMajor (newStorage rows cols));
+
+generate f rows cols =
+   (m = newStorage rows cols;
+    for [0..cols-1] do col:
+        for [0..rows-1] do row:
+            m[col][row] := f row col;
+        done;
+    done;
+    newMatrix (ColMajor m));
+
+constMatrix n = generate do row col: n done;
+randomMatrix = generate do row col: Math#random() done;
+identityMatrix = constMatrix 1;
+
+width m = m.cols;
+height m = m.rows;
+dimensions m = { cols = m.cols, rows = m.rows };
+
+tagOf m = case m.m of RowMajor _: RowMajor; ColMajor _: ColMajor esac;
+
+copyOf m = m with { m = ((tagOf m) (array (map vec.copyOf m));
+
+transposed m = m with {
+    case m.m of
+    RowMajor d: ColMajor d;
+    ColMajor d: RowMajor d;
+    esac,
+    };
+
+flippedStorageOrder m is array<~double[]> -> array<~double[]> = 
+    generate do row col: m[col][row] done (cols m) (rows m);
+
+{
+generate, constMatrix, randomMatrix, zeroMatrix, identityMatrix,
+width, cols, height, rows, dimensions,
+copyOf,
+transposed,
+}
+
