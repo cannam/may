@@ -1,11 +1,11 @@
 
-module fft;
+module yetilab.transform.fft;
 
 import edu.emory.mathcs.jtransforms.fft: DoubleFFT_1D;
 
-b = load block;
-vec = load fvector;
-complex = load complex;
+b = load yetilab.block.block;
+vec = load yetilab.block.fvector;
+complex = load yetilab.block.complex;
 
 packedToComplex p =
    (n = (vec.length p) / 2;

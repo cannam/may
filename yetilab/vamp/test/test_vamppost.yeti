@@ -1,8 +1,8 @@
-module test.test_vamppost;
+module yetilab.vamp.test.test_vamppost;
 
-vp = load vamppost;
+vp = load yetilab.vamp.vamppost;
 
-{ compare } = load test.test;
+{ compare } = load yetilab.test.test;
 
 untimed n = { timestamp = Untimed (), values = [n] };
 timed t n = { timestamp = Time t, values = [n] };

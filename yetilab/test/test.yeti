@@ -1,8 +1,7 @@
+module yetilab.test.test;
 
-module test.test;
-
-vec = load fvector;
-ss = load syntheticstream;
+vec = load yetilab.block.fvector;
+ss = load yetilab.stream.syntheticstream;
 
 testStream n is number -> 'a  = ss.precalculated 1000 (vec.vector [1..n]);
 

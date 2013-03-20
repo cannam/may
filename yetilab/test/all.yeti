@@ -1,15 +1,15 @@
 
-program test.all;
+program yetilab.test.all;
 
-{ runTests } = load test.test;
+{ runTests } = load yetilab.test.test;
 
 tests = [
-"fvector"    : load test.test_fvector,
-"framer"     : load test.test_framer,
-"blockfuncs" : load test.test_blockfuncs,
-"complex"    : load test.test_complex,
-"fft"        : load test.test_fft,
-"vamppost"   : load test.test_vamppost,
+"fvector"    : load yetilab.block.test.test_fvector,
+"blockfuncs" : load yetilab.block.test.test_blockfuncs,
+"complex"    : load yetilab.block.test.test_complex,
+"framer"     : load yetilab.stream.test.test_framer,
+"fft"        : load yetilab.transform.test.test_fft,
+"vamppost"   : load yetilab.vamp.test.test_vamppost,
 ];
 
 bad = sum (mapHash do name testHash: runTests name testHash done tests);

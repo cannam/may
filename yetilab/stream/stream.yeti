@@ -1,5 +1,5 @@
 
-module stream;
+module yetilab.stream.stream;
 
 monoStream box =
    (readAll' box = box.read (box.len - box.position);

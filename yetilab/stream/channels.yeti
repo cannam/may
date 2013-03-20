@@ -1,9 +1,9 @@
 
-module channels;
+module yetilab.stream.channels;
 
-vec = load fvector;
-block = load block;
-mat = load fmatrix;
+vec = load yetilab.block.fvector;
+block = load yetilab.block.block;
+mat = load yetilab.block.fmatrix;
         
 interleaved m = 
    ({ cols, rows } = mat.dimensions m;

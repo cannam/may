@@ -1,5 +1,5 @@
 
-module complex;
+module yetilab.block.complex;
 
 import java.lang: ClassCastException;
 

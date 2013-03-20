@@ -1,16 +1,16 @@
 
-module framer;
+module yetilab.stream.framer;
 
 /**
  * Framer expresses a stream (or a file) as a lazy list of (possibly
  * overlapping) frames of mono data.
  */
 
-block = load block;
-bf = load blockfuncs;
-af = load audiofile;
-win = load window;
-fft = load fft;
+block = load yetilab.block.block;
+bf = load yetilab.block.blockfuncs;
+af = load yetilab.stream.audiofile;
+win = load yetilab.transform.window;
+fft = load yetilab.transform.fft;
 
 blockList framesize stream =
     if stream.finished? then

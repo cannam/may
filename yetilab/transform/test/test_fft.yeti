@@ -1,11 +1,11 @@
 
-module test.test_fft;
+module yetilab.transform.test.test_fft;
 
-{ realForward, realInverse } = load fft;
-{ list, fromList } = load block;
-{ complex } = load complex;
+{ realForward, realInverse } = load yetilab.transform.fft;
+{ list, fromList } = load yetilab.block.block;
+{ complex } = load yetilab.block.complex;
 
-{ compare } = load test.test;
+{ compare } = load yetilab.test.test;
 
 testFFT orig reals imags =
    (out = realForward (length orig) (fromList orig);

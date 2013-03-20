@@ -1,6 +1,6 @@
-module vamppost;
+module yetilab.vamp.vamppost;
 
-fmat = load fmatrix;
+fmat = load yetilab.block.fmatrix;
 
 fillOneSamplePerStep config features =
    (fill' n pending features =

@@ -1,9 +1,9 @@
-module test.test_complex;
+module yetilab.block.test.test_complex;
 
 { real, imaginary, complex, magnitude, angle, add, scale }
-   = load complex;
+   = load yetilab.block.complex;
 
-{ compare } = load test.test;
+{ compare } = load yetilab.test.test;
 
 [
 

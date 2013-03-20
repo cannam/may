@@ -1,8 +1,8 @@
-module fmatrix;
+module yetilab.block.fmatrix;
 
 // Basic matrices using primitive array of double as each row
 
-vec = load fvector;
+vec = load yetilab.block.fvector;
 
 zeroMatrix rows cols = array (map \(vec.zeros cols) [1..rows]);
 

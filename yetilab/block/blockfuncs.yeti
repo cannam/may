@@ -1,7 +1,7 @@
 
-module blockfuncs;
+module yetilab.block.blockfuncs;
 
-b = load block;
+b = load yetilab.block.block;
 
 sum' =
     sum . b.list;

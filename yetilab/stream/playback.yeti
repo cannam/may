@@ -1,10 +1,10 @@
 
-module playback;
+module yetilab.stream.playback;
 
-block = load block;
-fr = load framer;
-af = load audiofile;
-ch = load channels;
+block = load yetilab.block.block;
+fr = load yetilab.stream.framer;
+af = load yetilab.stream.audiofile;
+ch = load yetilab.stream.channels;
 
 import javax.sound.sampled:
     AudioSystem, AudioFormat, AudioFormat$Encoding, SourceDataLine;

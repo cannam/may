@@ -1,9 +1,9 @@
 
-module test.test_fvector;
+module yetilab.block.test.test_fvector;
 
-vec = load fvector;
+vec = load yetilab.block.fvector;
 
-{ compare } = load test.test;
+{ compare } = load yetilab.test.test;
 
 [
 

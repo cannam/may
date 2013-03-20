@@ -1,5 +1,5 @@
 
-module vamprdf;
+module yetilab.vamp.vamprdf;
 
 read = load yertle.read;
 { newRdfStore } = load yertle.store;

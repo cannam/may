@@ -1,7 +1,7 @@
 
-module block;
+module yetilab.block.block;
 
-vec = load fvector;
+vec = load yetilab.block.fvector;
 
 typedef opaque block = ~double[];
 

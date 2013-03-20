@@ -1,9 +1,9 @@
 
-module syntheticstream;
+module yetilab.stream.syntheticstream;
 
-str = load stream;
-vec = load fvector;
-block = load block;
+str = load yetilab.stream.stream;
+vec = load yetilab.block.fvector;
+block = load yetilab.block.block;
 
 generated rate generator seconds =
     str.monoStream {

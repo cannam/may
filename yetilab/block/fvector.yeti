@@ -1,4 +1,4 @@
-module fvector;
+module yetilab.block.fvector;
 
 import java.util: Arrays;
 

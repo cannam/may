@@ -1,4 +1,4 @@
-module vamp;
+module yetilab.vamp.vamp;
 
 import org.vamp_plugins:
        Plugin, Plugin$InputDomain,
@@ -10,10 +10,10 @@ import java.lang: UnsatisfiedLinkError;
 
 import java.util: Map, List;
 
-block = load block;
-fr = load framer;
-af = load audiofile;
-vamprdf = load vamprdf;
+block = load yetilab.block.block;
+fr = load yetilab.stream.framer;
+af = load yetilab.stream.audiofile;
+vamprdf = load yetilab.vamp.vamprdf;
 
 store = load yertle.store;
 

@@ -1,4 +1,4 @@
-module matrix;
+module yetilab.block.matrix;
 
 // Basic matrices using number type (rather than primitive arrays)
 

@@ -1,10 +1,10 @@
 
-module test.test_framer;
+module yetilab.stream.test.test_framer;
 
-fr = load framer;
-block = load block;
+fr = load yetilab.stream.framer;
+block = load yetilab.block.block;
 
-{ compare, testStream } = load test.test;
+{ compare, testStream } = load yetilab.test.test;
 
 [
 

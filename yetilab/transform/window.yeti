@@ -1,8 +1,8 @@
 
-module window;
+module yetilab.transform.window;
 
-b = load block;
-bf = load blockfuncs;
+b = load yetilab.block.block;
+bf = load yetilab.block.blockfuncs;
 
 cosinewin a0 a1 a2 a3 n =
     b.fromList
