@@ -93,12 +93,14 @@ makeTests name flipper =
 ),
 
 "equal-\(name)": \(
-    m = constMatrix 2 { rows = 3, columns = 4 };
-    m' = m;
-    p = constMatrix 2 { rows = 4, columns = 3 };
-    q = constMatrix 3 { rows = 3, columns = 4 };
-    mat.equal m m' and mat.equal m m and
-       not mat.equal m p and not mat.equal m q and not mat.equal p q
+    m = newMatrix (ColumnMajor ()) [[1,4],[2,5],[3,6]];
+    n = m;
+    p = newMatrix (RowMajor ()) [[1,2,3],[4,5,6]];
+    q = newMatrix (ColumnMajor ()) [[1,2,3],[4,5,6]];
+    compareMatrices m n and
+        compareMatrices m p and
+        compareMatrices n p and
+        not mat.equal m q
 ),
 
 "getAt-\(name)": \(
@@ -154,14 +156,25 @@ makeTests name flipper =
             done [0..1])
 ),
 
-"flipped": \(
+"transposed-back-\(name)": \(
+    m = newMatrix (ColumnMajor ()) [[1,4],[2,5],[3,6]];
+    compareMatrices m (mat.transposed (mat.transposed m)) and
+        not mat.equal m (mat.transposed m);
+),
+
+"flipped-\(name)": \(
     m = newMatrix (ColumnMajor ()) [[1,4],[2,5],[3,6]];
     m' = mat.flipped m;
     m'' = newMatrix (RowMajor ()) [[1,2,3],[4,5,6]];
-    compareMatrices m' m'';
+    compareMatrices m m' and compareMatrices m m'' and compareMatrices m' m'';
 ),
 
-"flipped-empty": \(
+"flipped-back-\(name)": \(
+    m = newMatrix (ColumnMajor ()) [[1,4],[2,5],[3,6]];
+    compareMatrices m (mat.flipped (mat.flipped m));
+),
+
+"flipped-empty-\(name)": \(
     m = constMatrix 2 { rows = 0, columns = 4 };
     compareMatrices (mat.flipped m) (mat.flipped (constMatrix 0 { rows = 0, columns = 0 }));
 ),

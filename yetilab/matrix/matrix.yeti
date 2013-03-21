@@ -83,16 +83,34 @@ identityMatrix = constMatrix 1;
 width m = m.size.columns;
 height m = m.size.rows;
 
-//!!! should matrices with the same content but different storage order be equal?
+transposed m =
+    make
+       (case m.data of
+        RowM d: ColM d;
+        ColM d: RowM d;
+        esac);
+
+flipped m =
+    if m.isRowMajor? then
+        generate do row col: m.getAt row col done m.size;
+    else
+        transposed
+           (generate do row col: m.getAt col row done
+            { rows = m.size.columns, columns = m.size.rows });
+    fi;
+
+// Matrices with different storage order but the same contents are
+// equal (but comparing them is slow)
 equal m1 m2 =
-   (compare d1 d2 =
-        all id (map2 vec.equal d1 d2);
-    case m1.data of
-    RowM d1:
-        case m2.data of RowM d2: compare d1 d2; _: false; esac;
-    ColM d1:
-        case m2.data of ColM d2: compare d1 d2; _: false; esac;
-    esac);
+    if m1.isRowMajor? != m2.isRowMajor?
+    then equal (flipped m1) m2;
+    else
+        compare d1 d2 = all id (map2 vec.equal d1 d2);
+        case m1.data of
+        RowM d1: case m2.data of RowM d2: compare d1 d2; _: false; esac;
+        ColM d1: case m2.data of ColM d2: compare d1 d2; _: false; esac;
+        esac
+    fi;
 
 copyOf m =
    (copyOfData d = (array (map vec.copyOf d));
@@ -101,20 +119,6 @@ copyOf m =
         RowM d: RowM (copyOfData d);
         ColM d: ColM (copyOfData d);
         esac));
-
-transposed m =
-    make
-       (case m.data of
-        RowM d: ColM d;
-        ColM d: RowM d;
-        esac);
-
-//!!! Change storage from column to row major order (or back
-//again). Is there a word for this?
-flipped m =
-    if m.isRowMajor? then id else transposed fi
-       (generate do row col: m.getAt col row done
-           { rows = m.size.columns, columns = m.size.rows });
 
 newMatrix type data is RowMajor () | ColumnMajor () -> list?<list?<number>> -> 'a =
    (tagger = case type of RowMajor (): RowM; ColumnMajor (): ColM esac;
