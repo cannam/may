@@ -4,89 +4,91 @@ module yetilab.matrix.test.test_matrix;
 mat = load yetilab.matrix.matrix;
 block = load yetilab.block.block;
 
+import yeti.lang: FailureException;
+
 { compare } = load yetilab.test.test;
 
 [
 
 "constMatrixEmpty": \(
-    m = mat.constMatrix 2 0 0;
+    m = mat.constMatrix 2 { rows = 0, columns = 0 };
     compare m.size { columns = 0, rows = 0 }
 ),
 
 "constMatrixEmpty2": \(
-    compare (mat.constMatrix 2 0 4).size { columns = 0, rows = 0 } and
-        compare (mat.constMatrix 2 4 0).size { columns = 0, rows = 0 }
+    compare (mat.constMatrix 2 { rows = 0, columns = 4 }).size { columns = 0, rows = 0 } and
+        compare (mat.constMatrix 2 { rows = 4, columns = 0 }).size { columns = 0, rows = 0 }
 ),
 
 "constMatrix": \(
-    m = mat.constMatrix 2 3 4;
+    m = mat.constMatrix 2 { rows = 3, columns = 4 };
     compare m.size { columns = 4, rows = 3 } and
         all id (map do row: compare (block.list (m.getRow row)) [2,2,2,2] done [0..2]) and
         all id (map do col: compare (block.list (m.getColumn col)) [2,2,2] done [0..3])
 ),
 
 "randomMatrixEmpty": \(
-    m = mat.randomMatrix 0 0;
+    m = mat.randomMatrix { rows = 0, columns = 0 };
     compare m.size { columns = 0, rows = 0 }
 ),
 
 "randomMatrix": \(
-    m = mat.randomMatrix 3 4;
+    m = mat.randomMatrix { rows = 3, columns = 4 };
     compare m.size { columns = 4, rows = 3 }
 ),
 
 "zeroMatrixEmpty": \(
-    m = mat.zeroMatrix 0 0;
+    m = mat.zeroMatrix { rows = 0, columns = 0 };
     compare m.size { columns = 0, rows = 0 }
 ),
 
 "zeroMatrix": \(
-    m = mat.zeroMatrix 3 4;
+    m = mat.zeroMatrix { rows = 3, columns = 4 };
     compare m.size { columns = 4, rows = 3 } and
         all id (map do row: compare (block.list (m.getRow row)) [0,0,0,0] done [0..2]) and
         all id (map do col: compare (block.list (m.getColumn col)) [0,0,0] done [0..3])
 ),
 
 "identityMatrixEmpty": \(
-    m = mat.identityMatrix 0 0;
+    m = mat.identityMatrix { rows = 0, columns = 0 };
     compare m.size { columns = 0, rows = 0 }
 ),
 
 "identityMatrix": \(
-    m = mat.identityMatrix 3 4;
+    m = mat.identityMatrix { rows = 3, columns = 4 };
     compare m.size { columns = 4, rows = 3 } and
         all id (map do row: compare (block.list (m.getRow row)) [1,1,1,1] done [0..2]) and
         all id (map do col: compare (block.list (m.getColumn col)) [1,1,1] done [0..3])
 ),
 
 "generateEmpty": \(
-    m = mat.generate do row col: 0 done 0 0;
+    m = mat.generate do row col: 0 done { rows = 0, columns = 0 };
     compare m.size { columns = 0, rows = 0 }
 ),
 
 "generate": \(
-    m = mat.generate do row col: row * 10 + col done 2 3;
+    m = mat.generate do row col: row * 10 + col done { rows = 2, columns = 3 };
     compare (block.list (m.getRow 0)) [0,1,2] and
         compare (block.list (m.getRow 1)) [10,11,12]
 ),
 
 "widthAndHeight": \(
-    m = mat.constMatrix 2 3 4;
+    m = mat.constMatrix 2 { rows = 3, columns = 4 };
     compare m.size { columns = mat.width m, rows = mat.height m }
 ),
 
 "equal": \(
-    m = mat.constMatrix 2 3 4;
+    m = mat.constMatrix 2 { rows = 3, columns = 4 };
     m' = m;
-    p = mat.constMatrix 2 4 3;
-    q = mat.constMatrix 3 3 4;
+    p = mat.constMatrix 2 { rows = 4, columns = 3 };
+    q = mat.constMatrix 3 { rows = 3, columns = 4 };
     mat.equal m m' and mat.equal m m and
        not mat.equal m p and not mat.equal m q and not mat.equal p q
 ),
 
 "getAt": \(
     generator row col = row * 10 + col;
-    m = mat.generate generator 2 3;
+    m = mat.generate generator { rows = 2, columns = 3 };
     all id
        (map do row: all id
            (map do col: m.getAt row col == generator row col done [0..2])
@@ -95,7 +97,7 @@ block = load yetilab.block.block;
 
 "setAt": \(
     generator row col = row * 10 + col;
-    m = mat.generate generator 2 3;
+    m = mat.generate generator { rows = 2, columns = 3 };
     m.setAt 1 2 16;
     compare (m.getAt 1 2) 16 and
         compare (m.getAt 1 1) 11 and
@@ -103,13 +105,13 @@ block = load yetilab.block.block;
 ),
 
 "copyOfEqual": \(
-    m = mat.constMatrix 2 3 4;
+    m = mat.constMatrix 2 { rows = 3, columns = 4 };
     m'' = mat.copyOf m;
     mat.equal m m''
 ),
 
 "copyOfAlias": \(
-    m = mat.constMatrix 2 3 4;
+    m = mat.constMatrix 2 { rows = 3, columns = 4 };
     m' = m;
     m'' = mat.copyOf m;
     m.setAt 0 0 6;
@@ -117,24 +119,60 @@ block = load yetilab.block.block;
 ),
 
 "transposedEmpty": \(
-    compare (mat.transposed (mat.constMatrix 2 0 0)).size { columns = 0, rows = 0 } and
-        compare (mat.transposed (mat.constMatrix 2 0 4)).size { columns = 0, rows = 0 } and
-        compare (mat.transposed (mat.constMatrix 2 4 0)).size { columns = 0, rows = 0 }
+    compare (mat.transposed (mat.constMatrix 2 { rows = 0, columns = 0 })).size { columns = 0, rows = 0 } and
+        compare (mat.transposed (mat.constMatrix 2 { rows = 0, columns = 4 })).size { columns = 0, rows = 0 } and
+        compare (mat.transposed (mat.constMatrix 2 { rows = 4, columns = 0 })).size { columns = 0, rows = 0 }
 ),
 
 "transposedSize": \(
-    compare (mat.transposed (mat.constMatrix 2 3 4)).size { columns = 3, rows = 4 }
+    compare (mat.transposed (mat.constMatrix 2 { rows = 3, columns = 4 })).size { columns = 3, rows = 4 }
 ),
 
 "transposed": \(
     generator row col = row * 10 + col;
-    m = mat.generate generator 2 3;
+    m = mat.generate generator { rows = 2, columns = 3 };
     m' = mat.transposed m;
     all id
        (map do row: all id
            // like getAt test, but with col/row flipped
            (map do col: m'.getAt col row == generator row col done [0..2])
             done [0..1])
+),
+
+"scaled": \(
+    mat.equal
+       (mat.scaled 0.5 (mat.constMatrix 2 { rows = 3, columns = 4 }))
+       (mat.constMatrix 1 { rows = 3, columns = 4 }) and
+       mat.equal
+          (mat.scaled 0.5 (mat.constMatrix (-3) { rows = 3, columns = 4 }))
+          (mat.constMatrix (-1.5) { rows = 3, columns = 4 }) and
+       mat.equal
+          (mat.scaled 0.5 (mat.constMatrix 2 { rows = 0, columns = 2 }))
+          (mat.constMatrix 5 { rows = 0, columns = 0 })
+),
+
+"sum": \(
+    mat.equal
+       (mat.sum (mat.constMatrix 2 { rows = 3, columns = 4 })
+                (mat.constMatrix 1 { rows = 3, columns = 4 }))
+       (mat.constMatrix 3 { rows = 3, columns = 4 })
+),
+
+"sumFail": \(
+    try 
+        \() (mat.sum (mat.constMatrix 2 { rows = 3, columns = 4 })
+                     (mat.constMatrix 1 { rows = 3, columns = 5 }));
+        false;
+    catch FailureException e:
+        true
+    yrt
+),
+
+"product": \(
+    mat.equal
+       (mat.product (mat.constMatrix 2 { rows = 4, columns = 2 })
+                    (mat.constMatrix 3 { rows = 2, columns = 3 }))
+       (mat.constMatrix 12 { rows = 4, columns = 3 })
 ),
 
 ] is hash<string, () -> boolean>;

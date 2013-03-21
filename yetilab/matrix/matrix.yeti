@@ -58,17 +58,17 @@ make d = {
         esac,
     };
 
-newStorage rows cols = 
+newStorage { rows, columns } = 
     if rows < 1 then array []
-    else array (map \(vec.zeros rows) [1..cols])
+    else array (map \(vec.zeros rows) [1..columns])
     fi;
 
-zeroMatrix rows cols = 
-    make (ColM (newStorage rows cols));
+zeroMatrix { rows, columns } = 
+    make (ColM (newStorage { rows, columns }));
 
-generate f rows cols =
-   (m = newStorage rows cols;
-    for [0..cols-1] do col:
+generate f { rows, columns } =
+   (m = newStorage { rows, columns };
+    for [0..columns-1] do col:
         for [0..rows-1] do row:
             m[col][row] := f row col;
         done;
@@ -82,6 +82,7 @@ identityMatrix = constMatrix 1;
 width m = m.size.columns;
 height m = m.size.rows;
 
+//!!! should matrices with the same content but different storage order be equal?
 equal m1 m2 =
    (compare d1 d2 =
         all id (map2 vec.equal d1 d2);
@@ -111,12 +112,12 @@ transposed m =
 //again). Is there a word for this?
 flipped m =
     if m.isRowMajor? then id else transposed fi
-       (generate do row col: m.getAt col row done m.size.columns m.size.rows);
+       (generate do row col: m.getAt col row done m.size);
 
 newMatrix type data is RowMajor () | ColumnMajor () -> list?<list?<number>> -> 'a =
    (tagger = case type of RowMajor (): RowM; ColumnMajor (): ColM esac;
     if empty? data or empty? (head data)
-    then zeroMatrix 0 0
+    then zeroMatrix { rows = 0, columns = 0 }
     else make (tagger (array (map vec.vector data)))
     fi);
 
@@ -126,6 +127,28 @@ newRowVector data =
 newColumnVector data = 
     newMatrix (ColumnMajor ()) [data];
 
+scaled factor m =
+    generate do row col: factor * m.getAt row col done m.size;
+
+sum' m1 m2 =
+    if m1.size != m2.size
+    then failWith "Matrices are not the same size: \(m1.size), \(m2.size)";
+    else
+        generate do row col: m1.getAt row col + m2.getAt row col done m1.size;
+    fi;
+
+product m1 m2 =
+    if m1.size.columns != m2.size.rows
+    then failWith "Matrix dimensions incompatible: \(m1.size), \(m2.size) (\(m1.size.columns != m2.size.rows)";
+    else
+    //!!! super-slow!
+        generate do row col:
+            r = block.list (m1.getRow row);
+            c = block.list (m2.getColumn col);
+            sum (map2 (*) r c);
+        done { rows = m1.size.rows, columns = m2.size.columns }
+    fi;
+
 {
 constMatrix, randomMatrix, zeroMatrix, identityMatrix,
 generate,
@@ -134,6 +157,8 @@ equal,
 copyOf,
 transposed,
 flipped,
-newMatrix, newRowVector, newColumnVector
+scaled,
+sum = sum', product,
+newMatrix, newRowVector, newColumnVector,
 }
 
