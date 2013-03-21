@@ -8,129 +8,144 @@ import yeti.lang: FailureException;
 
 { compare } = load yetilab.test.test;
 
+compareMatrices obtained expected =
+    if mat.equal obtained expected then
+        true;
+    else
+        println "** expected: \(expected.data)\n   obtained: \(obtained.data)";
+        false;
+    fi;
+
+makeTests name flipper =
+   (constMatrix n s = flipper (mat.constMatrix n s);
+    zeroMatrix s = flipper (mat.zeroMatrix s);
+    randomMatrix s = flipper (mat.randomMatrix s);
+    identityMatrix s = flipper (mat.identityMatrix s);
+    generate f s = flipper (mat.generate f s);
+    newMatrix t d = flipper (mat.newMatrix t d);
 [
 
-"constMatrixEmpty": \(
-    m = mat.constMatrix 2 { rows = 0, columns = 0 };
+"constMatrixEmpty-\(name)": \(
+    m = constMatrix 2 { rows = 0, columns = 0 };
     compare m.size { columns = 0, rows = 0 }
 ),
 
-"constMatrixEmpty2": \(
-    compare (mat.constMatrix 2 { rows = 0, columns = 4 }).size { columns = 0, rows = 0 } and
-        compare (mat.constMatrix 2 { rows = 4, columns = 0 }).size { columns = 0, rows = 0 }
+"constMatrixEmpty2-\(name)": \(
+    compare (constMatrix 2 { rows = 0, columns = 4 }).size { columns = 0, rows = 0 } and
+        compare (constMatrix 2 { rows = 4, columns = 0 }).size { columns = 0, rows = 0 }
 ),
 
-"constMatrix": \(
-    m = mat.constMatrix 2 { rows = 3, columns = 4 };
+"constMatrix-\(name)": \(
+    m = constMatrix 2 { rows = 3, columns = 4 };
     compare m.size { columns = 4, rows = 3 } and
         all id (map do row: compare (block.list (m.getRow row)) [2,2,2,2] done [0..2]) and
         all id (map do col: compare (block.list (m.getColumn col)) [2,2,2] done [0..3])
 ),
 
-"randomMatrixEmpty": \(
-    m = mat.randomMatrix { rows = 0, columns = 0 };
+"randomMatrixEmpty-\(name)": \(
+    m = randomMatrix { rows = 0, columns = 0 };
     compare m.size { columns = 0, rows = 0 }
 ),
 
-"randomMatrix": \(
-    m = mat.randomMatrix { rows = 3, columns = 4 };
+"randomMatrix-\(name)": \(
+    m = randomMatrix { rows = 3, columns = 4 };
     compare m.size { columns = 4, rows = 3 }
 ),
 
-"zeroMatrixEmpty": \(
-    m = mat.zeroMatrix { rows = 0, columns = 0 };
+"zeroMatrixEmpty-\(name)": \(
+    m = zeroMatrix { rows = 0, columns = 0 };
     compare m.size { columns = 0, rows = 0 }
 ),
 
-"zeroMatrix": \(
-    m = mat.zeroMatrix { rows = 3, columns = 4 };
+"zeroMatrix-\(name)": \(
+    m = zeroMatrix { rows = 3, columns = 4 };
     compare m.size { columns = 4, rows = 3 } and
         all id (map do row: compare (block.list (m.getRow row)) [0,0,0,0] done [0..2]) and
         all id (map do col: compare (block.list (m.getColumn col)) [0,0,0] done [0..3])
 ),
 
-"identityMatrixEmpty": \(
-    m = mat.identityMatrix { rows = 0, columns = 0 };
+"identityMatrixEmpty-\(name)": \(
+    m = identityMatrix { rows = 0, columns = 0 };
     compare m.size { columns = 0, rows = 0 }
 ),
 
-"identityMatrix": \(
-    m = mat.identityMatrix { rows = 3, columns = 4 };
+"identityMatrix-\(name)": \(
+    m = identityMatrix { rows = 3, columns = 4 };
     compare m.size { columns = 4, rows = 3 } and
         all id (map do row: compare (block.list (m.getRow row)) [1,1,1,1] done [0..2]) and
         all id (map do col: compare (block.list (m.getColumn col)) [1,1,1] done [0..3])
 ),
 
-"generateEmpty": \(
-    m = mat.generate do row col: 0 done { rows = 0, columns = 0 };
+"generateEmpty-\(name)": \(
+    m = generate do row col: 0 done { rows = 0, columns = 0 };
     compare m.size { columns = 0, rows = 0 }
 ),
 
-"generate": \(
-    m = mat.generate do row col: row * 10 + col done { rows = 2, columns = 3 };
+"generate-\(name)": \(
+    m = generate do row col: row * 10 + col done { rows = 2, columns = 3 };
     compare (block.list (m.getRow 0)) [0,1,2] and
         compare (block.list (m.getRow 1)) [10,11,12]
 ),
 
-"widthAndHeight": \(
-    m = mat.constMatrix 2 { rows = 3, columns = 4 };
+"widthAndHeight-\(name)": \(
+    m = constMatrix 2 { rows = 3, columns = 4 };
     compare m.size { columns = mat.width m, rows = mat.height m }
 ),
 
-"equal": \(
-    m = mat.constMatrix 2 { rows = 3, columns = 4 };
+"equal-\(name)": \(
+    m = constMatrix 2 { rows = 3, columns = 4 };
     m' = m;
-    p = mat.constMatrix 2 { rows = 4, columns = 3 };
-    q = mat.constMatrix 3 { rows = 3, columns = 4 };
+    p = constMatrix 2 { rows = 4, columns = 3 };
+    q = constMatrix 3 { rows = 3, columns = 4 };
     mat.equal m m' and mat.equal m m and
        not mat.equal m p and not mat.equal m q and not mat.equal p q
 ),
 
-"getAt": \(
+"getAt-\(name)": \(
     generator row col = row * 10 + col;
-    m = mat.generate generator { rows = 2, columns = 3 };
+    m = generate generator { rows = 2, columns = 3 };
     all id
        (map do row: all id
            (map do col: m.getAt row col == generator row col done [0..2])
             done [0..1])
 ),
 
-"setAt": \(
+"setAt-\(name)": \(
     generator row col = row * 10 + col;
-    m = mat.generate generator { rows = 2, columns = 3 };
+    m = generate generator { rows = 2, columns = 3 };
     m.setAt 1 2 16;
     compare (m.getAt 1 2) 16 and
         compare (m.getAt 1 1) 11 and
         compare (m.getAt 0 2) 2
 ),
 
-"copyOfEqual": \(
-    m = mat.constMatrix 2 { rows = 3, columns = 4 };
+"copyOfEqual-\(name)": \(
+    m = constMatrix 2 { rows = 3, columns = 4 };
     m'' = mat.copyOf m;
-    mat.equal m m''
+    compareMatrices m'' m
 ),
 
-"copyOfAlias": \(
-    m = mat.constMatrix 2 { rows = 3, columns = 4 };
+"copyOfAlias-\(name)": \(
+    m = constMatrix 2 { rows = 3, columns = 4 };
     m' = m;
     m'' = mat.copyOf m;
     m.setAt 0 0 6;
-    mat.equal m m' and not mat.equal m m'';
+    compareMatrices m' m and not mat.equal m m'';
 ),
 
-"transposedEmpty": \(
-    compare (mat.transposed (mat.constMatrix 2 { rows = 0, columns = 0 })).size { columns = 0, rows = 0 } and
-        compare (mat.transposed (mat.constMatrix 2 { rows = 0, columns = 4 })).size { columns = 0, rows = 0 } and
-        compare (mat.transposed (mat.constMatrix 2 { rows = 4, columns = 0 })).size { columns = 0, rows = 0 }
+"transposedEmpty-\(name)": \(
+    compare (mat.transposed (constMatrix 2 { rows = 0, columns = 0 })).size { columns = 0, rows = 0 } and
+        compare (mat.transposed (constMatrix 2 { rows = 0, columns = 4 })).size { columns = 0, rows = 0 } and
+        compare (mat.transposed (constMatrix 2 { rows = 4, columns = 0 })).size { columns = 0, rows = 0 }
 ),
 
-"transposedSize": \(
-    compare (mat.transposed (mat.constMatrix 2 { rows = 3, columns = 4 })).size { columns = 3, rows = 4 }
+"transposedSize-\(name)": \(
+    compare (mat.transposed (constMatrix 2 { rows = 3, columns = 4 })).size { columns = 3, rows = 4 }
 ),
 
-"transposed": \(
+"transposed-\(name)": \(
     generator row col = row * 10 + col;
-    m = mat.generate generator { rows = 2, columns = 3 };
+    m = generate generator { rows = 2, columns = 3 };
     m' = mat.transposed m;
     all id
        (map do row: all id
@@ -139,41 +154,77 @@ import yeti.lang: FailureException;
             done [0..1])
 ),
 
-"scaled": \(
-    mat.equal
-       (mat.scaled 0.5 (mat.constMatrix 2 { rows = 3, columns = 4 }))
-       (mat.constMatrix 1 { rows = 3, columns = 4 }) and
-       mat.equal
-          (mat.scaled 0.5 (mat.constMatrix (-3) { rows = 3, columns = 4 }))
-          (mat.constMatrix (-1.5) { rows = 3, columns = 4 }) and
-       mat.equal
-          (mat.scaled 0.5 (mat.constMatrix 2 { rows = 0, columns = 2 }))
-          (mat.constMatrix 5 { rows = 0, columns = 0 })
+"flipped": \(
+    m = newMatrix (ColumnMajor ()) [[1,4],[2,5],[3,6]];
+    m' = mat.flipped m;
+    m'' = newMatrix (RowMajor ()) [[1,2,3],[4,5,6]];
+    compareMatrices m' m'';
 ),
 
-"sum": \(
-    mat.equal
-       (mat.sum (mat.constMatrix 2 { rows = 3, columns = 4 })
-                (mat.constMatrix 1 { rows = 3, columns = 4 }))
-       (mat.constMatrix 3 { rows = 3, columns = 4 })
+"flipped-empty": \(
+    m = constMatrix 2 { rows = 0, columns = 4 };
+    compareMatrices (mat.flipped m) (mat.flipped (constMatrix 0 { rows = 0, columns = 0 }));
 ),
 
-"sumFail": \(
+"scaled-\(name)": \(
+    compareMatrices
+       (mat.scaled 0.5 (constMatrix 2 { rows = 3, columns = 4 }))
+       (constMatrix 1 { rows = 3, columns = 4 }) and
+       compareMatrices
+          (mat.scaled 0.5 (constMatrix (-3) { rows = 3, columns = 4 }))
+          (constMatrix (-1.5) { rows = 3, columns = 4 }) and
+       compareMatrices
+          (mat.scaled 0.5 (constMatrix 2 { rows = 0, columns = 2 }))
+          (constMatrix 5 { rows = 0, columns = 0 })
+),
+
+"sum-\(name)": \(
+    compareMatrices
+       (mat.sum (constMatrix 2 { rows = 3, columns = 4 })
+                (constMatrix 1 { rows = 3, columns = 4 }))
+       (constMatrix 3 { rows = 3, columns = 4 })
+),
+
+"sumFail-\(name)": \(
     try 
-        \() (mat.sum (mat.constMatrix 2 { rows = 3, columns = 4 })
-                     (mat.constMatrix 1 { rows = 3, columns = 5 }));
+      \() (mat.sum (constMatrix 2 { rows = 3, columns = 4 })
+                   (constMatrix 1 { rows = 3, columns = 5 }));
         false;
     catch FailureException e:
         true
     yrt
 ),
 
-"product": \(
-    mat.equal
-       (mat.product (mat.constMatrix 2 { rows = 4, columns = 2 })
-                    (mat.constMatrix 3 { rows = 2, columns = 3 }))
-       (mat.constMatrix 12 { rows = 4, columns = 3 })
+"product-\(name)": \(
+    compareMatrices
+       (mat.product (constMatrix 2 { rows = 4, columns = 2 })
+                    (constMatrix 3 { rows = 2, columns = 3 }))
+       (constMatrix 12 { rows = 4, columns = 3 }) and
+        compareMatrices
+           (mat.product (newMatrix (ColumnMajor ()) [[1,4],[2,5],[3,6]])
+                        (newMatrix (ColumnMajor ()) [[7,9,11],[8,10,12]]))
+           (newMatrix (ColumnMajor ()) [[58,139],[64,154]])
 ),
 
-] is hash<string, () -> boolean>;
+"productFail-\(name)": \(
+    try
+      \() (mat.product (constMatrix 2 { rows = 4, columns = 2 })
+                       (constMatrix 3 { rows = 3, columns = 2 }));
+        false;
+    catch FailureException e:
+        true
+    yrt
+),
+
+]);
+
+colhash = makeTests "column-major" id;
+rowhash = makeTests "row-major" mat.flipped;
+
+all = [:];
+for (keys colhash) do k: all[k] := colhash[k] done;
+for (keys rowhash) do k: all[k] := rowhash[k] done;
+
+all is hash<string, () -> boolean>;
+
 

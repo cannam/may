@@ -13,6 +13,7 @@ module yetilab.matrix.matrix;
 
 vec = load yetilab.block.fvector;
 block = load yetilab.block.block;
+bf = load yetilab.block.blockfuncs;
 
 make d = {
     get data () = d,
@@ -112,7 +113,8 @@ transposed m =
 //again). Is there a word for this?
 flipped m =
     if m.isRowMajor? then id else transposed fi
-       (generate do row col: m.getAt col row done m.size);
+       (generate do row col: m.getAt col row done
+           { rows = m.size.columns, columns = m.size.rows });
 
 newMatrix type data is RowMajor () | ColumnMajor () -> list?<list?<number>> -> 'a =
    (tagger = case type of RowMajor (): RowM; ColumnMajor (): ColM esac;
@@ -143,9 +145,7 @@ product m1 m2 =
     else
     //!!! super-slow!
         generate do row col:
-            r = block.list (m1.getRow row);
-            c = block.list (m2.getColumn col);
-            sum (map2 (*) r c);
+            bf.sum (bf.multiply (m1.getRow row) (m2.getColumn col))
         done { rows = m1.size.rows, columns = m2.size.columns }
     fi;
 
