@@ -3,13 +3,11 @@ module yetilab.matrix.matrix;
 
 // A matrix is an array of fvectors (i.e. primitive double[]s).
 
-// A matrix can be either RowMajor, akin to a C multidimensional array
-// in which each row is a separate fvector, or ColumnMajor, akin to a
-// FORTAN multidimensional array in which each column is a separate
-// fvector. The default is ColumnMajor. Storage order is an efficiency
-// concern only, all operations behave identically regardless.  (The
-// transpose function just switches the row/column order without
-// moving the elements.)
+// A matrix can be stored in either column-major (the default) or
+// row-major format. Storage order is an efficiency concern only:
+// every API function operating on matrix objects will return the same
+// result regardless of storage order.  (The transpose function just
+// switches the row/column order without moving the elements.)
 
 vec = load yetilab.block.fvector;
 block = load yetilab.block.block;
@@ -147,7 +145,6 @@ product m1 m2 =
     if m1.size.columns != m2.size.rows
     then failWith "Matrix dimensions incompatible: \(m1.size), \(m2.size) (\(m1.size.columns != m2.size.rows)";
     else
-    //!!! super-slow!
         generate do row col:
             bf.sum (bf.multiply (m1.getRow row) (m2.getColumn col))
         done { rows = m1.size.rows, columns = m2.size.columns }
