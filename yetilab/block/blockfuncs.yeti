@@ -2,9 +2,15 @@
 module yetilab.block.blockfuncs;
 
 b = load yetilab.block.block;
+vec = load yetilab.block.fvector;
 
-sum' =
-    sum . b.list;
+sum' bl =
+   (v = b.data bl;
+    tot = new double[1];
+    for [0..length v - 1] do i:
+        tot[0] := tot[0] + v[i]
+    done;
+    tot[0]);
 
 mean bl =
     case b.length bl of
@@ -13,7 +19,14 @@ mean bl =
     esac;
 
 multiply b1 b2 =
-    b.fromList (map2 (*) (b.list b1) (b.list b2));
+   (v1 = b.data b1;
+    v2 = b.data b2;
+    len = if length v1 < length v2 then length v1 else length v2 fi;
+    bb = vec.zeros len;
+    for [0..len-1] do i:
+        bb[i] := v1[i] * v2[i]
+    done;
+    b.block bb);
 
 divideBy n bl =
     b.fromList (map (/ n) (b.list bl));
