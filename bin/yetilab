@@ -1,6 +1,6 @@
 #!/bin/sh
 MYDIR=`dirname $0`
-YETII_DIR=../yetii
+AYR_DIR=../ayr
 YETI_LIBDIR=${YETI_LIBDIR:=../yeti}
 if [ ! -d "$YETI_LIBDIR" ]; then 
     YETI_LIBDIR=../other/yeti
@@ -9,8 +9,8 @@ JVAMP_DIR=${JVAMP_DIR:=../jvamp}
 YERTLE_DIR=${YERTLE_DIR:=../yertle}
 
 YETI_MODULE_SOURCE_PATH=${YETI_LIBDIR}/modules \
-    LD_LIBRARY_PATH=$YETII_DIR:$JVAMP_DIR:$LD_LIBRARY_PATH \
+    LD_LIBRARY_PATH=$AYR_DIR:$JVAMP_DIR:$LD_LIBRARY_PATH \
     $JAVA_HOME/bin/java -classpath \
-        $YETII_DIR/yetii.jar:$YETI_LIBDIR/yeti.jar:$YETI_LIBDIR/yeti-lib.jar:$YETII_DIR/libreadline-java.jar:$JVAMP_DIR/jvamp.jar:$YERTLE_DIR/yertle.jar:./jtransforms-2.4.jar \
-    com.particularprograms.yetii "$@"
+        $AYR_DIR/ayr.jar:$YETI_LIBDIR/yeti.jar:$YETI_LIBDIR/yeti-lib.jar:$AYR_DIR/libreadline-java.jar:$JVAMP_DIR/jvamp.jar:$YERTLE_DIR/yertle.jar:./jtransforms-2.4.jar \
+    com.particularprograms.ayr "$@"
 

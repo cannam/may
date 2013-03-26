@@ -1,6 +1,7 @@
 module yetilab.vamp.vamppost;
 
 fmat = load yetilab.block.fmatrix;
+bl = load yetilab.block.block;
 
 fillOneSamplePerStep config features =
    (fill' n pending features =
@@ -50,7 +51,8 @@ structureGrid binCount features =
     else
         fmat.generate
             do row col:
-                features[col].values[row];
+                v = bl.data features[col].values;
+                v[row];
             done binCount (length features);
     fi;
 

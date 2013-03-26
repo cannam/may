@@ -10,7 +10,7 @@ import java.lang: UnsatisfiedLinkError;
 
 import java.util: Map, List;
 
-block = load yetilab.block.block;
+bl = load yetilab.block.block;
 fr = load yetilab.stream.framer;
 af = load yetilab.stream.audiofile;
 vamprdf = load yetilab.vamp.vamprdf;
@@ -22,7 +22,7 @@ realTime r is ~RealTime -> number = r#sec() + (r#nsec() / 1000000000);
 feature f is ~Feature -> 'a = {
     timestamp = if f#hasTimestamp then Time (realTime f#timestamp) else Untimed () fi,
     duration = if f#hasDuration then Time (realTime f#duration) else Untimed () fi,
-    values = f#values,
+    values = bl.fromFloats f#values,
     label = f#label,
     };
 
@@ -185,7 +185,7 @@ plugin key p is string -> ~Plugin -> 'a =
         None (): map (outputDescriptor (None ())) p#getOutputDescriptors();
         esac,
     process blocks time is 'a -> ~RealTime -> 'b = 
-        featureSet p#process((map block.floats blocks) as ~float[][], 0, time),
+        featureSet p#process((map bl.floats blocks) as ~float[][], 0, time),
     getRemainingFeatures () = featureSet p#getRemainingFeatures(),
     dispose () = p#dispose(),
     });
@@ -209,6 +209,10 @@ loadPlugin rate key =
         Error "Failed to load Vamp plugin with key \(key)"
     yrt;
 
+//!!! bring block typedef into scope -- this shouldn't be necessary,
+//but see comment in processed below
+load yetilab.block.block;
+
 processed { p, sampleRate, hop } frames count 
     // I don't know why this type declaration is necessary. Without
     // it, yeti records the return type as 'a and can't do anything
@@ -219,7 +223,7 @@ processed { p, sampleRate, hop } frames count
                   list<{ timestamp is Time number | Untimed (), 
                          duration  is Time number | Untimed (),
                          label is string,
-                         values is ~float[]
+                         values is block
                        }>>> =
     case frames of
     frame::rest:
@@ -265,7 +269,7 @@ processWith key p outputNo stream =
         returnErrorFrom p stream "Failed to initialise plugin \(key) with channels = \(channels), blockSize = \(blockSize), stepSize = \(stepSize)";
     fi);
 
-process key output stream =
+processStream key output stream =
     case loadPlugin stream.sampleRate key of
     OK p:
         outputNo = outputNumberByName p output;
@@ -273,14 +277,14 @@ process key output stream =
             processWith key p outputNo stream
         else
             outputs = strJoin ", " (map (.identifier) p.outputs);
-            returnErrorFrom p stream "Plugin \(key) has no output named \(output) (outputs are \(outputs))"
+            returnErrorFrom p stream "Plugin \(key) has no output named \(output) (outputs are: \(outputs))"
         fi;
     Error e: Error e;
     esac;
 
 processFile key output filename = 
     case af.open filename of
-    Stream s: process key output s;
+    Stream s: processStream key output s;
     Error e: Error e;
     esac;
 
@@ -289,7 +293,7 @@ get pluginPath = getPluginPath,
 get pluginKeys = listPlugins,
 loadPlugin,
 categoryOf,
-process,
+processStream,
 processFile,
 }
 
