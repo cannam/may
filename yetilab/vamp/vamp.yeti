@@ -242,8 +242,14 @@ converted { p, sampleRate, hop } outputNo fl =
 returnErrorFrom p stream text = (p.dispose (); stream.close (); Error text);
 
 processWith key p outputNo stream =
-   (blockSize = p.preferredBlockSize;
-    stepSize = p.preferredStepSize;
+   (blockSize =
+        if p.preferredBlockSize == 0 then 2048
+        else p.preferredBlockSize fi;
+    stepSize =
+        if p.preferredStepSize == 0 then
+            if p.inputDomain == FrequencyDomain () then blockSize / 2
+            else blockSize fi;
+        else p.preferredStepSize fi;
     channels = 1;
     params = {
         p, sampleRate = stream.sampleRate, channels = 1,
