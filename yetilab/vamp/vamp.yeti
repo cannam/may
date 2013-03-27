@@ -14,6 +14,7 @@ bl = load yetilab.block.block;
 fr = load yetilab.stream.framer;
 af = load yetilab.stream.audiofile;
 vamprdf = load yetilab.vamp.vamprdf;
+vamppost = load yetilab.vamp.vamppost;
 
 store = load yertle.store;
 
@@ -294,6 +295,12 @@ processFile key output filename =
     Error e: Error e;
     esac;
 
+processStreamStructured key output filename =
+    vamppost.postprocess (processStream key output filename);
+
+processFileStructured key output filename =
+    vamppost.postprocess (processFile key output filename);
+
 {
 get pluginPath = getPluginPath,
 get pluginKeys = listPlugins,
@@ -301,5 +308,7 @@ loadPlugin,
 categoryOf,
 processStream,
 processFile,
+processStreamStructured,
+processFileStructured
 }
 

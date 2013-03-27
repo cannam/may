@@ -46,12 +46,64 @@ fillTimestamps { output, config, features } =
     esac;
 
 structureGrid binCount features =
+//!!! need to return grid resolution as well -- or will caller read that from output elsewhere if they need it?
     if empty? features then
         mat.zeroMatrix { rows = binCount, columns = 0 };
     else
         mat.newMatrix (ColumnMajor ())
            (map do f: list (bl.data f.values) done features);
     fi;
+
+timeOf f =
+    case f.timestamp of
+    Time t: t;
+    _: failWith "Internal error: timestamps not filled";
+    esac;
+
+structureCurve features =
+//!!! need to return sample type as well -- or will caller read that from output elsewhere if they need it?
+    map do f: {
+        time = timeOf f,
+        value = (bl.data f.values)[0],
+        label = f.label
+    } done features;
+
+structureInstants features =
+    map do f: {
+        time = timeOf f,
+        label = f.label
+    } done features;
+
+structureSegmentation features =
+    map do f: {
+        time = timeOf f,
+        type = (bl.data f.values)[0],
+        label = f.label
+    } done features;
+
+structureNotes features =
+    map do f: {
+        time = timeOf f,
+        duration = f.duration,
+        pitch = (bl.data f.values)[0], //!!! no, might be empty
+        otherValues = array (tail (bl.list f.values)), //!!! no, might be empty
+        label = f.label
+    } done features;
+
+structureWithDuration features =
+    map do f: {
+        time = timeOf f,
+        duration = f.duration,
+        values = array (bl.list f.values),
+        label = f.label
+    } done features;
+
+structureWithoutDuration features =
+    map do f: {
+        time = timeOf f,
+        values = array (bl.list f.values),
+        label = f.label
+    } done features;
 
 structure data =
    (type = data.output.inferredStructure;
@@ -67,19 +119,22 @@ structure data =
         esac;
     case type of
     Curve ():               // No duration, one value
-        Curve features;
+        Curve (structureCurve features);
     Grid ():                // No duration, >1 value, not variable rate
         Grid (structureGrid binCount features);
     Instants ():            // Zero-valued features
-        Instants features;
+        Instants (structureInstants features);
     Notes ():               // Duration, at least one value (pitch or freq)
-        Notes features;
+        Notes (structureNotes features);
     Regions ():             // Duration, zero or more values
-        Regions features;
+        Regions (structureWithDuration features);
     Segmentation ():        // No duration, one value, segment type in RDF
-        Segmentation features;
+        Segmentation (structureSegmentation features);
     Unknown ():             // Other
-        Unknown features;
+        Unknown
+           ((if data.output.hasDuration then structureWithDuration
+             else structureWithoutDuration
+             fi) features);
     esac);
 
 postprocess data =
@@ -91,7 +146,6 @@ postprocess data =
     esac;
 
 {
-fillTimestamps,
 postprocess
 }
 
