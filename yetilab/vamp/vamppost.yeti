@@ -1,6 +1,6 @@
 module yetilab.vamp.vamppost;
 
-fmat = load yetilab.block.fmatrix;
+mat = load yetilab.matrix.matrix;
 bl = load yetilab.block.block;
 
 fillOneSamplePerStep config features =
@@ -47,13 +47,10 @@ fillTimestamps { output, config, features } =
 
 structureGrid binCount features =
     if empty? features then
-        fmat.constMatrix binCount 0 0;
+        mat.zeroMatrix { rows = binCount, columns = 0 };
     else
-        fmat.generate
-            do row col:
-                v = bl.data features[col].values;
-                v[row];
-            done binCount (length features);
+        mat.newMatrix (ColumnMajor ())
+           (map do f: list (bl.data f.values) done features);
     fi;
 
 structure data =
@@ -72,7 +69,7 @@ structure data =
     Curve ():               // No duration, one value
         Curve features;
     Grid ():                // No duration, >1 value, not variable rate
-        Grid (structureGrid binCount (array features));
+        Grid (structureGrid binCount features);
     Instants ():            // Zero-valued features
         Instants features;
     Notes ():               // Duration, at least one value (pitch or freq)
