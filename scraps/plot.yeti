@@ -1,0 +1,16 @@
+program plot;
+import org.jzy3d.chart: Chart;
+c = new Chart();
+import org.jzy3d.maths: Coord3d;
+points = new Coord3d[1000];
+r () = Math#random() - 0.5; for [0..999] do i: points[i] := new Coord3d(r(),r(),r()) done;
+import org.jzy3d.plot3d.primitives: MultiColorScatter;
+import org.jzy3d.colors.colormaps: ColorMapRainbow;
+import org.jzy3d.colors: ColorMapper;
+m = new MultiColorScatter(points, new ColorMapper(new ColorMapRainbow (), -0.5, 0.5));
+import org.jzy3d.colors: Color;
+c#getAxeLayout()#setMainColor(Color#WHITE);
+c#getView()#setBackgroundColor(Color#BLACK);
+c#getScene()#add(m);
+import org.jzy3d.chart: ChartLauncher;
+ChartLauncher#openChart(c);

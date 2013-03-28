@@ -9,8 +9,8 @@ JVAMP_DIR=${JVAMP_DIR:=../jvamp}
 YERTLE_DIR=${YERTLE_DIR:=../yertle}
 
 YETI_MODULE_SOURCE_PATH=${YETI_LIBDIR}/modules \
-    LD_LIBRARY_PATH=$AYR_DIR:$JVAMP_DIR:$LD_LIBRARY_PATH \
+    LD_LIBRARY_PATH=$AYR_DIR:$JVAMP_DIR:./native/linux32:$LD_LIBRARY_PATH \
     $JAVA_HOME/bin/java -classpath \
-        $AYR_DIR/ayr.jar:$YETI_LIBDIR/yeti.jar:$YETI_LIBDIR/yeti-lib.jar:$AYR_DIR/libreadline-java.jar:$JVAMP_DIR/jvamp.jar:$YERTLE_DIR/yertle.jar:./jtransforms-2.4.jar \
+        $AYR_DIR/ayr.jar:$YETI_LIBDIR/yeti.jar:$YETI_LIBDIR/yeti-lib.jar:$AYR_DIR/libreadline-java.jar:$JVAMP_DIR/jvamp.jar:$YERTLE_DIR/yertle.jar:./jars/jtransforms-2.4.jar:./jars/org.jzy3d-0.9.jar:./jars/jogl2-rc10/jogl-all.jar:./jars/jogl2-rc10/jogl-all-natives-linux-i586.jar:./jars/jogl2-rc10/gluegen.jar:./jars/jogl2-rc10/gluegen-rt.jar:./jars/jogl2-rc10/gluegen-rt-natives-linux-i586.jar:./jars/misc/opencsv-2.1.jar:./jars/misc/org.convexhull.jar:./jars/misc/swt.jar \
     com.particularprograms.ayr "$@"
 
