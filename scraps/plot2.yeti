@@ -1,4 +1,4 @@
-module plot2;
+module scraps.plot2;
 
 import org.jzy3d.plot3d.builder: Mapper;
 import org.jzy3d.maths: Range;
@@ -29,7 +29,7 @@ surface#setFaceDisplayed(true);
 surface#setWireframeDisplayed(false);
 surface#setWireframeColor(Color#BLACK);
 
-chart = new Chart(Quality#Advanced);
+chart = new Chart(Quality#Nicest);
 chart#getScene()#getGraph()#add(surface);
 ChartLauncher#openChart(chart);
 
