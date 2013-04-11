@@ -5,6 +5,10 @@ bl = load yetilab.block.block;
 
 fillOneSamplePerStep config features =
    (fill' n pending features =
+        // For OneSamplePerStep features, the time is incremented
+        // between process blocks (a process block is one element in
+        // the features list, which is then expanded into the complete
+        // pending list)
         case pending of
         feature::rest:
             stamped = feature with
@@ -20,6 +24,10 @@ fillOneSamplePerStep config features =
 fillFixedSampleRate config rate features =
    (eps = 0.0001;
     fill' n pending features =
+        // For FixedSampleRate features without explicit timestamps,
+        // the time is incremented from the previous *feature* not the
+        // previous process block (i.e. between elements in the
+        // pending list)
         case pending of
         feature::rest:
             n = case feature.timestamp of
@@ -146,6 +154,7 @@ postprocess data =
     esac;
 
 {
+fillTimestamps,
 postprocess
 }
 
