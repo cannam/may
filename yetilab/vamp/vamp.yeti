@@ -44,17 +44,25 @@ featureSet fs is ~Map -> 'a =
     for kk do k: s[numberOf k] := featureList fs#get(k) done;
     s);
 
-getStandardStore =
-   (s = store.newRdfStore ();
-    var loaded = false;
-    \(synchronized s do:
-          if not loaded then
-            vamprdf.loadSystemVampRdf s;
-            loaded := true
-          fi;
-          s
-      done)
-    );
+stores = [:];
+
+getSingletonStoreFor loader =
+    synchronized stores do:
+        if loader in stores then
+            stores[loader]
+        else
+            s = store.newRdfStore ();
+            loader s;
+            stores[loader] := s;
+            s;
+        fi
+    done;
+
+getSystemStore () =
+    getSingletonStoreFor vamprdf.loadSystemVampRdf;
+
+getGlobalStore () = 
+    getSingletonStoreFor vamprdf.loadGlobalVampRdf;
 
 getPluginPath () =
    (try
@@ -71,6 +79,15 @@ listPlugins () =
         eprintln "Warning: Unable to obtain plugin list:\n\(e)";
         [];
     yrt);
+
+getKnownPluginKeys () =
+   (store = getGlobalStore ();
+    nodes = vamprdf.allPluginNodes store;
+    // ordering is random out of the store; might as well sort
+    sort (map do n: (vamprdf.pluginDataByNode store n).pluginKey done nodes));
+
+getDataForKnownPlugin key =
+    vamprdf.pluginDataByKey (getGlobalStore ()) key;
    
 categoryOf key =
     list PluginLoader#getInstance()#getPluginCategory(key);
@@ -105,7 +122,7 @@ sampleType t rate is ~OutputDescriptor$SampleType -> number -> 'a =
 
 structureOf rdfOutputData od is 'a -> ~OutputDescriptor -> 'b = 
    (computes = case rdfOutputData of Some d: d.computes; None (): Unknown () esac;
-    s = getStandardStore ();
+    s = getSystemStore ();
     noteIRI = case s.expand "af:Note" of IRI iri: iri; _: "" esac;
     if od#hasFixedBinCount and od#binCount == 0 then
         Instants ();
@@ -153,7 +170,7 @@ outputDescriptor rdfOutputData od is 'a -> ~OutputDescriptor -> 'b = {
     };
 
 plugin key p is string -> ~Plugin -> 'a =
-   (rdfData = vamprdf.pluginDataByKey (getStandardStore ()) key;
+   (rdfData = vamprdf.pluginDataByKey (getSystemStore ()) key;
     {
     plugin = p,
     key,
@@ -309,6 +326,8 @@ categoryOf,
 processStream,
 processFile,
 processStreamStructured,
-processFileStructured
+processFileStructured,
+getKnownPluginKeys,
+getDataForKnownPlugin,
 }
 

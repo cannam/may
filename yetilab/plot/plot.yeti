@@ -38,7 +38,7 @@ plot matrix =
     xrange = new Range(1, size.columns - 1);
     yrange = new Range(1, size.rows - 1);
     grid = new OrthonormalGrid(xrange, size.columns, yrange, size.rows);
-    surface = Builder#buildOrthonormal(grid, mapper);
+    surface = Builder#buildOrthonormalBig(grid, mapper); //??? big?
     surface#setFaceDisplayed(true);
     surface#setWireframeDisplayed(true);
     surface#setWireframeColor(Color#BLACK);
@@ -46,5 +46,13 @@ plot matrix =
     chart#getScene()#getGraph()#add(surface);
     ChartLauncher#openChart(chart));
 
-{ plot }
+plotStructure structure =
+    case structure of
+    Grid matrix:
+        plot matrix;
+    //!!!
+    _: failWith "Cannot plot this structure (only grids implemented so far)";
+    esac;
+
+{ plot, plotStructure }
 
