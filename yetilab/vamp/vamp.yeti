@@ -257,7 +257,7 @@ processed { p, sampleRate, hop } frames count
 converted { p, sampleRate, hop } outputNo fl =
     map (featuresFromSet outputNo) fl;
 
-returnErrorFrom p stream text = (p.dispose (); stream.close (); Error text);
+returnErrorFrom p stream text = (p.dispose (); stream.close (); failWith text);
 
 processWith key p outputNo stream =
    (blockSize =
@@ -274,7 +274,7 @@ processWith key p outputNo stream =
         framesize = blockSize, blockSize, hop = stepSize
     };
     if p.initialise params then
-        OK {
+        {
             key = key,
             output = p.outputs[outputNo],
             parameters = mapIntoHash id p.parameterValue
@@ -303,13 +303,13 @@ processStream key output stream =
             outputs = strJoin ", " (map (.identifier) p.outputs);
             returnErrorFrom p stream "Plugin \(key) has no output named \(output) (outputs are: \(outputs))"
         fi;
-    Error e: Error e;
+    Error e: failWith e;
     esac;
 
 processFile key output filename = 
     case af.open filename of
     Stream s: processStream key output s;
-    Error e: Error e;
+    Error e: failWith e;
     esac;
 
 processStreamStructured key output filename =

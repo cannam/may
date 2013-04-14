@@ -145,17 +145,9 @@ structure data =
              fi) features);
     esac);
 
-postprocess data =
-    case data of
-    OK data:
-        structure data;
-    Error e:
-        Error e;
-    esac;
-
 {
 fillTimestamps,
-postprocess
+postprocess = structure
 }
 
 

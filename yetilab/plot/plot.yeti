@@ -39,10 +39,10 @@ plot matrix =
     yrange = new Range(1, size.rows - 1);
     grid = new OrthonormalGrid(xrange, size.columns, yrange, size.rows);
     surface = Builder#buildOrthonormalBig(grid, mapper); //??? big?
-    surface#setFaceDisplayed(true);
+    surface#setFaceDisplayed(false);
     surface#setWireframeDisplayed(true);
     surface#setWireframeColor(Color#BLACK);
-    chart = new Chart(Quality#Nicest);
+    chart = new Chart(Quality#Fastest, "swing");
     chart#getScene()#getGraph()#add(surface);
     ChartLauncher#openChart(chart));
 
