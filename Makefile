@@ -6,7 +6,7 @@ test/.run:	yetilab.jar $(TEST_SOURCES)
 	@grep -qv passed $@.out || touch $@
 
 yetilab.jar:	$(SOURCES)
-	./bin/yc -d classes -doc doc $^
+	./bin/yc --no-yetilab-jar -d classes -doc doc $^
 	jar cf $@ -C classes yetilab 
 
 clean:	
