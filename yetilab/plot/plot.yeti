@@ -38,11 +38,13 @@ plot matrix =
     xrange = new Range(1, size.columns - 1);
     yrange = new Range(1, size.rows - 1);
     grid = new OrthonormalGrid(xrange, size.columns, yrange, size.rows);
+    println "Matrix size: \(size)";
     surface = Builder#buildOrthonormalBig(grid, mapper); //??? big?
     surface#setFaceDisplayed(false);
     surface#setWireframeDisplayed(true);
     surface#setWireframeColor(Color#BLACK);
-    chart = new Chart(Quality#Fastest, "swing");
+//    chart = new Chart(Quality#Fastest, "swing");
+    chart = new Chart(Quality#Nicest);
     chart#getScene()#getGraph()#add(surface);
     ChartLauncher#openChart(chart));
 

@@ -13,7 +13,7 @@ import java.nio: ByteBuffer, ByteOrder;
 
 playBlock line b is ~SourceDataLine -> 'a -> () =
    (len = block.length b;
-    samples = block.unblock b;
+    samples = block.data b;
     nb = len * 2;
     bytes = new byte[nb];
     bb = ByteBuffer#wrap(bytes, 0, nb);
@@ -47,7 +47,11 @@ playStream stream =
     line.close();
     stream.close());
 
-playFile filename = playStream (af.open filename);
+playFile filename = 
+    case af.open filename of
+    Stream str: playStream str;
+    Error e: failWith e
+    esac;
 
 {
     open, play, playStream, playFile,
