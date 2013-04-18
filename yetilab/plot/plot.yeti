@@ -1,15 +1,17 @@
 module yetilab.plot.plot;
 
 import org.jzy3d.plot3d.builder: Mapper;
-import org.jzy3d.maths: Range;
-import org.jzy3d.plot3d.primitives: Shape;
+import org.jzy3d.maths: Range, Coord3d;
+import org.jzy3d.plot3d.primitives: Shape, HistogramBar;
+import org.jzy3d.plot3d.primitives.axes.layout.providers: StaticTickProvider;
+import org.jzy3d.plot3d.primitives.axes.layout.renderers: TickLabelMap;
 import org.jzy3d.chart: Chart, ChartLauncher;
 import org.jzy3d.plot3d.builder: Builder;
 import org.jzy3d.plot3d.builder.concrete: OrthonormalGrid;
 import org.jzy3d.colors.colormaps: ColorMapRainbow;
-import org.jzy3d.colors: ColorMapper;
-import org.jzy3d.colors: Color;
+import org.jzy3d.colors: ColorMapper, Color;
 import org.jzy3d.plot3d.rendering.canvas: Quality;
+import org.jzy3d.plot3d.rendering.view.modes: ViewPositionMode;
 
 newMatrixMapper matrix =
    (class MMapper extends Mapper
@@ -37,8 +39,8 @@ newMapper mapFunction =
 plotMatrix matrix =
    (mapper = newMatrixMapper matrix;
     size = matrix.size;
-    xrange = new Range(1, size.columns - 1);
-    yrange = new Range(1, size.rows - 1);
+    xrange = new Range(0, size.columns - 1);
+    yrange = new Range(0, size.rows - 1);
     grid = new OrthonormalGrid(xrange, size.columns, yrange, size.rows);
     println "Matrix size: \(size)";
     surface = Builder#buildOrthonormal(grid, mapper); //??? big?
@@ -52,6 +54,33 @@ plotMatrix matrix =
     ChartLauncher#openChart(chart);
     ());
 
+plotBarChart keys unit values =
+   (chart = new Chart(Quality#Nicest);
+    var n = 0;
+    scene = chart#getScene();
+    ticks = new float[length keys];
+    tickLabels = new TickLabelMap();
+    for keys do k:
+        bar = new HistogramBar();
+        bar#setData(new Coord3d(n, 0, 0), values[k], 0.45, Color#random());
+        bar#setWireframeDisplayed(false);
+        scene#add(bar);
+        ticks[n] := n;
+        tickLabels#register(n, k);
+        n := n + 1;
+    done;
+    chart#getView()#setViewPoint(new Coord3d(pi/2, 0, 0));
+    axes = chart#getAxeLayout();
+    axes#setXAxeLabelDisplayed(false);
+    axes#setYAxeLabelDisplayed(false);
+    axes#setZAxeLabelDisplayed(true);
+    axes#setZAxeLabel(unit);
+    axes#setXTickProvider(new StaticTickProvider(ticks));
+    axes#setXTickRenderer(tickLabels);
+    axes#setYTickLabelDisplayed(false);
+    ChartLauncher#openChart(chart);
+    ());
+
 plotStructure structure =
     case structure of
     Grid matrix:
@@ -61,7 +90,11 @@ plotStructure structure =
     esac;
 
 {
+    newMatrixMapper,
+    newMatrixLogMapper,
+    newMapper,
     plotMatrix, 
-    plotStructure
+    plotStructure,
+    plotBarChart
 }
 
