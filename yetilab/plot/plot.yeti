@@ -14,7 +14,9 @@ import org.jzy3d.plot3d.rendering.canvas: Quality;
 newMatrixMapper matrix =
    (class MMapper extends Mapper
         double f(double x, double y)
-            matrix.getAt y x
+            result = matrix.getAt y x;
+            println "f(\(x),\(y)) -> \(result)";
+            result
     end;
     new MMapper());
 
@@ -33,13 +35,14 @@ newMapper mapFunction =
     new FMapper());
 
 plotMatrix matrix =
-   (mapper = newMatrixLogMapper matrix;
+   (mapper = newMatrixMapper matrix;
     size = matrix.size;
     xrange = new Range(1, size.columns - 1);
     yrange = new Range(1, size.rows - 1);
     grid = new OrthonormalGrid(xrange, size.columns, yrange, size.rows);
     println "Matrix size: \(size)";
-    surface = Builder#buildOrthonormalBig(grid, mapper); //??? big?
+    surface = Builder#buildOrthonormal(grid, mapper); //??? big?
+    println "Z Bounds: \(surface#getBounds()#getZmin()) -> \(surface#getBounds()#getZmax())";
     surface#setFaceDisplayed(false);
     surface#setWireframeDisplayed(true);
     surface#setWireframeColor(Color#BLACK);

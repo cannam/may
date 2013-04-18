@@ -29,6 +29,8 @@ surface#setFaceDisplayed(true);
 surface#setWireframeDisplayed(false);
 surface#setWireframeColor(Color#BLACK);
 
+println "Z Bounds: \(surface#getBounds()#getZmin()) -> \(surface#getBounds()#getZmax())";
+
 chart = new Chart(Quality#Nicest);
 chart#getScene()#getGraph()#add(surface);
 ChartLauncher#openChart(chart);
