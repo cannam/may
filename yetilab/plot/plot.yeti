@@ -32,7 +32,7 @@ newMapper mapFunction =
     end;
     new FMapper());
 
-plot matrix =
+plotMatrix matrix =
    (mapper = newMatrixLogMapper matrix;
     size = matrix.size;
     xrange = new Range(1, size.columns - 1);
@@ -46,15 +46,19 @@ plot matrix =
 //    chart = new Chart(Quality#Fastest, "swing");
     chart = new Chart(Quality#Nicest);
     chart#getScene()#getGraph()#add(surface);
-    ChartLauncher#openChart(chart));
+    ChartLauncher#openChart(chart);
+    ());
 
 plotStructure structure =
     case structure of
     Grid matrix:
-        plot matrix;
+        plotMatrix matrix;
     //!!!
     _: failWith "Cannot plot this structure (only grids implemented so far)";
     esac;
 
-{ plot, plotStructure }
+{
+    plotMatrix, 
+    plotStructure
+}
 
