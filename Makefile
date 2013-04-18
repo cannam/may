@@ -1,7 +1,7 @@
 TEST_SOURCES := $(wildcard yetilab/test/*.yeti yetilab/*/test/*.yeti yetilab/*/*/test/*.yeti)
 SOURCES := $(filter-out $(TESTS), $(wildcard yetilab/*.yeti yetilab/*/*.yeti yetilab/*/*/*.yeti))
 
-test/.run:	yetilab.jar $(TEST_SOURCES)
+bin/.testrun:	yetilab.jar $(TEST_SOURCES)
 	./bin/yc yetilab/test/all.yeti | tee $@.out
 	@grep -qv passed $@.out || touch $@
 
@@ -10,7 +10,7 @@ yetilab.jar:	$(SOURCES)
 	jar cf $@ -C classes yetilab 
 
 clean:	
-	rm -rf com test/.run
+	rm -rf com bin/.testrun
 
 distclean:	clean
 	rm -f yetilab.jar
