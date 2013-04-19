@@ -2,7 +2,7 @@ module yetilab.plot.plot;
 
 import org.jzy3d.plot3d.builder: Mapper;
 import org.jzy3d.maths: Range, Coord3d;
-import org.jzy3d.plot3d.primitives: Shape, HistogramBar;
+import org.jzy3d.plot3d.primitives: Shape, HistogramBar, FlatLine2d;
 import org.jzy3d.plot3d.primitives.axes.layout.providers: StaticTickProvider;
 import org.jzy3d.plot3d.primitives.axes.layout.renderers: TickLabelMap;
 import org.jzy3d.chart: Chart, ChartLauncher;
@@ -81,6 +81,41 @@ plotBarChart keys unit values =
     ChartLauncher#openChart(chart);
     ());
 
+plotLines xkeys unit values =
+   (chart = new Chart(Quality#Nicest);
+    scene = chart#getScene();
+    keys = keys values;
+    n = length xkeys;
+    var z = 0;
+    for keys do k:
+        v = values[k];
+        x = new float[n];
+        y = new float[n];
+        var i = 0;
+        for xkeys do xk:
+            x[i] := i;
+            y[i] := if xk in v then v[xk] else 0 fi;
+            i := i + 1;
+        done;
+        line = new FlatLine2d(x, y, z);
+        line#setWireframeDisplayed(true);
+        line#setWireframeColor(Color#random());
+        line#setWireframeWidth(2);
+        line#setFaceDisplayed(false);
+        scene#add(line);
+        z := z + 1;
+    done;
+    chart#getView()#setViewPoint(new Coord3d(0, 0, 0));
+    axes = chart#getAxeLayout();
+    axes#setXAxeLabelDisplayed(false);
+    axes#setYAxeLabelDisplayed(false);
+    axes#setZAxeLabelDisplayed(true);
+    axes#setZAxeLabel(unit);
+    axes#setYTickLabelDisplayed(false);
+    ChartLauncher#openChart(chart);
+    ());
+
+
 plotStructure structure =
     case structure of
     Grid matrix:
@@ -94,7 +129,8 @@ plotStructure structure =
     newMatrixLogMapper,
     newMapper,
     plotMatrix, 
+    plotBarChart,
+    plotLines,
     plotStructure,
-    plotBarChart
 }
 
