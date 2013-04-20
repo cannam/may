@@ -2,7 +2,7 @@ module yetilab.plot.plot;
 
 import org.jzy3d.plot3d.builder: Mapper;
 import org.jzy3d.maths: Range, Coord3d;
-import org.jzy3d.plot3d.primitives: Shape, HistogramBar, FlatLine2d;
+import org.jzy3d.plot3d.primitives: Shape, HistogramBar, FlatLine2d, Polygon, Point;
 import org.jzy3d.plot3d.primitives.axes.layout.providers: StaticTickProvider;
 import org.jzy3d.plot3d.primitives.axes.layout.renderers: TickLabelMap;
 import org.jzy3d.chart: Chart, ChartLauncher;
@@ -115,6 +115,50 @@ plotLines xkeys unit values =
     ChartLauncher#openChart(chart);
     ());
 
+stack keys xkeys values =
+   (stacked = mapIntoHash id \(mapIntoHash id \0 xkeys) keys;
+    prev = mapIntoHash id \0 xkeys;
+    for xkeys do xk:
+        for keys do k:
+            value = if xk in values[k] then values[k][xk] else 0 fi;
+            height = prev[xk] + value;
+            stacked[k][xk] := height;
+            prev[xk] := height;
+        done;
+    done;
+    stacked);
+
+plotStacked keys xkeys unit values =
+   (chart = new Chart(Quality#Nicest);
+    scene = chart#getScene();
+    stacked = stack keys xkeys values;
+    var z = 0;
+    for keys do k:
+        heights = stacked[k];
+        poly = new Polygon();
+        poly#setWireframeDisplayed(true);
+        poly#setWireframeColor(Color#random());
+        poly#setFaceDisplayed(true);
+        poly#setColor(Color#random());
+        poly#add(new Point(new Coord3d(0, 0, z)));
+        var x = 0;
+        for xkeys do xk:
+            poly#add(new Point(new Coord3d(x, heights[xk], z)));
+            x := x + 1;
+        done;
+        poly#add(new Point(new Coord3d(x - 1, 0, z)));
+        scene#add(poly);
+        z := z + 1;
+    done;
+    chart#getView()#setViewPoint(new Coord3d(0, 0, 0));
+    axes = chart#getAxeLayout();
+    axes#setXAxeLabelDisplayed(false);
+    axes#setYAxeLabelDisplayed(false);
+    axes#setZAxeLabelDisplayed(true);
+    axes#setZAxeLabel(unit);
+    axes#setYTickLabelDisplayed(false);
+    ChartLauncher#openChart(chart);
+    ());
 
 plotStructure structure =
     case structure of
@@ -131,6 +175,8 @@ plotStructure structure =
     plotMatrix, 
     plotBarChart,
     plotLines,
+    stack,
+    plotStacked,
     plotStructure,
 }
 

@@ -1,0 +1,23 @@
+module yetilab.plot.test.test_plot;
+
+p = load yetilab.plot.plot;
+
+{ compare } = load yetilab.test.test;
+
+[
+
+"stack": \(
+    compare
+       (p.stack
+            [ "Conrad", "Alice", "Bob" ]
+            [ "Jan", "Feb", "Mar" ]
+            [ "Alice":  [ "Jan": 3, "Mar": 2 ],
+              "Bob":    [ "Jan": 0, "Feb": 1, "Mar": 4 ],
+              "Conrad": [ "Feb": 2, "Mar": 1 ] ])
+        [ "Conrad": [ "Jan": 0, "Feb": 2, "Mar": 1 ],
+          "Alice":  [ "Jan": 3, "Feb": 2, "Mar": 3 ],
+          "Bob":    [ "Jan": 3, "Feb": 3, "Mar": 7 ] ]
+),
+
+] is hash<string, () -> boolean>;
+
