@@ -1,6 +1,7 @@
 module yetilab.plot.plot;
 
 import org.jzy3d.plot3d.builder: Mapper;
+import org.jzy3d.plot3d.text.drawable: DrawableTextBillboard, DrawableTextBitmap;
 import org.jzy3d.maths: Range, Coord3d;
 import org.jzy3d.plot3d.primitives: Shape, HistogramBar, FlatLine2d, Polygon, Quad, Point;
 import org.jzy3d.plot3d.primitives.axes.layout.providers: StaticTickProvider;
@@ -129,7 +130,9 @@ stack keys xkeys values =
     stacked);
 
 plotStacked keys xkeys unit values =
-   (chart = new Chart(Quality#Nicest);
+   (quality = Quality#Nicest;
+    quality#setAnimated(false);
+    chart = new Chart(quality);
     scene = chart#getScene();
     stacked = stack keys xkeys values;
     var z = 0;
@@ -147,13 +150,17 @@ plotStacked keys xkeys unit values =
     for keys do k:
         ranges = stacked[k];
         var x = 0;
+        var ty = 0;
         c = Color#random();
         for xkeys do xk:
             rect = newRect x ranges[xk].y0 ranges[xk].y1 z c;
             scene#add(rect);
             x := x + 1;
         done;
+        text = new DrawableTextBitmap(k, new Coord3d(0, z, ty), c);
+        scene#add(text);
         z := z - 1;
+        ty := ty + 10;
     done;
     chart#getView()#setViewPoint(new Coord3d(pi/2, 0, 0));
     axes = chart#getAxeLayout();
