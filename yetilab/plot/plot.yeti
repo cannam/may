@@ -116,12 +116,18 @@ plotLines xkeys unit values =
     ChartLauncher#openChart(chart);
     ());
 
-stack keys xkeys values =
+stack keys xkeys values normalised =
    (stacked = mapIntoHash id \(mapIntoHash id \{ y0 = 0, y1 = 0 } xkeys) keys;
     prev = mapIntoHash id \0 xkeys;
+    valueOf k xk = if xk in values[k] then values[k][xk] else 0 fi;
     for xkeys do xk:
+        total = sum (map do k: valueOf k xk done keys);
         for keys do k:
-            value = if xk in values[k] then values[k][xk] else 0 fi;
+            value =
+                if normalised and total > 0
+                then (valueOf k xk) / total
+                else (valueOf k xk)
+                fi;
             height = prev[xk] + value;
             stacked[k][xk] := { y0 = prev[xk], y1 = height };
             prev[xk] := height;
@@ -129,12 +135,12 @@ stack keys xkeys values =
     done;
     stacked);
 
-plotStacked keys xkeys unit values =
+plotStacked keys xkeys unit values normalised =
    (quality = Quality#Nicest;
     quality#setAnimated(false);
     chart = new Chart(quality);
     scene = chart#getScene();
-    stacked = stack keys xkeys values;
+    stacked = stack keys xkeys values normalised;
     var z = 0;
     newRect x y0 y1 z colour is number -> number -> number -> number -> ~Color -> 'a =
        (poly = new Quad();
@@ -162,7 +168,7 @@ plotStacked keys xkeys unit values =
         z := z - 1;
         ty := ty + 10;
     done;
-    chart#getView()#setViewPoint(new Coord3d(pi/2, 0, 0));
+    chart#getView()#setViewPoint(new Coord3d(-pi/2, 0, 0));
     axes = chart#getAxeLayout();
     axes#setXAxeLabelDisplayed(false);
     axes#setYAxeLabelDisplayed(false);
