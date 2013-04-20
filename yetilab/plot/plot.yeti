@@ -2,7 +2,7 @@ module yetilab.plot.plot;
 
 import org.jzy3d.plot3d.builder: Mapper;
 import org.jzy3d.maths: Range, Coord3d;
-import org.jzy3d.plot3d.primitives: Shape, HistogramBar, FlatLine2d, Polygon, Point;
+import org.jzy3d.plot3d.primitives: Shape, HistogramBar, FlatLine2d, Polygon, Quad, Point;
 import org.jzy3d.plot3d.primitives.axes.layout.providers: StaticTickProvider;
 import org.jzy3d.plot3d.primitives.axes.layout.renderers: TickLabelMap;
 import org.jzy3d.chart: Chart, ChartLauncher;
@@ -133,24 +133,29 @@ plotStacked keys xkeys unit values =
     scene = chart#getScene();
     stacked = stack keys xkeys values;
     var z = 0;
+    newRect x height z colour is number -> number -> number -> ~Color -> 'a =
+       (poly = new Quad();
+        poly#add(new Point(new Coord3d(x + 0.5, z, 0)));
+        poly#add(new Point(new Coord3d(x + 0.5, z, height)));
+        poly#add(new Point(new Coord3d(x - 0.5, z, height)));
+        poly#add(new Point(new Coord3d(x - 0.5, z, 0)));
+        poly#setWireframeDisplayed(true);
+        poly#setWireframeColor(colour);
+        poly#setFaceDisplayed(true);
+        poly#setColor(colour);
+        poly);
     for keys do k:
         heights = stacked[k];
-        poly = new Polygon();
-        poly#setWireframeDisplayed(true);
-        poly#setWireframeColor(Color#random());
-        poly#setFaceDisplayed(true);
-        poly#setColor(Color#random());
-        poly#add(new Point(new Coord3d(0, 0, z)));
         var x = 0;
+        c = Color#random();
         for xkeys do xk:
-            poly#add(new Point(new Coord3d(x, heights[xk], z)));
+            poly = newRect x heights[xk] z c;
+            scene#add(poly);
             x := x + 1;
         done;
-        poly#add(new Point(new Coord3d(x - 1, 0, z)));
-        scene#add(poly);
-        z := z + 1;
+        z := z - 1;
     done;
-    chart#getView()#setViewPoint(new Coord3d(0, 0, 0));
+//    chart#getView()#setViewPoint(new Coord3d(0, 0, 0));
     axes = chart#getAxeLayout();
     axes#setXAxeLabelDisplayed(false);
     axes#setYAxeLabelDisplayed(false);
