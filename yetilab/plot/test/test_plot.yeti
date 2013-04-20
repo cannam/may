@@ -14,9 +14,15 @@ p = load yetilab.plot.plot;
             [ "Alice":  [ "Jan": 3, "Mar": 2 ],
               "Bob":    [ "Jan": 0, "Feb": 1, "Mar": 4 ],
               "Conrad": [ "Feb": 2, "Mar": 1 ] ])
-        [ "Conrad": [ "Jan": 0, "Feb": 2, "Mar": 1 ],
-          "Alice":  [ "Jan": 3, "Feb": 2, "Mar": 3 ],
-          "Bob":    [ "Jan": 3, "Feb": 3, "Mar": 7 ] ]
+        [ "Conrad": [ "Jan": { y0 = 0, y1 = 0 },
+                      "Feb": { y0 = 0, y1 = 2 },
+                      "Mar": { y0 = 0, y1 = 1 } ],
+          "Alice":  [ "Jan": { y0 = 0, y1 = 3 },
+                      "Feb": { y0 = 2, y1 = 2 },
+                      "Mar": { y0 = 1, y1 = 3 } ],
+          "Bob":    [ "Jan": { y0 = 3, y1 = 3 },
+                      "Feb": { y0 = 2, y1 = 3 },
+                      "Mar": { y0 = 3, y1 = 7 } ] ]
 ),
 
 ] is hash<string, () -> boolean>;

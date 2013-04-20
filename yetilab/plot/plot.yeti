@@ -116,13 +116,13 @@ plotLines xkeys unit values =
     ());
 
 stack keys xkeys values =
-   (stacked = mapIntoHash id \(mapIntoHash id \0 xkeys) keys;
+   (stacked = mapIntoHash id \(mapIntoHash id \{ y0 = 0, y1 = 0 } xkeys) keys;
     prev = mapIntoHash id \0 xkeys;
     for xkeys do xk:
         for keys do k:
             value = if xk in values[k] then values[k][xk] else 0 fi;
             height = prev[xk] + value;
-            stacked[k][xk] := height;
+            stacked[k][xk] := { y0 = prev[xk], y1 = height };
             prev[xk] := height;
         done;
     done;
@@ -133,29 +133,29 @@ plotStacked keys xkeys unit values =
     scene = chart#getScene();
     stacked = stack keys xkeys values;
     var z = 0;
-    newRect x height z colour is number -> number -> number -> ~Color -> 'a =
+    newRect x y0 y1 z colour is number -> number -> number -> number -> ~Color -> 'a =
        (poly = new Quad();
-        poly#add(new Point(new Coord3d(x + 0.5, z, 0)));
-        poly#add(new Point(new Coord3d(x + 0.5, z, height)));
-        poly#add(new Point(new Coord3d(x - 0.5, z, height)));
-        poly#add(new Point(new Coord3d(x - 0.5, z, 0)));
+        poly#add(new Point(new Coord3d(x + 0.5, z, y0)));
+        poly#add(new Point(new Coord3d(x + 0.5, z, y1)));
+        poly#add(new Point(new Coord3d(x - 0.5, z, y1)));
+        poly#add(new Point(new Coord3d(x - 0.5, z, y0)));
         poly#setWireframeDisplayed(true);
         poly#setWireframeColor(colour);
         poly#setFaceDisplayed(true);
         poly#setColor(colour);
         poly);
     for keys do k:
-        heights = stacked[k];
+        ranges = stacked[k];
         var x = 0;
         c = Color#random();
         for xkeys do xk:
-            poly = newRect x heights[xk] z c;
-            scene#add(poly);
+            rect = newRect x ranges[xk].y0 ranges[xk].y1 z c;
+            scene#add(rect);
             x := x + 1;
         done;
         z := z - 1;
     done;
-//    chart#getView()#setViewPoint(new Coord3d(0, 0, 0));
+    chart#getView()#setViewPoint(new Coord3d(pi/2, 0, 0));
     axes = chart#getAxeLayout();
     axes#setXAxeLabelDisplayed(false);
     axes#setYAxeLabelDisplayed(false);
