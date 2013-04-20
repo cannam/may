@@ -137,7 +137,7 @@ stack keys xkeys values normalised =
 
 plotStacked keys xkeys unit values normalised =
    (quality = Quality#Nicest;
-    quality#setAnimated(false);
+//    quality#setAnimated(false);
     chart = new Chart(quality);
     scene = chart#getScene();
     stacked = stack keys xkeys values normalised;
@@ -153,20 +153,20 @@ plotStacked keys xkeys unit values normalised =
         poly#setFaceDisplayed(true);
         poly#setColor(colour);
         poly);
+    var ty = 0;
     for keys do k:
         ranges = stacked[k];
         var x = 0;
-        var ty = 0;
         c = Color#random();
         for xkeys do xk:
             rect = newRect x ranges[xk].y0 ranges[xk].y1 z c;
             scene#add(rect);
             x := x + 1;
         done;
-        text = new DrawableTextBitmap(k, new Coord3d(0, z, ty), c);
+        text = new DrawableTextBitmap(k, new Coord3d(-5, z, ty), c);
         scene#add(text);
         z := z - 1;
-        ty := ty + 10;
+        ty := ty + 0.1;
     done;
     chart#getView()#setViewPoint(new Coord3d(-pi/2, 0, 0));
     axes = chart#getAxeLayout();
