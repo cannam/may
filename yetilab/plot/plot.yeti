@@ -5,7 +5,7 @@ import org.jzy3d.plot3d.text.drawable: DrawableTextBillboard, DrawableTextBitmap
 import org.jzy3d.maths: Range, Coord3d;
 import org.jzy3d.plot3d.primitives: Shape, HistogramBar, FlatLine2d, Polygon, Quad, Point;
 import org.jzy3d.plot3d.primitives.axes.layout.providers: StaticTickProvider;
-import org.jzy3d.plot3d.primitives.axes.layout.renderers: TickLabelMap;
+import org.jzy3d.plot3d.primitives.axes.layout.renderers: ITickRenderer, TickLabelMap;
 import org.jzy3d.chart: Chart, ChartLauncher;
 import org.jzy3d.plot3d.builder: Builder;
 import org.jzy3d.plot3d.builder.concrete: OrthonormalGrid;
@@ -56,19 +56,27 @@ newMapper mapFunction =
     end;
     new FMapper());
 
+newPercentTickRenderer () =
+   (f v = " \(int (v * 100))%";
+    class PercentageTickRenderer extends ITickRenderer
+        String format(double value) f value,
+        String format(float value) f value
+    end;
+    new PercentageTickRenderer());
+
 parseOptions options defaultKeys defaultXKeys =
    (parsed = {
-        var keys = sort defaultKeys,
+        var keys = array (sort defaultKeys),
         var labels = [:],
         var animated = false,
         var normalised = false,
         var unit = "",
-        var xkeys = sort defaultXKeys
+        var xkeys = array (sort defaultXKeys)
     };
     for options
        \case of
-        Keys kk: parsed.keys := kk;
-        XKeys xk: parsed.xkeys := xk;
+        Keys kk: parsed.keys := array kk;
+        XKeys xk: parsed.xkeys := array xk;
         Animated a: parsed.animated := a;
         Normalised n: parsed.normalised := n;
         Unit u: parsed.unit := u;
@@ -108,9 +116,12 @@ plotBarChart options values =
     tickLabels = new TickLabelMap();
     var i = 0;
     var x = n - i - 1;
+    total = sum (map do k: values[k] done opts.keys);
     for opts.keys do k:
         bar = new HistogramBar();
-        bar#setData(new Coord3d(x, 0, 0), values[k], 0.45, chartColour i);
+        v = values[k];
+        v = if opts.normalised and total > 0 then v / total else v fi;
+        bar#setData(new Coord3d(x, 0, 0), v, 0.45, chartColour i);
         bar#setWireframeDisplayed(false);
         scene#add(bar);
         ticks[i] := i;
@@ -123,7 +134,12 @@ plotBarChart options values =
     axes#setXAxeLabelDisplayed(false);
     axes#setYAxeLabelDisplayed(false);
     axes#setZAxeLabelDisplayed(true);
-    axes#setZAxeLabel(opts.unit);
+    if opts.normalised then
+        axes#setZAxeLabel("");
+        axes#setZTickRenderer(newPercentTickRenderer ());
+    else
+        axes#setZAxeLabel(opts.unit);
+    fi;
     axes#setXTickProvider(new StaticTickProvider(ticks));
     axes#setXTickRenderer(tickLabels);
     axes#setYTickLabelDisplayed(false);
@@ -206,14 +222,17 @@ plotStacked options values =
     stacked = stack opts.keys opts.xkeys values opts.normalised;
     var z = 0;
     var ty = 0;
+    xtickLabels = new TickLabelMap();
+    for [0..length opts.xkeys - 1] do x:
+        xtickLabels#register(x, opts.xkeys[x]);
+    done;
     for opts.keys do k:
         ranges = stacked[k];
-        var x = 0;
         c = chartColour z;
-        for opts.xkeys do xk:
+        for [0..length opts.xkeys - 1] do x:
+            xk = opts.xkeys[x];
             rect = newRect x ranges[xk].y0 ranges[xk].y1 z c;
             scene#add(rect);
-            x := x + 1;
         done;
         text = new DrawableTextBitmap(opts.labels[k], new Coord3d(-5, z, ty), c);
         scene#add(text);
@@ -223,9 +242,15 @@ plotStacked options values =
     chart#getView()#setViewPoint(new Coord3d(-pi/2, 0, 0));
     axes = chart#getAxeLayout();
     axes#setXAxeLabelDisplayed(false);
+    axes#setXTickRenderer(xtickLabels);
     axes#setYAxeLabelDisplayed(false);
     axes#setZAxeLabelDisplayed(true);
-    axes#setZAxeLabel(opts.unit);
+    if opts.normalised then 
+        axes#setZAxeLabel("");
+        axes#setZTickRenderer(newPercentTickRenderer ());
+    else
+        axes#setZAxeLabel(opts.unit);
+    fi;
     axes#setYTickLabelDisplayed(false);
     ChartLauncher#openChart(chart);
     ());
