@@ -14,6 +14,17 @@ import org.jzy3d.colors: ColorMapper, Color;
 import org.jzy3d.plot3d.rendering.canvas: Quality;
 import org.jzy3d.plot3d.rendering.view.modes: ViewPositionMode;
 
+chartColours = [
+    new Color(161, 54, 2), // red
+    new Color(207, 228, 148), // grey-green
+    new Color(82, 126, 154), // dark steel blue
+    new Color(251, 116, 43), // light red
+    new Color(126, 33, 28), // dried blood!
+    new Color(21, 183, 197), // light blue
+    new Color(188, 13, 207), // mid purple
+    new Color(200, 125, 234), // light purple
+];    
+
 newMatrixMapper matrix =
    (class MMapper extends Mapper
         double f(double x, double y)
@@ -56,7 +67,9 @@ plotMatrix matrix =
     ());
 
 plotBarChart keys unit values =
-   (chart = new Chart(Quality#Nicest);
+   (quality = Quality#Nicest;
+    quality#setAnimated(false);
+    chart = new Chart(quality);
     var n = 0;
     scene = chart#getScene();
     ticks = new float[length keys];
@@ -83,7 +96,9 @@ plotBarChart keys unit values =
     ());
 
 plotLines xkeys unit values =
-   (chart = new Chart(Quality#Nicest);
+   (quality = Quality#Nicest;
+    quality#setAnimated(false);
+    chart = new Chart(quality);
     scene = chart#getScene();
     keys = keys values;
     n = length xkeys;
@@ -137,7 +152,7 @@ stack keys xkeys values normalised =
 
 plotStacked keys xkeys unit values normalised =
    (quality = Quality#Nicest;
-//    quality#setAnimated(false);
+    quality#setAnimated(false);
     chart = new Chart(quality);
     scene = chart#getScene();
     stacked = stack keys xkeys values normalised;
