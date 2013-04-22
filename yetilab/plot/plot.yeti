@@ -14,16 +14,24 @@ import org.jzy3d.colors: ColorMapper, Color;
 import org.jzy3d.plot3d.rendering.canvas: Quality;
 import org.jzy3d.plot3d.rendering.view.modes: ViewPositionMode;
 
-chartColours = [
-    new Color(161, 54, 2), // red
-    new Color(207, 228, 148), // grey-green
-    new Color(82, 126, 154), // dark steel blue
-    new Color(251, 116, 43), // light red
-    new Color(126, 33, 28), // dried blood!
-    new Color(21, 183, 197), // light blue
-    new Color(188, 13, 207), // mid purple
-    new Color(200, 125, 234), // light purple
+chartColours = array [
+    { r = 82,  g = 126, b = 154 }, // dark steel blue
+    { r = 161, g = 54,  b = 2   }, // red
+    { r = 207, g = 228, b = 148 }, // grey-green
+    { r = 21,  g = 183, b = 197 }, // light blue
+    { r = 251, g = 116, b = 43  }, // light red
+    { r = 200, g = 125, b = 234 }, // light purple
+    { r = 126, g = 33,  b = 28  }, // dried blood!
+    { r = 188, g = 13,  b = 207 }, // mid purple
 ];    
+
+chartColour n =
+    if n < 0
+    then chartColour (-n)
+    else
+        rgb = chartColours[n % (length chartColours)];
+        new Color(rgb.r / 255.0, rgb.g / 255.0, rgb.b / 255.0);
+    fi;
 
 newMatrixMapper matrix =
    (class MMapper extends Mapper
@@ -48,6 +56,29 @@ newMapper mapFunction =
     end;
     new FMapper());
 
+parseOptions options defaultKeys defaultXKeys =
+   (parsed = {
+        var keys = sort defaultKeys,
+        var labels = [:],
+        var animated = false,
+        var normalised = false,
+        var unit = "",
+        var xkeys = sort defaultXKeys
+    };
+    for options
+       \case of
+        Keys kk: parsed.keys := kk;
+        XKeys xk: parsed.xkeys := xk;
+        Animated a: parsed.animated := a;
+        Normalised n: parsed.normalised := n;
+        Unit u: parsed.unit := u;
+        Labels ll: parsed.labels := ll;
+        esac;
+    if empty? parsed.labels then
+        parsed.labels := mapIntoHash id id parsed.keys
+    fi;
+    parsed);
+
 plotMatrix matrix =
    (mapper = newMatrixMapper matrix;
     size = matrix.size;
@@ -66,56 +97,60 @@ plotMatrix matrix =
     ChartLauncher#openChart(chart);
     ());
 
-plotBarChart keys unit values =
-   (quality = Quality#Nicest;
-    quality#setAnimated(false);
+plotBarChart options values =
+   (opts = parseOptions options (keys values) [];
+    quality = Quality#Fastest;
+    quality#setAnimated(opts.animated);
     chart = new Chart(quality);
-    var n = 0;
+    var n = length opts.keys;
     scene = chart#getScene();
-    ticks = new float[length keys];
+    ticks = new float[n+1];
     tickLabels = new TickLabelMap();
-    for keys do k:
+    var i = 0;
+    var x = n - i - 1;
+    for opts.keys do k:
         bar = new HistogramBar();
-        bar#setData(new Coord3d(n, 0, 0), values[k], 0.45, Color#random());
+        bar#setData(new Coord3d(x, 0, 0), values[k], 0.45, chartColour i);
         bar#setWireframeDisplayed(false);
         scene#add(bar);
-        ticks[n] := n;
-        tickLabels#register(n, k);
-        n := n + 1;
+        ticks[i] := i;
+        tickLabels#register(x, opts.labels[k]);
+        i := i + 1;
+        x := x - 1;
     done;
     chart#getView()#setViewPoint(new Coord3d(pi/2, 0, 0));
     axes = chart#getAxeLayout();
     axes#setXAxeLabelDisplayed(false);
     axes#setYAxeLabelDisplayed(false);
     axes#setZAxeLabelDisplayed(true);
-    axes#setZAxeLabel(unit);
+    axes#setZAxeLabel(opts.unit);
     axes#setXTickProvider(new StaticTickProvider(ticks));
     axes#setXTickRenderer(tickLabels);
     axes#setYTickLabelDisplayed(false);
     ChartLauncher#openChart(chart);
     ());
 
-plotLines xkeys unit values =
-   (quality = Quality#Nicest;
-    quality#setAnimated(false);
+plotLines options values =
+   (opts = parseOptions options (keys values) (keys values[head (keys values)]);
+    quality = Quality#Fastest;
+    quality#setAnimated(opts.animated);
     chart = new Chart(quality);
     scene = chart#getScene();
-    keys = keys values;
-    n = length xkeys;
+    n = length opts.xkeys;
     var z = 0;
-    for keys do k:
+    for opts.keys do k:
         v = values[k];
         x = new float[n];
         y = new float[n];
         var i = 0;
-        for xkeys do xk:
+        for opts.xkeys do xk:
             x[i] := i;
             y[i] := if xk in v then v[xk] else 0 fi;
             i := i + 1;
         done;
         line = new FlatLine2d(x, y, z);
         line#setWireframeDisplayed(true);
-        line#setWireframeColor(Color#random());
+        line#setWireframeColor(chartColour z);
         line#setWireframeWidth(2);
         line#setFaceDisplayed(false);
         scene#add(line);
@@ -126,7 +161,7 @@ plotLines xkeys unit values =
     axes#setXAxeLabelDisplayed(false);
     axes#setYAxeLabelDisplayed(false);
     axes#setZAxeLabelDisplayed(true);
-    axes#setZAxeLabel(unit);
+    axes#setZAxeLabel(opts.unit);
     axes#setYTickLabelDisplayed(false);
     ChartLauncher#openChart(chart);
     ());
@@ -150,35 +185,37 @@ stack keys xkeys values normalised =
     done;
     stacked);
 
-plotStacked keys xkeys unit values normalised =
-   (quality = Quality#Nicest;
-    quality#setAnimated(false);
+newRect x y0 y1 z colour is number -> number -> number -> number -> ~Color -> 'a =
+   (poly = new Quad();
+    poly#add(new Point(new Coord3d(x + 0.5, z, y0)));
+    poly#add(new Point(new Coord3d(x + 0.5, z, y1)));
+    poly#add(new Point(new Coord3d(x - 0.5, z, y1)));
+    poly#add(new Point(new Coord3d(x - 0.5, z, y0)));
+    poly#setWireframeDisplayed(true);
+    poly#setWireframeColor(colour);
+    poly#setFaceDisplayed(true);
+    poly#setColor(colour);
+    poly);
+
+plotStacked options values =
+   (opts = parseOptions options (keys values) (keys values[head (keys values)]);
+    quality = Quality#Fastest;
+    quality#setAnimated(opts.animated);
     chart = new Chart(quality);
     scene = chart#getScene();
-    stacked = stack keys xkeys values normalised;
+    stacked = stack opts.keys opts.xkeys values opts.normalised;
     var z = 0;
-    newRect x y0 y1 z colour is number -> number -> number -> number -> ~Color -> 'a =
-       (poly = new Quad();
-        poly#add(new Point(new Coord3d(x + 0.5, z, y0)));
-        poly#add(new Point(new Coord3d(x + 0.5, z, y1)));
-        poly#add(new Point(new Coord3d(x - 0.5, z, y1)));
-        poly#add(new Point(new Coord3d(x - 0.5, z, y0)));
-        poly#setWireframeDisplayed(true);
-        poly#setWireframeColor(colour);
-        poly#setFaceDisplayed(true);
-        poly#setColor(colour);
-        poly);
     var ty = 0;
-    for keys do k:
+    for opts.keys do k:
         ranges = stacked[k];
         var x = 0;
-        c = Color#random();
-        for xkeys do xk:
+        c = chartColour z;
+        for opts.xkeys do xk:
             rect = newRect x ranges[xk].y0 ranges[xk].y1 z c;
             scene#add(rect);
             x := x + 1;
         done;
-        text = new DrawableTextBitmap(k, new Coord3d(-5, z, ty), c);
+        text = new DrawableTextBitmap(opts.labels[k], new Coord3d(-5, z, ty), c);
         scene#add(text);
         z := z - 1;
         ty := ty + 0.1;
@@ -188,7 +225,7 @@ plotStacked keys xkeys unit values normalised =
     axes#setXAxeLabelDisplayed(false);
     axes#setYAxeLabelDisplayed(false);
     axes#setZAxeLabelDisplayed(true);
-    axes#setZAxeLabel(unit);
+    axes#setZAxeLabel(opts.unit);
     axes#setYTickLabelDisplayed(false);
     ChartLauncher#openChart(chart);
     ());
