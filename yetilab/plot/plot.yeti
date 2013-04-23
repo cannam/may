@@ -2,7 +2,6 @@ module yetilab.plot.plot;
 
 import org.jzy3d.plot3d.builder: Mapper;
 import org.jzy3d.plot3d.text.drawable: DrawableTextBillboard, DrawableTextBitmap;
-import org.jzy3d.plot3d.text.renderers.jogl: JOGLTextRenderer;
 import org.jzy3d.maths: Range, Coord3d;
 import org.jzy3d.plot3d.primitives: Shape, HistogramBar, FlatLine2d, Polygon, Quad, Point;
 import org.jzy3d.plot3d.primitives.axes.layout.providers: StaticTickProvider;
@@ -72,8 +71,7 @@ parseOptions options defaultKeys defaultXKeys =
         var animated = false,
         var normalised = false,
         var unit = "",
-        var xkeys = array (sort defaultXKeys),
-        var horizontal = false,
+        var xkeys = array (sort defaultXKeys)
     };
     for options
        \case of
@@ -83,7 +81,6 @@ parseOptions options defaultKeys defaultXKeys =
         Normalised n: parsed.normalised := n;
         Unit u: parsed.unit := u;
         Labels ll: parsed.labels := ll;
-        Horizontal h: parsed.horizontal := h;
         esac;
     if empty? parsed.labels then
         parsed.labels := mapIntoHash id id parsed.keys
@@ -108,30 +105,6 @@ plotMatrix matrix =
     ChartLauncher#openChart(chart);
     ());
 
-newRect x y0 y1 z colour is number -> number -> number -> number -> ~Color -> 'a =
-   (poly = new Quad();
-    poly#add(new Point(new Coord3d(x + 0.5, z, y0)));
-    poly#add(new Point(new Coord3d(x + 0.5, z, y1)));
-    poly#add(new Point(new Coord3d(x - 0.5, z, y1)));
-    poly#add(new Point(new Coord3d(x - 0.5, z, y0)));
-    poly#setWireframeDisplayed(true);
-    poly#setWireframeColor(colour);
-    poly#setFaceDisplayed(true);
-    poly#setColor(colour);
-    poly);
-
-newProjectedRect x y0 y1 z colour is number -> number -> number -> number -> ~Color -> 'a =
-   (poly = new Quad();
-    poly#add(new Point(new Coord3d(x + 0.5, y0, z)));
-    poly#add(new Point(new Coord3d(x + 0.5, y1, z)));
-    poly#add(new Point(new Coord3d(x - 0.5, y1, z)));
-    poly#add(new Point(new Coord3d(x - 0.5, y0, z)));
-    poly#setWireframeDisplayed(true);
-    poly#setWireframeColor(colour);
-    poly#setFaceDisplayed(true);
-    poly#setColor(colour);
-    poly);
-
 plotBarChart options values =
    (opts = parseOptions options (keys values) [];
     quality = Quality#Fastest;
@@ -145,49 +118,31 @@ plotBarChart options values =
     var x = n - i - 1;
     total = sum (map do k: if k in values then values[k] else 0 fi done opts.keys);
     for opts.keys do k:
+        bar = new HistogramBar();
         v = if k in values then values[k] else 0 fi;
         v = if opts.normalised and total > 0 then v / total else v fi;
-        c = chartColour i;
-        scene#add(newRect x 0 v 1 c);
-        scene#add(newProjectedRect x 0 v 1 c);
+        bar#setData(new Coord3d(x, 0, 0), v, 0.45, chartColour i);
+        bar#setWireframeDisplayed(false);
+        scene#add(bar);
         ticks[i] := i;
         tickLabels#register(x, opts.labels[k]);
         i := i + 1;
         x := x - 1;
     done;
-    if opts.horizontal then
-        chart#getView()#setViewPoint(new Coord3d(0, pi/2, 0));
-    else
-        chart#getView()#setViewPoint(new Coord3d(pi/2, 0, 0));
-    fi;
-
+    chart#getView()#setViewPoint(new Coord3d(pi/2, 0, 0));
     axes = chart#getAxeLayout();
-    if opts.horizontal then
-        axes#setZAxeLabelDisplayed(false);
-        axes#setZTickLabelDisplayed(false);
-        axes#setYAxeLabelDisplayed(true);
-        if opts.normalised then
-            axes#setYAxeLabel("");
-            axes#setYTickRenderer(newPercentTickRenderer ());
-        else
-            axes#setYAxeLabel(opts.unit);
-        fi;
-    else 
-        axes#setYAxeLabelDisplayed(false);
-        axes#setYTickLabelDisplayed(false);
-        axes#setZAxeLabelDisplayed(true);
-        if opts.normalised then
-            axes#setZAxeLabel("");
-            axes#setZTickRenderer(newPercentTickRenderer ());
-        else
-            axes#setZAxeLabel(opts.unit);
-        fi;
-    fi;
-    
     axes#setXAxeLabelDisplayed(false);
+    axes#setYAxeLabelDisplayed(false);
+    axes#setZAxeLabelDisplayed(true);
+    if opts.normalised then
+        axes#setZAxeLabel("");
+        axes#setZTickRenderer(newPercentTickRenderer ());
+    else
+        axes#setZAxeLabel(opts.unit);
+    fi;
     axes#setXTickProvider(new StaticTickProvider(ticks));
     axes#setXTickRenderer(tickLabels);
-
+    axes#setYTickLabelDisplayed(false);
     ChartLauncher#openChart(chart);
     ());
 
@@ -245,6 +200,18 @@ stack keys xkeys values normalised =
         done;
     done;
     stacked);
+
+newRect x y0 y1 z colour is number -> number -> number -> number -> ~Color -> 'a =
+   (poly = new Quad();
+    poly#add(new Point(new Coord3d(x + 0.5, z, y0)));
+    poly#add(new Point(new Coord3d(x + 0.5, z, y1)));
+    poly#add(new Point(new Coord3d(x - 0.5, z, y1)));
+    poly#add(new Point(new Coord3d(x - 0.5, z, y0)));
+    poly#setWireframeDisplayed(true);
+    poly#setWireframeColor(colour);
+    poly#setFaceDisplayed(true);
+    poly#setColor(colour);
+    poly);
 
 plotStacked options values =
    (opts = parseOptions options (keys values) (keys values[head (keys values)]);
