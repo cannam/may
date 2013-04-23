@@ -4,7 +4,7 @@ import org.jzy3d.plot3d.builder: Mapper;
 import org.jzy3d.plot3d.text.drawable: DrawableTextBillboard, DrawableTextBitmap;
 import org.jzy3d.maths: Range, Coord3d;
 import org.jzy3d.plot3d.primitives: Shape, HistogramBar, FlatLine2d, Polygon, Quad, Point;
-import org.jzy3d.plot3d.primitives.axes.layout.providers: StaticTickProvider;
+import org.jzy3d.plot3d.primitives.axes.layout.providers: StaticTickProvider, RegularTickProvider;
 import org.jzy3d.plot3d.primitives.axes.layout.renderers: ITickRenderer, TickLabelMap;
 import org.jzy3d.chart: Chart, ChartLauncher;
 import org.jzy3d.plot3d.builder: Builder;
@@ -240,19 +240,20 @@ plotStacked options values =
     stacked = stack opts.keys opts.xkeys values opts.normalised;
     var z = 0;
     var ty = 0;
+    nxk = length opts.xkeys;
     xtickLabels = new TickLabelMap();
-    for [0..length opts.xkeys - 1] do x:
+    for [0..nxk - 1] do x:
         xtickLabels#register(x, opts.xkeys[x]);
     done;
     for opts.keys do k:
         ranges = stacked[k];
         c = chartColour z;
-        for [0..length opts.xkeys - 1] do x:
+        for [0..nxk - 1] do x:
             xk = opts.xkeys[x];
             rect = newRect x ranges[xk].y0 ranges[xk].y1 z c;
             scene#add(rect);
         done;
-        text = new DrawableTextBitmap(opts.labels[k], new Coord3d(-5, z, ty), c);
+        text = new DrawableTextBitmap(opts.labels[k], new Coord3d(-(nxk/5 + 0.5), z, ty), c);
         scene#add(text);
         z := z - 1;
         ty := ty + 0.1;
@@ -260,6 +261,9 @@ plotStacked options values =
     chart#getView()#setViewPoint(new Coord3d(-pi/2, 0, 0));
     axes = chart#getAxeLayout();
     axes#setXAxeLabelDisplayed(false);
+//    if nxk < 10 then
+//        axes#setXTickProvider(new RegularTickProvider(nxk + 1));
+//    fi;
     axes#setXTickRenderer(xtickLabels);
     axes#setYAxeLabelDisplayed(false);
     axes#setZAxeLabelDisplayed(true);
