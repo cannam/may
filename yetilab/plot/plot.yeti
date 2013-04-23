@@ -116,10 +116,10 @@ plotBarChart options values =
     tickLabels = new TickLabelMap();
     var i = 0;
     var x = n - i - 1;
-    total = sum (map do k: values[k] done opts.keys);
+    total = sum (map do k: if k in values then values[k] else 0 fi done opts.keys);
     for opts.keys do k:
         bar = new HistogramBar();
-        v = values[k];
+        v = if k in values then values[k] else 0 fi;
         v = if opts.normalised and total > 0 then v / total else v fi;
         bar#setData(new Coord3d(x, 0, 0), v, 0.45, chartColour i);
         bar#setWireframeDisplayed(false);
