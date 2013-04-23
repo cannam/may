@@ -14,6 +14,10 @@ import org.jzy3d.colors: ColorMapper, Color;
 import org.jzy3d.plot3d.rendering.canvas: Quality;
 import org.jzy3d.plot3d.rendering.view.modes: ViewPositionMode;
 
+import javax.imageio: ImageIO;
+
+import java.io: File;
+
 chartColours = array [
     { r = 82,  g = 126, b = 154 }, // dark steel blue
     { r = 161, g = 54,  b = 2   }, // red
@@ -71,7 +75,9 @@ parseOptions options defaultKeys defaultXKeys =
         var animated = false,
         var normalised = false,
         var unit = "",
-        var xkeys = array (sort defaultXKeys)
+        var xkeys = array (sort defaultXKeys),
+        var saveTo = "",
+        var display = true,
     };
     for options
        \case of
@@ -81,12 +87,32 @@ parseOptions options defaultKeys defaultXKeys =
         Normalised n: parsed.normalised := n;
         Unit u: parsed.unit := u;
         Labels ll: parsed.labels := ll;
+        SaveTo file: parsed.saveTo := file;
+        Display d: parsed.display := d;
         esac;
     if empty? parsed.labels then
         parsed.labels := mapIntoHash id id parsed.keys
     fi;
     parsed);
 
+newChart opts =
+   (quality = Quality#Fastest;
+    quality#setAnimated(opts.animated);
+//    if opts.display then
+        new Chart(quality);
+//    else
+//        new Chart(quality, "offscreen,640,640");
+//    fi);
+    );
+
+showChart opts chart is 'a -> ~Chart -> () =
+   (//if opts.display then
+        \() ChartLauncher#openChart(chart);
+//    fi;
+    if opts.saveTo != "" then
+        \() chart#screenshot(opts.saveTo);
+    fi);
+    
 plotMatrix matrix =
    (mapper = newMatrixMapper matrix;
     size = matrix.size;
@@ -107,12 +133,10 @@ plotMatrix matrix =
 
 plotBarChart options values =
    (opts = parseOptions options (keys values) [];
-    quality = Quality#Fastest;
-    quality#setAnimated(opts.animated);
-    chart = new Chart(quality);
+    chart = newChart opts;
     var n = length opts.keys;
     scene = chart#getScene();
-    ticks = new float[n+1];
+    ticks = new double[n+1];
     tickLabels = new TickLabelMap();
     var i = 0;
     var x = n - i - 1;
@@ -143,14 +167,11 @@ plotBarChart options values =
     axes#setXTickProvider(new StaticTickProvider(ticks));
     axes#setXTickRenderer(tickLabels);
     axes#setYTickLabelDisplayed(false);
-    ChartLauncher#openChart(chart);
-    ());
+    showChart opts chart);
 
 plotLines options values =
    (opts = parseOptions options (keys values) (keys values[head (keys values)]);
-    quality = Quality#Fastest;
-    quality#setAnimated(opts.animated);
-    chart = new Chart(quality);
+    chart = newChart opts;
     scene = chart#getScene();
     n = length opts.xkeys;
     var z = 0;
@@ -179,8 +200,7 @@ plotLines options values =
     axes#setZAxeLabelDisplayed(true);
     axes#setZAxeLabel(opts.unit);
     axes#setYTickLabelDisplayed(false);
-    ChartLauncher#openChart(chart);
-    ());
+    showChart opts chart);
 
 stack keys xkeys values normalised =
    (stacked = mapIntoHash id \(mapIntoHash id \{ y0 = 0, y1 = 0 } xkeys) keys;
@@ -215,9 +235,7 @@ newRect x y0 y1 z colour is number -> number -> number -> number -> ~Color -> 'a
 
 plotStacked options values =
    (opts = parseOptions options (keys values) (keys values[head (keys values)]);
-    quality = Quality#Fastest;
-    quality#setAnimated(opts.animated);
-    chart = new Chart(quality);
+    chart = newChart opts;
     scene = chart#getScene();
     stacked = stack opts.keys opts.xkeys values opts.normalised;
     var z = 0;
@@ -252,8 +270,7 @@ plotStacked options values =
         axes#setZAxeLabel(opts.unit);
     fi;
     axes#setYTickLabelDisplayed(false);
-    ChartLauncher#openChart(chart);
-    ());
+    showChart opts chart);
 
 plotStructure structure =
     case structure of
