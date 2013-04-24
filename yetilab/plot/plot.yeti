@@ -136,7 +136,7 @@ plotBarChart options values =
     chart = newChart opts;
     var n = length opts.keys;
     scene = chart#getScene();
-    ticks = new double[n+1];
+    ticks = new double[n];
     tickLabels = new TickLabelMap();
     var i = 0;
     var x = n - i - 1;
@@ -241,9 +241,12 @@ plotStacked options values =
     var z = 0;
     var ty = 0;
     nxk = length opts.xkeys;
+    xticks = new double[nxk];
     xtickLabels = new TickLabelMap();
     for [0..nxk - 1] do x:
-        xtickLabels#register(x, opts.xkeys[x]);
+        xticks[x] := x;
+        k = opts.xkeys[x];
+        xtickLabels#register(x, if k in opts.labels then opts.labels[k] else k fi);
     done;
     for opts.keys do k:
         ranges = stacked[k];
@@ -261,9 +264,9 @@ plotStacked options values =
     chart#getView()#setViewPoint(new Coord3d(-pi/2, 0, 0));
     axes = chart#getAxeLayout();
     axes#setXAxeLabelDisplayed(false);
-//    if nxk < 10 then
-//        axes#setXTickProvider(new RegularTickProvider(nxk + 1));
-//    fi;
+    if nxk < 10 then
+        axes#setXTickProvider(new StaticTickProvider(xticks));
+    fi;
     axes#setXTickRenderer(xtickLabels);
     axes#setYAxeLabelDisplayed(false);
     axes#setZAxeLabelDisplayed(true);
