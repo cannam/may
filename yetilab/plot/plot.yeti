@@ -5,7 +5,7 @@ import org.jzy3d.plot3d.text.drawable: DrawableTextBillboard, DrawableTextBitmap
 import org.jzy3d.maths: Range, Coord3d;
 import org.jzy3d.plot3d.primitives: Shape, HistogramBar, FlatLine2d, Polygon, Quad, Point;
 import org.jzy3d.plot3d.primitives.axes.layout.providers: StaticTickProvider, RegularTickProvider;
-import org.jzy3d.plot3d.primitives.axes.layout.renderers: ITickRenderer, TickLabelMap;
+import org.jzy3d.plot3d.primitives.axes.layout.renderers: ITickRenderer, TickLabelMap, IntegerTickRenderer;
 import org.jzy3d.chart: Chart, ChartLauncher;
 import org.jzy3d.plot3d.builder: Builder;
 import org.jzy3d.plot3d.builder.concrete: OrthonormalGrid;
@@ -67,6 +67,14 @@ newPercentTickRenderer () =
         String format(float value) f value
     end;
     new PercentageTickRenderer());
+
+newPaddedIntTickRenderer () =
+   (f v = "    \(int (v + 0.5))";
+    class PaddedIntTickRenderer extends ITickRenderer
+        String format(double value) f value,
+        String format(float value) f value
+    end;
+    new PaddedIntTickRenderer());
 
 parseOptions options defaultKeys defaultXKeys =
    (parsed = {
@@ -205,7 +213,10 @@ plotLines options values =
 stack keys xkeys values normalised =
    (stacked = mapIntoHash id \(mapIntoHash id \{ y0 = 0, y1 = 0 } xkeys) keys;
     prev = mapIntoHash id \0 xkeys;
-    valueOf k xk = if xk in values[k] then values[k][xk] else 0 fi;
+    valueOf k xk =
+        if k in values and xk in values[k] 
+        then values[k][xk] else 0 
+        fi;
     for xkeys do xk:
         total = sum (map do k: valueOf k xk done keys);
         for keys do k:
@@ -275,6 +286,7 @@ plotStacked options values =
         axes#setZTickRenderer(newPercentTickRenderer ());
     else
         axes#setZAxeLabel(opts.unit);
+        axes#setZTickRenderer(newPaddedIntTickRenderer ());
     fi;
     axes#setYTickLabelDisplayed(false);
     showChart opts chart);
