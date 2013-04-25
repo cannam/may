@@ -114,9 +114,11 @@ newChart opts =
     );
 
 showChart opts chart is 'a -> ~Chart -> () =
-   (//if opts.display then
+   (if opts.display then
         \() ChartLauncher#openChart(chart);
-//    fi;
+    else
+        \() ChartLauncher#openStaticChart(chart);
+    fi;
     if opts.saveTo != "" then
         \() chart#screenshot(opts.saveTo);
     fi);
