@@ -60,6 +60,9 @@ add c1 c2 is ~Cplx -> ~Cplx -> ~Cplx =
 scale r c is number -> ~Cplx -> ~Cplx =
     complex (r * real c) (r * imaginary c);
 
+zeros n is number -> array<~Cplx> =
+    array (map \(complex 0 0) [1..n]);
+
 {
    real,
    imaginary,
@@ -68,6 +71,7 @@ scale r c is number -> ~Cplx -> ~Cplx =
    angle,
    add,
    scale,
+   zeros,
 } as {
    real is cplx -> number,
    imaginary is cplx -> number,
@@ -76,5 +80,6 @@ scale r c is number -> ~Cplx -> ~Cplx =
    angle is cplx -> number,
    add is cplx -> cplx -> cplx,
    scale is number -> cplx -> cplx,
+   zeros is number -> array<cplx>,
 }
 

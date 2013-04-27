@@ -1,6 +1,6 @@
 module yetilab.block.test.test_complex;
 
-{ real, imaginary, complex, magnitude, angle, add, scale }
+{ real, imaginary, complex, magnitude, angle, add, scale, zeros }
    = load yetilab.block.complex;
 
 { compare } = load yetilab.test.test;
@@ -38,6 +38,11 @@ module yetilab.block.test.test_complex;
 
 "scale": \(
     compare (scale 4 (complex 2 3)) (complex 8 12)
+),
+
+"zeros": \(
+    compare (zeros 0) (array []) and
+        compare (zeros 3) (array [complex 0 0, complex 0 0, complex 0 0])
 ),
 
 ] is hash<string, () -> boolean>;
