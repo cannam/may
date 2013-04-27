@@ -20,12 +20,8 @@ features featureFunc frames =
     featuresOf (emptyFrameFor frames) frames);
 
 featuresOfFile featureFunc file =
-    case fr.frequencyDomainFramesOfFile { framesize = 1024, hop = 512 } file of
-    Frames ff:
-        Features (features featureFunc ff);
-    Error e:
-        Error e;
-    esac;
+    features featureFunc 
+       (fr.frequencyDomainFramesOfFile { framesize = 1024, hop = 512 } file);
 
 {
     specdiff,

@@ -63,21 +63,12 @@ frequencyDomainFrames { framesize, hop } stream =
     frequencyDomainFrames,
 
     framesOfFile parameters filename =
-        case af.open filename of
-        Stream s: Frames (frames parameters s);
-        Error e: Error e;
-        esac,
+        frames parameters (af.open filename),
 
     windowedFramesOfFile parameters filename = 
-        case af.open filename of
-        Stream s: Frames (windowedFrames parameters s);
-        Error e: Error e;
-        esac,
+        windowedFrames parameters (af.open filename),
 
     frequencyDomainFramesOfFile parameters filename = 
-        case af.open filename of
-        Stream s: Frames (frequencyDomainFrames parameters s);
-        Error e: Error e;
-        esac,
+        frequencyDomainFrames parameters (af.open filename),
 }
 

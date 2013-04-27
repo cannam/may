@@ -48,10 +48,7 @@ playStream stream =
     stream.close());
 
 playFile filename = 
-    case af.open filename of
-    Stream str: playStream str;
-    Error e: failWith e
-    esac;
+    playStream (af.open filename);
 
 {
     open, play, playStream, playFile,
