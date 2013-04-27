@@ -11,7 +11,8 @@ tests = [
 "fft"        : load yetilab.transform.test.test_fft,
 "vamppost"   : load yetilab.vamp.test.test_vamppost,
 "matrix"     : load yetilab.matrix.test.test_matrix,
-"plot"       : load yetilab.plot.test.test_plot
+"plot"       : load yetilab.plot.test.test_plot,
+"signal"     : load yetilab.signal.test.test_signal,
 ];
 
 bad = sum (mapHash do name testHash: runTests name testHash done tests);

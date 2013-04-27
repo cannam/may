@@ -1,0 +1,26 @@
+
+module yetilab.signal.autocorrelation;
+
+acf len series =
+   (a = array series;
+    map do i:
+        sum (map do j:
+                 a[j] * a[j-i]
+                 done [i..length a - 1])
+        done [0..len-1]);
+
+acfNormalised len series =
+   (n = length series;
+    map2 do v i: v / (n - i) done (acf len series) [0..len-1]);
+
+acfUnityNormalised len series =
+   (a = acfNormalised len series;
+    max = head (sortBy (>) a);
+    map (/ max) a);
+
+{
+    acf,
+    acfNormalised,
+    acfUnityNormalised,
+}
+
