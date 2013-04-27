@@ -1,0 +1,35 @@
+
+module yetilab.feature.features;
+
+cplx = load yetilab.block.complex;
+fr = load yetilab.stream.framer;
+
+specdiff frame1 frame2 = 
+    sum (map2 do a b: abs(cplx.magnitude b - cplx.magnitude a) done
+         frame1 frame2);
+
+emptyFrameFor frames =
+    if empty? frames then array [] else cplx.zeros (length (head frames)) fi;
+
+features featureFunc frames =
+   (featuresOf prev frames =
+        case frames of
+        frame::rest: featureFunc prev frame :. \(featuresOf frame rest);
+         _: [];
+        esac;
+    featuresOf (emptyFrameFor frames) frames);
+
+featuresOfFile featureFunc file =
+    case fr.frequencyDomainFramesOfFile { framesize = 1024, hop = 512 } file of
+    Frames ff:
+        Features (features featureFunc ff);
+    Error e:
+        Error e;
+    esac;
+
+{
+    specdiff,
+    features,
+    featuresOfFile
+}
+
