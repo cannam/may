@@ -1,9 +1,11 @@
 module yetilab.block.test.test_complex;
 
-{ real, imaginary, complex, magnitude, angle, add, scale, zeros }
+{ real, imaginary, complex, magnitude, angle, add, scale, zeros, magnitudes, angles }
    = load yetilab.block.complex;
 
 { compare } = load yetilab.test.test;
+
+block = load yetilab.block.block;
 
 [
 
@@ -44,6 +46,19 @@ module yetilab.block.test.test_complex;
     compare (zeros 0) (array []) and
         compare (zeros 3) (array [complex 0 0, complex 0 0, complex 0 0])
 ),
+
+"magnitudes": \(
+    compare (block.list (magnitudes [ complex (-3) 4, complex 4 3, complex 0 0 ]))
+            [ 5, 5, 0 ] and
+       compare (block.list (magnitudes (array []))) []
+),
+
+"angles": \(
+    compare (block.list (angles [ complex 1 0, complex (-1) 0, complex 0 (-1) ]))
+            [ 0, pi, -pi/2 ] and
+       compare (block.list (angles (array []))) []
+),
+
 
 ] is hash<string, () -> boolean>;
 

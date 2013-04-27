@@ -1,6 +1,8 @@
 
 module yetilab.block.complex;
 
+load yetilab.block.block;
+
 import java.lang: ClassCastException;
 
 class Cplx(double real, double imag)
@@ -63,6 +65,12 @@ scale r c is number -> ~Cplx -> ~Cplx =
 zeros n is number -> array<~Cplx> =
     array (map \(complex 0 0) [1..n]);
 
+magnitudes cc is list?<~Cplx> -> block =
+    fromList (map magnitude cc);
+
+angles cc is list?<~Cplx> -> block =
+    fromList (map angle cc);
+
 {
    real,
    imaginary,
@@ -72,6 +80,8 @@ zeros n is number -> array<~Cplx> =
    add,
    scale,
    zeros,
+   magnitudes,
+   angles,
 } as {
    real is cplx -> number,
    imaginary is cplx -> number,
@@ -81,5 +91,7 @@ zeros n is number -> array<~Cplx> =
    add is cplx -> cplx -> cplx,
    scale is number -> cplx -> cplx,
    zeros is number -> array<cplx>,
+   magnitudes is list?<cplx> -> block,
+   angles is list?<cplx> -> block,
 }
 
