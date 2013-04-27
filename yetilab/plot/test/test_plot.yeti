@@ -1,6 +1,6 @@
 module yetilab.plot.test.test_plot;
 
-p = load yetilab.plot.plot;
+ch = load yetilab.plot.chart;
 
 { compare } = load yetilab.test.test;
 
@@ -8,7 +8,7 @@ p = load yetilab.plot.plot;
 
 "stack": \(
     compare
-       (p.stack
+       (ch.stack
             [ "Conrad", "Alice", "Bob" ]
             [ "Jan", "Feb", "Mar" ]
             [ "Alice":  [ "Jan": 3, "Mar": 2 ],
@@ -28,7 +28,7 @@ p = load yetilab.plot.plot;
 
 "stack-normalised": \(
     compare
-       (p.stack
+       (ch.stack
             [ "Conrad", "Alice", "Bob" ]
             [ "Jan", "Feb", "Mar" ]
             [ "Alice":  [ "Jan": 3, "Mar": 2 ],
