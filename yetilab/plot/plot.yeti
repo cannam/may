@@ -52,23 +52,26 @@ plotMatrix matrix =
     ChartLauncher#openChart(chart);
     ());
 
-plotCurve values is list?<number> -> () =
+plotCurve curve =
    (chart = new Chart(Quality#Nicest);
     scene = chart#getScene();
-    n = length values;
-    line = new FlatLine2d([0..n-1] as ~float[], values as ~float[], 0);
+    xx = map (.time) curve;
+    yy = map (.value) curve;
+    line = new FlatLine2d(xx as ~float[], yy as ~float[], 0);
     line#setWireframeDisplayed(true);
     line#setWireframeColor(Color#BLACK);
     line#setWireframeWidth(2);
     line#setFaceDisplayed(false);
     scene#add(line);
     chart#getView()#setViewPoint(new Coord3d(0, 0, 0));
+/*
     axes = chart#getAxeLayout();
     axes#setXAxeLabelDisplayed(false);
     axes#setYAxeLabelDisplayed(false);
     axes#setZAxeLabelDisplayed(true);
     axes#setZAxeLabel("unit goes here"); //!!!
     axes#setYTickLabelDisplayed(false);
+*/
     ChartLauncher#openChart(chart);
     ());
 
@@ -77,7 +80,7 @@ plotStructure structure =
     Grid matrix:
         plotMatrix matrix;
     Curve curve:
-        plotCurve (map (.value) curve); //!!! this is wrong, but just to see
+        plotCurve curve;
     _: failWith "Cannot plot this structure (only grids implemented so far)";
     esac;
 
