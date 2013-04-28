@@ -9,6 +9,7 @@ import org.jzy3d.colors.colormaps: ColorMapRainbow;
 import org.jzy3d.colors: ColorMapper, Color;
 import org.jzy3d.plot3d.rendering.canvas: Quality;
 import org.jzy3d.plot3d.rendering.view.modes: ViewPositionMode;
+import org.jzy3d.plot3d.primitives: FlatLine2d, Point;
 
 newMatrixMapper matrix =
    (class MMapper extends Mapper
@@ -51,11 +52,32 @@ plotMatrix matrix =
     ChartLauncher#openChart(chart);
     ());
 
+plotCurve values is list?<number> -> () =
+   (chart = new Chart(Quality#Nicest);
+    scene = chart#getScene();
+    n = length values;
+    line = new FlatLine2d([0..n-1] as ~float[], values as ~float[], 0);
+    line#setWireframeDisplayed(true);
+    line#setWireframeColor(Color#BLACK);
+    line#setWireframeWidth(2);
+    line#setFaceDisplayed(false);
+    scene#add(line);
+    chart#getView()#setViewPoint(new Coord3d(0, 0, 0));
+    axes = chart#getAxeLayout();
+    axes#setXAxeLabelDisplayed(false);
+    axes#setYAxeLabelDisplayed(false);
+    axes#setZAxeLabelDisplayed(true);
+    axes#setZAxeLabel("unit goes here"); //!!!
+    axes#setYTickLabelDisplayed(false);
+    ChartLauncher#openChart(chart);
+    ());
+
 plotStructure structure =
     case structure of
     Grid matrix:
         plotMatrix matrix;
-    //!!!
+    Curve curve:
+        plotCurve (map (.value) curve); //!!! this is wrong, but just to see
     _: failWith "Cannot plot this structure (only grids implemented so far)";
     esac;
 
