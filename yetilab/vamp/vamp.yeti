@@ -142,10 +142,15 @@ structureOf rdfOutputData od is 'a -> ~OutputDescriptor -> 'b =
     elif od#hasFixedBinCount and od#binCount == 1 then
         case computes of
         Event e:
-            if strEnds? e "Segment" then Segmentation ();
-            else Curve ();
+            if strEnds? e "Segment" 
+            then Segmentation ()
+            else Curve ()
             fi;
-        _: Curve ();
+        _:
+            if od#sampleType != OutputDescriptor$SampleType#VariableSampleRate
+            then Series ()
+            else Curve ()
+            fi;
         esac;
     elif od#hasFixedBinCount and
          od#sampleType != OutputDescriptor$SampleType#VariableSampleRate then

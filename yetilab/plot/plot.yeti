@@ -34,7 +34,7 @@ newMapper mapFunction =
     end;
     new FMapper());
 
-plotMatrix matrix =
+plotMatrix chart matrix is ~Chart -> 'a -> () =
    (mapper = newMatrixMapper matrix;
     size = matrix.size;
     xrange = new Range(0, size.columns - 1);
@@ -46,15 +46,11 @@ plotMatrix matrix =
     surface#setFaceDisplayed(true);
     surface#setWireframeDisplayed(true);
     surface#setWireframeColor(Color#BLACK);
-//    chart = new Chart(Quality#Fastest, "swing");
-    chart = new Chart(Quality#Nicest);
     chart#getScene()#getGraph()#add(surface);
-    ChartLauncher#openChart(chart);
     ());
 
-plotCurve curve =
-   (chart = new Chart(Quality#Nicest);
-    scene = chart#getScene();
+plotCurve chart curve is ~Chart -> 'a -> () =
+   (scene = chart#getScene();
     xx = map (.time) curve;
     yy = map (.value) curve;
     line = new FlatLine2d(xx as ~float[], yy as ~float[], 0);
@@ -72,14 +68,12 @@ plotCurve curve =
     axes#setZAxeLabel("unit goes here"); //!!!
     axes#setYTickLabelDisplayed(false);
 */
-    ChartLauncher#openChart(chart);
     ());
 
-plotSeries series =
-   (chart = new Chart(Quality#Nicest);
-    scene = chart#getScene();
-    xx = [0..length series - 1];
-    yy = list series;
+plotSeries chart { start, step, values } is ~Chart -> 'a -> () =
+   (scene = chart#getScene();
+    xx = map do i: start + step * i done [0..length values - 1];
+    yy = list values;
     line = new FlatLine2d(xx as ~float[], yy as ~float[], 0);
     line#setWireframeDisplayed(true);
     line#setWireframeColor(Color#BLACK);
@@ -95,25 +89,31 @@ plotSeries series =
     axes#setZAxeLabel("unit goes here"); //!!!
     axes#setYTickLabelDisplayed(false);
 */
-    ChartLauncher#openChart(chart);
     ());
 
-plotStructure structure =
-    case structure of
-    Grid matrix:
-        plotMatrix matrix;
-    Curve curve:
-        plotCurve curve;
-    Series series:
-        plotSeries series;
-    _: failWith "Cannot plot this structure (only grids implemented so far)";
-    esac;
+plot structures =
+   (chart = new Chart(Quality#Nicest);
+    for structures
+       \case of
+        Grid matrix:
+            plotMatrix chart matrix;
+        Curve curve:
+            plotCurve chart curve;
+        Series series:
+            plotSeries chart series;
+        other:
+            failWith "Unable to plot \(other)";
+        esac;
+    ChartLauncher#openChart(chart);
+    chart);
 
 {
     newMatrixMapper,
     newMatrixLogMapper,
     newMapper,
     plotMatrix, 
-    plotStructure,
+    plotCurve,
+    plotSeries,
+    plot,
 }
 

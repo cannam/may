@@ -12,6 +12,7 @@ fillOneSamplePerStep config features =
         case pending of
         feature::rest:
             stamped = feature with
+            //!!! how do we ensure feature timestamps are rationals where possible?
                { timestamp = Time ((n * config.stepSize) / config.sampleRate) };
             stamped :. \(fill' n rest features);
         _:
@@ -68,8 +69,20 @@ timeOf f =
     _: failWith "Internal error: timestamps not filled";
     esac;
 
+structureSeries features =
+    if empty? features then { start = 0, step = 0, values = [] }
+    else 
+        t0 = timeOf (head features);
+        t1 = if empty? (tail features) then t0
+             else timeOf (head (tail features)) fi;
+        {
+            start = t0,
+            step = t1 - t0,
+            values = map do f: (bl.data f.values)[0] done features;
+        }
+    fi;
+
 structureCurve features =
-//!!! need to return sample type as well -- or will caller read that from output elsewhere if they need it?
     map do f: {
         time = timeOf f,
         value = (bl.data f.values)[0],
@@ -126,10 +139,12 @@ structure data =
         _: 0;
         esac;
     case type of
-    Curve ():               // No duration, one value
-        Curve (structureCurve features);
+    Series ():              // No duration, one value, not variable rate
+        Series (structureSeries features);
     Grid ():                // No duration, >1 value, not variable rate
         Grid (structureGrid binCount features);
+    Curve ():               // No duration, one value, variable rate
+        Curve (structureCurve features);
     Instants ():            // Zero-valued features
         Instants (structureInstants features);
     Notes ():               // Duration, at least one value (pitch or freq)
