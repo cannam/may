@@ -75,12 +75,37 @@ plotCurve curve =
     ChartLauncher#openChart(chart);
     ());
 
+plotSeries series =
+   (chart = new Chart(Quality#Nicest);
+    scene = chart#getScene();
+    xx = [0..length series - 1];
+    yy = list series;
+    line = new FlatLine2d(xx as ~float[], yy as ~float[], 0);
+    line#setWireframeDisplayed(true);
+    line#setWireframeColor(Color#BLACK);
+    line#setWireframeWidth(2);
+    line#setFaceDisplayed(false);
+    scene#add(line);
+    chart#getView()#setViewPoint(new Coord3d(0, 0, 0));
+/*
+    axes = chart#getAxeLayout();
+    axes#setXAxeLabelDisplayed(false);
+    axes#setYAxeLabelDisplayed(false);
+    axes#setZAxeLabelDisplayed(true);
+    axes#setZAxeLabel("unit goes here"); //!!!
+    axes#setYTickLabelDisplayed(false);
+*/
+    ChartLauncher#openChart(chart);
+    ());
+
 plotStructure structure =
     case structure of
     Grid matrix:
         plotMatrix matrix;
     Curve curve:
         plotCurve curve;
+    Series series:
+        plotSeries series;
     _: failWith "Cannot plot this structure (only grids implemented so far)";
     esac;
 
