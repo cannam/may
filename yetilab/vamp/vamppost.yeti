@@ -23,8 +23,7 @@ fillOneSamplePerStep config features =
     fill' (-1) [] features);
 
 fillFixedSampleRate config rate features =
-   (eps = 0.0001;
-    fill' n pending features =
+   (fill' n pending features =
         // For FixedSampleRate features without explicit timestamps,
         // the time is incremented from the previous *feature* not the
         // previous process block (i.e. between elements in the
@@ -33,7 +32,7 @@ fillFixedSampleRate config rate features =
         feature::rest:
             n = case feature.timestamp of
                 Untimed (): n + 1;
-                Time t: int (t * rate + eps);
+                Time t: int (t * rate + 0.5);
                 esac;
             stamped = feature with { timestamp = Time (n / rate) };
             stamped :. \(fill' n rest features);

@@ -50,7 +50,18 @@ testdata =  {
     compare filled [
         timed 0 1 ,
         timed 0.2 1, timed 0.4 2 ,
-        timed 1.0 1, timed 1.2 2, timed 4.0 3
+        timed 1.2 1, timed 1.4 2, timed 4.0 3
+    ];
+),
+
+"fillFixedSampleRate2": \(
+    // As above, but with non-integer output sample rate
+    filled = vp.fillTimestamps
+       (testdata with { output = { sampleType = FixedSampleRate 2.5 } });
+    compare filled [
+        timed 0 1 ,
+        timed 0.4 1, timed 0.8 2 ,
+        timed 1.2 1, timed 1.6 2, timed 4.0 3
     ];
 ),
 
