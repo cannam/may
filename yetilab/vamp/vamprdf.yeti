@@ -69,10 +69,6 @@ loadGlobalVampRdf store =
         esac;
     done;
 
-filterIRIsFromNodes nodes =
-    map do r: case r of IRI iri: iri; esac done
-       (filter do r: case r of IRI iri: true; _: false esac done nodes);
-
 subjects = map (.s);
 
 iriTypes =
