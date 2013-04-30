@@ -15,15 +15,20 @@ testStream () = synthetic.whiteNoise rate 30;
 processTest output = 
     v.processStreamStructured testPluginKey output (testStream ());
 
+float n is number -> number =
+    // round number to float precision (for comparison with floats)
+   (arr = new float[1];
+    arr[0] := n;
+    arr[0]);
+
+floats nn = map float nn;
+
+tests =
 [
 
-"#_haveTestPlugin": \( // test named so as to appear first alphabetically
-    contains? testPluginKey v.pluginKeys;
-),
-
-"testPluginLoadAndVersion": \(
+"version": \(
     case v.loadPlugin rate testPluginKey of
-    Error e: (eprintln "testPluginLoadAndVersion: Error: \(e)"; false);
+    Error e: (eprintln "version: Error: \(e)"; false);
     OK plugin: compare plugin.version 1;
     esac
 ),
@@ -42,17 +47,21 @@ processTest output =
         compare s.start 0 and
         //!!! want to specify step and block size for processing
             compare s.step (2048/rate) and
-            compare s.values (map (* 0.05) [0..19]);
+            compare s.values (floats (map (* 0.05) [0..19]));
     other: failWith "wrong structure type: expected Series tag, got \(other)";
     esac
 ),
 
 "curve-fsr": \(
     case processTest "curve-fsr" of
-    Series s:
+    Curve c:
+        compare (map (.time) c) (map (* 0.4) [0..9]) and
+           compare (map (.value) c) (floats (map (* 0.1) [0..9]));
+/*
         compare s.start 0 and
             compare s.step 0.4 and
-            compare s.values (map (* 0.1) [0..9]);
+            compare s.values (floats (map (* 0.1) [0..9]));
+*/
     other: failWith "wrong structure type: expected Series tag, got \(other)";
     esac
 ),
@@ -61,7 +70,7 @@ processTest output =
     case processTest "curve-fsr-timed" of
     Curve c:
         compare (map (.time) c) [ 0, 0, 0, 0.4, 2, 2, 2, 2.4, 4, 4 ] and
-           compare (map (.value) c) (map (* 0.1) [0..9]);
+           compare (map (.value) c) (floats (map (* 0.1) [0..9]));
     other: failWith "wrong structure type: expected Curve tag, got \(other)";
     esac
 ),
@@ -70,7 +79,7 @@ processTest output =
     case processTest "curve-vsr" of
     Curve c:
         compare (map (.time) c) (map (* 0.75) [0..9]) and
-           compare (map (.value) c) (map (* 0.1) [0..9]);
+           compare (map (.value) c) (floats (map (* 0.1) [0..9]));
     other: failWith "wrong structure type: expected Curve tag, got \(other)";
     esac
 ),
@@ -81,9 +90,9 @@ processTest output =
         compareWith mat.equal g 
            (mat.newMatrix (ColumnMajor ())
                (map do x:
-                    map do y:
+                    floats (map do y:
                         (x + y + 2) / 30
-                        done [0..9]
+                        done [0..9])
                     done [0..19]));
     other: failWith "wrong structure type: expected Grid tag, got \(other)";
     esac
@@ -95,9 +104,9 @@ processTest output =
         compareWith mat.equal g 
            (mat.newMatrix (ColumnMajor ())
                (map do x:
-                    map do y:
+                    floats (map do y:
                         (x + y + 2) / 20
-                        done [0..9]
+                        done [0..9])
                     done [0..19]));
     other: failWith "wrong structure type: expected Grid tag, got \(other)";
     esac
@@ -108,11 +117,25 @@ processTest output =
     Regions rr:
         compare (map (.time) rr) [0..9] and
            compare (map (.duration) rr) (map do i: Time (if i % 2 == 0 then 1.75 else 0.5 fi) done [0..9]) and
-           compare (map (.values) rr) (map do i: array [i] done (map (* 0.1) [0..9]));
+           compare (map (.values) rr) (map do i: array [float i] done (map (* 0.1) [0..9]));
     other: failWith "wrong structure type: expected Curve tag, got \(other)";
     esac
 ),
     
-] is hash<string, () -> boolean>;
+];
+
+// Check we have the test plugin. Without it, all the tests must fail
+
+if contains? testPluginKey v.pluginKeys then 
+    tests
+else
+    eprintln
+"** The test plugin is not installed, or the Vamp module is totally broken.
+   Ensure vamp-test-plugin is in the Vamp path or set $VAMP_PATH to point to it.
+   (The path is currently \(v.pluginPath).)
+   All Vamp plugin tests will fail until this is fixed.";
+    mapIntoHash id \\false (keys tests)
+fi is hash<string, () -> boolean>;
+
 
 

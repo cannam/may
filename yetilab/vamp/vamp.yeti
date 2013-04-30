@@ -147,7 +147,7 @@ structureOf rdfOutputData od is 'a -> ~OutputDescriptor -> 'b =
             else Curve ()
             fi;
         _:
-            if od#sampleType != OutputDescriptor$SampleType#VariableSampleRate
+            if od#sampleType == OutputDescriptor$SampleType#OneSamplePerStep
             then Series ()
             else Curve ()
             fi;
