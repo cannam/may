@@ -53,7 +53,7 @@ plotCurve chart curve is ~Chart -> 'a -> () =
    (scene = chart#getScene();
     xx = map (.time) curve;
     yy = map (.value) curve;
-    line = new FlatLine2d(xx as ~float[], yy as ~float[], 0);
+    line = new FlatLine2d(xx as ~float[], yy as ~float[], 1);
     line#setWireframeDisplayed(true);
     line#setWireframeColor(Color#BLACK);
     line#setWireframeWidth(2);

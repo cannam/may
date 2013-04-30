@@ -10,6 +10,7 @@ tests = [
 "framer"     : load yetilab.stream.test.test_framer,
 "fft"        : load yetilab.transform.test.test_fft,
 "vamppost"   : load yetilab.vamp.test.test_vamppost,
+"vamp"       : load yetilab.vamp.test.test_vamp,
 "matrix"     : load yetilab.matrix.test.test_matrix,
 "plot"       : load yetilab.plot.test.test_plot,
 "signal"     : load yetilab.signal.test.test_signal,

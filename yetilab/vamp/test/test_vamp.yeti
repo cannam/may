@@ -1,0 +1,118 @@
+module yetilab.vamp.test.test_vamp;
+
+v = load yetilab.vamp.vamp;
+synthetic = load yetilab.stream.syntheticstream;
+mat = load yetilab.matrix.matrix;
+
+{ compare, compareWith } = load yetilab.test.test;
+
+testPluginKey = "vamp-test-plugin:vamp-test-plugin";
+
+rate = 44100;
+
+testStream () = synthetic.whiteNoise rate 30;
+
+processTest output = 
+    v.processStreamStructured testPluginKey output (testStream ());
+
+[
+
+"#_haveTestPlugin": \( // test named so as to appear first alphabetically
+    contains? testPluginKey v.pluginKeys;
+),
+
+"testPluginLoadAndVersion": \(
+    case v.loadPlugin rate testPluginKey of
+    Error e: (eprintln "testPluginLoadAndVersion: Error: \(e)"; false);
+    OK plugin: compare plugin.version 1;
+    esac
+),
+
+"instants": \(
+    case processTest "instants" of
+    Instants ii:
+        compare (map (.time) ii) [ 0, 1.5, 3, 4.5, 6, 7.5, 9, 10.5, 12, 13.5 ];
+    other: failWith "wrong structure type: expected Instants tag, got \(other)";
+    esac
+),
+
+"curve-oss": \(
+    case processTest "curve-oss" of
+    Series s:
+        compare s.start 0 and
+        //!!! want to specify step and block size for processing
+            compare s.step (2048/rate) and
+            compare s.values (map (* 0.05) [0..19]);
+    other: failWith "wrong structure type: expected Series tag, got \(other)";
+    esac
+),
+
+"curve-fsr": \(
+    case processTest "curve-fsr" of
+    Series s:
+        compare s.start 0 and
+            compare s.step 0.4 and
+            compare s.values (map (* 0.1) [0..9]);
+    other: failWith "wrong structure type: expected Series tag, got \(other)";
+    esac
+),
+    
+"curve-fsr-timed": \(
+    case processTest "curve-fsr-timed" of
+    Curve c:
+        compare (map (.time) c) [ 0, 0, 0, 0.4, 2, 2, 2, 2.4, 4, 4 ] and
+           compare (map (.value) c) (map (* 0.1) [0..9]);
+    other: failWith "wrong structure type: expected Curve tag, got \(other)";
+    esac
+),
+
+"curve-vsr": \(
+    case processTest "curve-vsr" of
+    Curve c:
+        compare (map (.time) c) (map (* 0.75) [0..9]) and
+           compare (map (.value) c) (map (* 0.1) [0..9]);
+    other: failWith "wrong structure type: expected Curve tag, got \(other)";
+    esac
+),
+
+"grid-oss": \(
+    case processTest "grid-oss" of //!!! test spacing?
+    Grid g:
+        compareWith mat.equal g 
+           (mat.newMatrix (ColumnMajor ())
+               (map do x:
+                    map do y:
+                        (x + y + 2) / 30
+                        done [0..9]
+                    done [0..19]));
+    other: failWith "wrong structure type: expected Grid tag, got \(other)";
+    esac
+),
+
+"grid-fsr": \(
+    case processTest "grid-fsr" of //!!! test spacing?
+    Grid g:
+        compareWith mat.equal g 
+           (mat.newMatrix (ColumnMajor ())
+               (map do x:
+                    map do y:
+                        (x + y + 2) / 20
+                        done [0..9]
+                    done [0..19]));
+    other: failWith "wrong structure type: expected Grid tag, got \(other)";
+    esac
+),
+
+"notes-regions": \(
+    case processTest "notes-regions" of
+    Regions rr:
+        compare (map (.time) rr) [0..9] and
+           compare (map (.duration) rr) (map do i: Time (if i % 2 == 0 then 1.75 else 0.5 fi) done [0..9]) and
+           compare (map (.values) rr) (map do i: array [i] done (map (* 0.1) [0..9]));
+    other: failWith "wrong structure type: expected Curve tag, got \(other)";
+    esac
+),
+    
+] is hash<string, () -> boolean>;
+
+

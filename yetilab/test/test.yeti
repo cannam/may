@@ -7,13 +7,15 @@ import yeti.lang: FailureException;
 
 testStream n is number -> 'a  = ss.precalculated 1000 (vec.vector [1..n]);
 
-compare obtained expected =
-    if obtained == expected then
+compareWith comparator obtained expected =
+    if comparator obtained expected then
         true;
     else
         println "** expected: \(expected)\n   obtained: \(obtained)";
         false;
     fi;
+
+compare obtained expected = compareWith (==) obtained expected;
 
 select f = fold do r x: if f x then x::r else r fi done [];
 
@@ -42,6 +44,6 @@ runTests group testHash =
     bad);
 
 {
-    testStream, compare, failedTests, runTests
+    testStream, compare, compareWith, failedTests, runTests
 }
 
