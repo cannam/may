@@ -3,6 +3,8 @@ module yetilab.test.test;
 vec = load yetilab.block.fvector;
 ss = load yetilab.stream.syntheticstream;
 
+import yeti.lang: FailureException;
+
 testStream n is number -> 'a  = ss.precalculated 1000 (vec.vector [1..n]);
 
 compare obtained expected =
@@ -18,10 +20,15 @@ select f = fold do r x: if f x then x::r else r fi done [];
 failedTests testHash =
     select (!= "")
        (mapHash do name f:
-            if f () then "" else
-                println "Test \(name) failed";
+            try
+                if f () then "" else
+                    println "Test \(name) failed";
+                    name;
+                fi 
+            catch FailureException e:
+                println "Test \(name) threw exception: \(e)";
                 name;
-            fi 
+            yrt;
         done testHash);
         
 runTests group testHash =
