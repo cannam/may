@@ -1,6 +1,8 @@
 
 module yetilab.stream.audiofile;
 
+load yetilab.stream.streamtype;
+
 import javax.sound.sampled:
      AudioSystem, AudioInputStream, AudioFormat, AudioFormat$Encoding,
      UnsupportedAudioFileException;
@@ -90,7 +92,7 @@ available' { format is ~AudioFormat, aistream is ~AudioInputStream } =
 close' { aistream is ~AudioInputStream } =
     aistream#close();
 
-open name is string -> 'a = 
+open name is string -> stream = 
    (f = new File(name);
     aistream = AudioSystem#getAudioInputStream(f);
     format = aistream#getFormat();
@@ -107,5 +109,7 @@ open name is string -> 'a =
 
 {
     open
-}
+} as {
+    open is string -> stream
+} 
 

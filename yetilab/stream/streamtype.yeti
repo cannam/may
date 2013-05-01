@@ -1,0 +1,16 @@
+
+module yetilab.stream.streamtype;
+
+typedef stream =
+    {
+        position is number,
+        channels is number,
+        sampleRate is number,
+        available is Known number | Unknown () | Infinite (),
+        finished? is boolean,
+        read is number -> 'a, // actually a matrix
+        close is () -> (),
+    };
+
+();
+

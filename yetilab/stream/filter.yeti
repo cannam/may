@@ -1,0 +1,34 @@
+
+module yetilab.stream.filter;
+
+mat = load yetilab.matrix.matrix;
+
+load yetilab.stream.streamtype;
+
+truncatedTo nsamples s =
+    {
+        get position () = s.position,
+        get channels () = s.channels, 
+        get sampleRate () = s.sampleRate,
+        get available () = Known (nsamples - s.position),
+        get finished? () = not (nsamples > s.position),
+        read count =
+            if nsamples > s.position + count then
+                s.read count;
+            elif nsamples > s.position then
+                s.read (nsamples - s.position)
+            else
+                mat.zeroMatrix { columns = 0, rows = s.channels }
+            fi,
+        close = s.close,
+    };
+
+{
+    truncatedTo, 
+} as {
+    truncatedTo is number -> stream -> stream
+}
+
+
+
+
