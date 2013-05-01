@@ -8,6 +8,7 @@ tests = [
 "blockfuncs" : load yetilab.block.test.test_blockfuncs,
 "complex"    : load yetilab.block.test.test_complex,
 "framer"     : load yetilab.stream.test.test_framer,
+"channels"   : load yetilab.stream.test.test_channels,
 "fft"        : load yetilab.transform.test.test_fft,
 "vamppost"   : load yetilab.vamp.test.test_vamppost,
 "vamp"       : load yetilab.vamp.test.test_vamp,

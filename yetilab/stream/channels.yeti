@@ -7,13 +7,17 @@ mat = load yetilab.matrix.matrix;
         
 interleaved m = 
    ({ columns, rows } = m.size;
-    v = vec.zeros (columns * rows);
-    for [0..rows-1] do row:
-        for [0..columns-1] do col:
-            v[col * rows + row] := m.getAt row col;
+    if rows == 1 then
+        m.getRow 0
+    else
+        v = vec.zeros (columns * rows);
+        for [0..rows-1] do row:
+            for [0..columns-1] do col:
+                v[col * rows + row] := m.getAt row col;
+            done;
         done;
-    done;
-    block.block v);
+        block.block v;
+    fi);
 
 deinterleaved channels b =
     if channels == 1 then
@@ -41,15 +45,19 @@ mixedDown m =
     block.block v);
 
 mixedDownFromInterleaved channels b =
-   (v = block.data b;
-    columns = ((vec.length v) / channels);
-    v' = vec.zeros columns;
-    for [0..channels-1] do row:
-        for [0..columns-1] do col:
-            v'[col] := v'[col] + v[col * channels + row];
+    if channels == 1 then
+        b;
+    else
+        v = block.data b;
+        columns = ((vec.length v) / channels);
+        v' = vec.zeros columns;
+        for [0..channels-1] do row:
+            for [0..columns-1] do col:
+                v'[col] := v'[col] + v[col * channels + row];
+            done;
         done;
-    done;
-    block.block v');
+        block.block v';
+    fi;
 
 mixedFromInterleavedTo targetChannels channels b = 
     if targetChannels == channels then

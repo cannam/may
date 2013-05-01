@@ -1,0 +1,77 @@
+
+module yetilab.stream.test.test_channels;
+
+ch = load yetilab.stream.channels;
+mat = load yetilab.matrix.matrix;
+bl = load yetilab.block.block;
+
+{ compare, compareUsing } = load yetilab.test.test;
+
+newMatrix data = mat.newMatrix (ColumnMajor ()) (map bl.fromList data);
+
+compareBlocks b1 b2 =
+    compare (bl.list b1) (bl.list b2);
+
+[
+
+"interleaved": \(
+    compareBlocks (ch.interleaved (newMatrix [[1,4],[2,5],[3,6]]))
+       (bl.fromList [1,4,2,5,3,6]) and
+        compareBlocks (ch.interleaved (newMatrix [[1],[2],[3]]))
+           (bl.fromList [1,2,3])
+),
+
+"deinterleaved": \(
+    compareUsing mat.equal (ch.deinterleaved 2 (bl.fromList [1,4,2,5,3,6]))
+       (newMatrix [[1,4],[2,5],[3,6]]) and
+        compareUsing mat.equal (ch.deinterleaved 1 (bl.fromList [1,2,3]))
+           (newMatrix [[1],[2],[3]])
+),
+
+"mixedDown": \(
+    compareBlocks (ch.mixedDown (newMatrix [[1,4],[2,5],[3,6]]))
+       (bl.fromList [5,7,9]) and
+        compareBlocks (ch.mixedDown (newMatrix []))
+           (bl.fromList [])
+),
+
+"mixedDownFromInterleaved": \(
+    compareBlocks (ch.mixedDownFromInterleaved 2 (bl.fromList [1,4,2,5,3,6]))
+       (bl.fromList [5,7,9]) and
+        compareBlocks (ch.mixedDownFromInterleaved 1 (bl.fromList [1,2,3]))
+           (bl.fromList [1,2,3])
+),
+
+"mixedFromInterleavedTo": \(
+    compareBlocks (ch.mixedFromInterleavedTo 1 2 (bl.fromList [1,4,2,5,3,6]))
+       (bl.fromList [5,7,9]) and
+        compareBlocks (ch.mixedFromInterleavedTo 2 2 (bl.fromList [1,4,2,5,3,6]))
+           (bl.fromList [1,4,2,5,3,6]) and
+        compareBlocks (ch.mixedFromInterleavedTo 3 2 (bl.fromList [1,4,2,5,3,6]))
+           (bl.fromList [1,4,0,2,5,0,3,6,0]) and
+        compareBlocks (ch.mixedFromInterleavedTo 1 1 (bl.fromList [1,2,3]))
+           (bl.fromList [1,2,3]) and
+        compareBlocks (ch.mixedFromInterleavedTo 2 1 (bl.fromList [1,2,3]))
+           (bl.fromList [1,1,2,2,3,3]) and
+        compareBlocks (ch.mixedFromInterleavedTo 3 1 (bl.fromList [1,2,3]))
+           (bl.fromList [1,1,0,2,2,0,3,3,0])
+),
+
+"mixedAndInterleavedTo": \(
+    compareBlocks (ch.mixedAndInterleavedTo 1 (newMatrix [[1,4],[2,5],[3,6]]))
+       (bl.fromList [5,7,9]) and
+        compareBlocks (ch.mixedAndInterleavedTo 2 (newMatrix [[1,4],[2,5],[3,6]]))
+           (bl.fromList [1,4,2,5,3,6]) and
+        compareBlocks (ch.mixedAndInterleavedTo 3 (newMatrix [[1,4],[2,5],[3,6]]))
+           (bl.fromList [1,4,0,2,5,0,3,6,0]) and
+        compareBlocks (ch.mixedAndInterleavedTo 1 (newMatrix [[1],[2],[3]]))
+           (bl.fromList [1,2,3]) and
+        compareBlocks (ch.mixedAndInterleavedTo 2 (newMatrix [[1],[2],[3]]))
+           (bl.fromList [1,1,2,2,3,3]) and
+        compareBlocks (ch.mixedAndInterleavedTo 3 (newMatrix [[1],[2],[3]]))
+           (bl.fromList [1,1,0,2,2,0,3,3,0])
+),
+
+] is hash<string, () -> boolean>;
+
+
