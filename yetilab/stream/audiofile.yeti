@@ -55,11 +55,11 @@ decode { format is ~AudioFormat } bytes doubles n =
         fi
     fi);
 
-readInterleaved' { format is ~AudioFormat, stream is ~AudioInputStream } nframes =
+readInterleaved' { format is ~AudioFormat, aistream is ~AudioInputStream } nframes =
    (channels = format#getChannels();
     bytesPerSample = format#getSampleSizeInBits() / 8;
     bytes = new byte[nframes * channels * bytesPerSample];
-    bytesRead = stream#read(bytes);
+    bytesRead = aistream#read(bytes);
     if bytesRead <= 0 then block.zeros 0;
     else
         n = int(bytesRead / bytesPerSample);
@@ -69,44 +69,44 @@ readInterleaved' { format is ~AudioFormat, stream is ~AudioInputStream } nframes
     fi;
    );
 
-read' { format is ~AudioFormat, stream is ~AudioInputStream } n =
-   (b = readInterleaved' { format, stream } n;
+read' { format is ~AudioFormat, aistream is ~AudioInputStream } n =
+   (b = readInterleaved' { format, aistream } n;
     channels = format#getChannels();
     ch.deinterleaved channels b;
    );
 
-readMono' { format is ~AudioFormat, stream is ~AudioInputStream } n =
-   (b = readInterleaved' { format, stream } n;
+readMono' { format is ~AudioFormat, aistream is ~AudioInputStream } n =
+   (b = readInterleaved' { format, aistream } n;
     channels = format#getChannels();
     ch.mixedDownFromInterleaved channels b;
    );
 
-// Note, all this assumes the stream is non-blocking (i.e. available()
-// is to the end of file)
+// Note, all this assumes aistream is non-blocking (i.e. available()
+// is to the end of file). Our stream interface does support
+// indefinite and infinite streams, but audiofile doesn't yet.
 
-available' { format is ~AudioFormat, stream is ~AudioInputStream } =
-    stream#available() / ((format#getSampleSizeInBits() / 8) * format#getChannels());
+available' { format is ~AudioFormat, aistream is ~AudioInputStream } =
+    aistream#available() / ((format#getSampleSizeInBits() / 8) * format#getChannels());
 
-close' { stream is ~AudioInputStream } =
-    stream#close();
+close' { aistream is ~AudioInputStream } =
+    aistream#close();
 
 open name is string -> 'a = 
    (f = new File(name);
-    stream = AudioSystem#getAudioInputStream(f);
-    format = stream#getFormat();
-    len = available' { format, stream }; // at start of stream
+    aistream = AudioSystem#getAudioInputStream(f);
+    format = aistream#getFormat();
+    len = available' { format, aistream }; // at start of stream
     str.stream {
-        stream,
         format,
-        len,
+        length = Known len,
         rate = format#getSampleRate(),
         channels = format#getChannels(),
-        get position () = len - available' { stream, format },
-        get available () = available' { stream, format },
-        read = read' { stream, format },
-        readInterleaved = readInterleaved' { stream, format },
-        readMono = readMono' { stream, format },
-        close () = close' { stream },
+        get position () = len - available' { aistream, format },
+        get available () = Known (available' { aistream, format }),
+        read = read' { aistream, format },
+        readInterleaved = readInterleaved' { aistream, format },
+        readMono = readMono' { aistream, format },
+        close () = close' { aistream },
     });
 
 {

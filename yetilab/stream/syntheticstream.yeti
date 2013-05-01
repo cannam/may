@@ -5,27 +5,26 @@ str = load yetilab.stream.stream;
 vec = load yetilab.block.fvector;
 block = load yetilab.block.block;
 
-generated rate generator seconds =
+generated rate generator =
+    // generator takes time in seconds as arg, returns number in -1,+1 range
     str.monoStream {
         var position = 0,
-        len = int(seconds * rate + 0.5),
         rate,
         read count = 
-           (rc = min count (len - position);
-            result = vec.zeros rc;
-            for [0..rc-1] do i:
+           (result = vec.zeros count;
+            for [0..count-1] do i:
                 result[i] := generator ((position + i) / rate)
             done;
-            position := position + rc;
+            position := position + count;
             block.block result),
         close = \(),
         };
 
-sinusoid rate freq seconds =
-    generated rate (sin . (* (freq / (2*pi * rate)))) seconds;
+sinusoid rate freq =
+    generated rate (sin . (* (freq / (2*pi * rate))));
 
-whiteNoise rate seconds =
-    generated rate \((Math#random() * 2.0) - 1.0) seconds;
+whiteNoise rate =
+    generated rate \((Math#random() * 2.0) - 1.0);
 
 precalculated rate data is number -> ~double[] -> 'a =
    (n = vec.length data;

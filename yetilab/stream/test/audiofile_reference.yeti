@@ -1,0 +1,9 @@
+
+module yetilab.stream.test.audiofile_reference;
+
+syn = load yetilab.stream.syntheticstream;
+str = load yetilab.stream.stream;
+vec = load yetilab.block.fvector;
+block = load yetilab.block.block;
+
+    

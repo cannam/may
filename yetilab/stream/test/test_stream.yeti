@@ -1,0 +1,17 @@
+
+module yetilab.stream.test.test_stream;
+
+str = load yetilab.stream.stream;
+block = load yetilab.block.block;
+
+{ compare, testStream } = load yetilab.test.test;
+
+[
+
+"generated": \(
+//    s = str.generated 10
+//        do i:
+)
+            
+] is hash<string, () -> boolean>;
+
