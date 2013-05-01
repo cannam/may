@@ -29,6 +29,9 @@ list' a is ~double[] -> list<number> =
 length' =
     length . list';
 
+empty?' =
+    empty? . list';
+
 floats a is ~double[] -> ~float[] =
    (len = length' a;
     f = new float[len];
@@ -72,6 +75,7 @@ concat vv is list?<~double[]> -> ~double[] =
 zeros, consts, ones,
 vector,
 length = length',
+empty? = empty?',
 list = list',
 floats, fromFloats,
 equal,

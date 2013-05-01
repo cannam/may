@@ -45,7 +45,7 @@ overlappingBlockList size hop stream valid buffer =
         stream.close ();
         [];
     else
-        mat.newMatrix (RowMajor ()) (map block.list buffer)
+        mat.newMatrix (RowMajor ()) buffer
             :. \(overlappingBlockList size hop stream remaining buffer);
     fi);
 

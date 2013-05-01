@@ -9,7 +9,7 @@ mat = load yetilab.matrix.matrix;
 
 compareFrames frames1 frames2 =
     all id (map2 do f1 f2: compareUsing mat.equal f1 f2 done frames1
-       (map mat.newRowVector frames2));
+       (map (mat.newRowVector . block.fromList) frames2));
 
 [
 

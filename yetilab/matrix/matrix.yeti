@@ -125,18 +125,18 @@ copyOf m =
         ColM d: ColM (copyOfData d);
         esac));
 
-newMatrix type data is RowMajor () | ColumnMajor () -> list?<list?<number>> -> 'a =
+newMatrix type data = //!!! NB does not copy data
    (tagger = case type of RowMajor (): RowM; ColumnMajor (): ColM esac;
-    if empty? data or empty? (head data)
+    if empty? data or block.empty? (head data)
     then zeroMatrix { rows = 0, columns = 0 }
-    else make (tagger (array (map vec.vector data)))
+    else make (tagger (array (map block.data data)))
     fi);
 
-newRowVector data = 
-    newMatrix (RowMajor ()) [data];
+newRowVector data = //!!! NB does not copy data
+    make (RowM (array [block.data data]));
 
-newColumnVector data = 
-    newMatrix (ColumnMajor ()) [data];
+newColumnVector data = //!!! NB does not copy data
+    make (ColM (array [block.data data]));
 
 scaled factor m =
     generate do row col: factor * m.getAt row col done m.size;

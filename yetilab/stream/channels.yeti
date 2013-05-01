@@ -15,11 +15,20 @@ interleaved m =
     done;
     block.block v);
 
-deinterleaved channels b = //!!! should generate a RowMajor matrix for faster framing
-   (v = block.data b;
-    mat.generate do row col:
-        v[channels * col + row]
-    done { rows = channels, columns = ((vec.length v) / channels) });
+deinterleaved channels b =
+    if channels == 1 then
+        mat.newRowVector b
+    else
+        rows = (block.length b) / channels;
+        vv = array (map \(vec.zeros rows) [0..channels-1]);
+        v = block.data b;
+        for [0..rows-1] do row:
+            for [0..channels-1] do col:
+                vv[col][row] := v[channels * row + col];
+            done
+        done;
+        mat.newMatrix (RowMajor ()) (map block.block vv);
+    fi;
 
 mixedDown m =
    ({ columns, rows } = m.size;

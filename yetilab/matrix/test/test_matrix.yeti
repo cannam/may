@@ -16,7 +16,7 @@ makeTests name flipper =
     randomMatrix s = flipper (mat.randomMatrix s);
     identityMatrix s = flipper (mat.identityMatrix s);
     generate f s = flipper (mat.generate f s);
-    newMatrix t d = flipper (mat.newMatrix t d);
+    newMatrix t d = flipper (mat.newMatrix t (map block.fromList d));
 [
 
 "constMatrixEmpty-\(name)": \(
