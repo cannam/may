@@ -98,6 +98,12 @@ flipped m =
             { rows = m.size.columns, columns = m.size.rows });
     fi;
 
+toRowMajor m =
+    if m.isRowMajor? then m else flipped m fi;
+
+toColumnMajor m =
+    if not m.isRowMajor? then m else flipped m fi;
+
 // Matrices with different storage order but the same contents are
 // equal (but comparing them is slow)
 equal m1 m2 =
@@ -161,6 +167,12 @@ product m1 m2 =
         done { rows = m1.size.rows, columns = m2.size.columns }
     fi;
 
+asRows m =
+    map (block.list . m.getRow) [0 .. m.size.rows - 1];
+
+asColumns m =
+    map (block.list . m.getColumn) [0 .. m.size.columns - 1];
+
 {
 constMatrix, randomMatrix, zeroMatrix, identityMatrix, zeroSizeMatrix,
 generate,
@@ -168,9 +180,10 @@ width, height,
 equal,
 copyOf,
 transposed,
-flipped,
+flipped, toRowMajor, toColumnMajor,
 scaled,
 resizedTo,
+asRows, asColumns,
 sum = sum', product,
 newMatrix, newRowVector, newColumnVector,
 }

@@ -13,6 +13,7 @@ import java.util: Map, List;
 bl = load yetilab.block.block;
 fr = load yetilab.stream.framer;
 af = load yetilab.stream.audiofile;
+mat = load yetilab.matrix.matrix;
 vamprdf = load yetilab.vamp.vamprdf;
 vamppost = load yetilab.vamp.vamppost;
 
@@ -207,8 +208,8 @@ plugin key p is string -> ~Plugin -> 'a =
         Some data: map2 outputDescriptor (map Some data.outputs) p#getOutputDescriptors();
         None (): map (outputDescriptor (None ())) p#getOutputDescriptors();
         esac,
-    process blocks time is 'a -> ~RealTime -> 'b = 
-        featureSet p#process((map bl.floats blocks) as ~float[][], 0, time),
+    process frame time is 'a -> ~RealTime -> 'b = 
+        featureSet p#process((mat.asRows frame) as ~float[][], 0, time),
     getRemainingFeatures () = featureSet p#getRemainingFeatures(),
     dispose () = p#dispose(),
     });
@@ -250,7 +251,7 @@ processed { p, sampleRate, hop } frames count
                        }>>> =
     case frames of
     frame::rest:
-        p.process [frame] RealTime#frame2RealTime(count, sampleRate)
+        p.process frame RealTime#frame2RealTime(count, sampleRate)
         :.
         \(processed { p, sampleRate, hop } rest (count + hop));
     _: 

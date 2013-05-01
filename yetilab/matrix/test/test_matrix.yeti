@@ -175,6 +175,24 @@ makeTests name flipper =
     compareMatrices (mat.flipped m) (mat.flipped (constMatrix 0 { rows = 0, columns = 0 }));
 ),
 
+"toRowMajor-\(name)": \(
+    m = newMatrix (ColumnMajor ()) [[1,4],[2,5],[3,6]];
+    m' = mat.toRowMajor m;
+    m'' = newMatrix (RowMajor ()) [[1,2,3],[4,5,6]];
+    m''' = mat.toRowMajor m'';
+    compareMatrices m m' and compareMatrices m m'' and compareMatrices m' m''
+        and compareMatrices m m''';
+),
+
+"toColumnMajor-\(name)": \(
+    m = newMatrix (RowMajor ()) [[1,4],[2,5],[3,6]];
+    m' = mat.toColumnMajor m;
+    m'' = newMatrix (ColumnMajor ()) [[1,2,3],[4,5,6]];
+    m''' = mat.toColumnMajor m'';
+    compareMatrices m m' and compareMatrices m m'' and compareMatrices m' m''
+        and compareMatrices m m''';
+),
+
 "scaled-\(name)": \(
     compareMatrices
        (mat.scaled 0.5 (constMatrix 2 { rows = 3, columns = 4 }))
@@ -244,6 +262,18 @@ makeTests name flipper =
     compareMatrices
        (mat.zeroSizeMatrix ())
        (newMatrix (ColumnMajor ()) [])
+),
+
+"asRows-\(name)": \(
+    compare
+       (mat.asRows (newMatrix (ColumnMajor ()) [[1,4],[2,5],[3,6]]))
+        [[1,2,3],[4,5,6]];
+),
+
+"asColumns-\(name)": \(
+    compare
+       (mat.asColumns (newMatrix (ColumnMajor ()) [[1,4],[2,5],[3,6]]))
+        [[1,4],[2,5],[3,6]];
 ),
 
 ]);
