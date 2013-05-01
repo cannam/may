@@ -17,7 +17,7 @@ ch = load yetilab.stream.channels;
 blockList framesize stream =
     if stream.finished? then
         stream.close ();
-        [ mat.zeroMatrix { rows = stream.channels, columns = 0 } ]
+        []
     else
         mat.resizedTo { rows = stream.channels, columns = framesize }
            (stream.read framesize)
