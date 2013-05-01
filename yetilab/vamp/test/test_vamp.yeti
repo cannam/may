@@ -12,7 +12,7 @@ testPluginKey = "vamp-test-plugin:vamp-test-plugin";
 
 rate = 44100;
 
-testStream () = filter.truncatedTo (rate * 30) (synthetic.whiteNoise rate);
+testStream () = filter.truncatedTo (rate * 20) (synthetic.whiteNoise rate);
 
 processTest output = 
     v.processStreamStructured testPluginKey output (testStream ());
@@ -109,7 +109,7 @@ tests =
                    (block.fromList . floats) (map do y:
                         (x + y + 2) / 20
                         done [0..9])
-                    done [0..19]));
+                    done [0..9]));
     other: failWith "wrong structure type: expected Grid tag, got \(other)";
     esac
 ),
