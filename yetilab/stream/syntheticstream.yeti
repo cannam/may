@@ -1,24 +1,28 @@
 
 module yetilab.stream.syntheticstream;
 
-str = load yetilab.stream.stream;
+ch = load yetilab.stream.channels;
 vec = load yetilab.block.fvector;
 block = load yetilab.block.block;
 
-generated rate generator =
-    // generator takes time in seconds as arg, returns number in -1,+1 range
-    str.monoStream {
-        var position = 0,
-        rate,
-        read count = 
+generated sampleRate generator =
+   (// generator takes time in seconds as arg, returns number in -1,+1 range
+    var position = 0;
+    {
+        get position () = position,
+        get channels () = 1, 
+        get sampleRate () = sampleRate,
+        get available () = Infinite (),
+        get finished? () = false,
+        read count = ch.deinterleaved 1
            (result = vec.zeros count;
             for [0..count-1] do i:
-                result[i] := generator ((position + i) / rate)
+                result[i] := generator ((position + i) / sampleRate)
             done;
             position := position + count;
             block.block result),
         close = \(),
-        };
+    });
 
 sinusoid rate freq =
     generated rate (sin . (* (freq / (2*pi * rate))));
@@ -26,21 +30,27 @@ sinusoid rate freq =
 whiteNoise rate =
     generated rate \((Math#random() * 2.0) - 1.0);
 
-precalculated rate data is number -> ~double[] -> 'a =
-   (n = vec.length data;
-    str.monoStream {
-        var position = 0,
-        len = n,
-        rate,
-        read count = 
-           (rc = min count (len - position);
-            result = vec.rangeOf data position rc;
+silent rate =
+    generated rate \0;
+
+precalculated rate data =
+   (n = block.length data;
+    var position = 0;
+    {
+        get position () = position,
+        get channels () = 1,
+        get sampleRate () = rate,
+        get available () = Known (n - position),
+        get finished? () = not (n > position),
+        read count = ch.deinterleaved 1
+           (rc = min count (n - position);
+            result = block.rangeOf data position rc;
             position := position + rc;
-            block.block result),
+            result),
         close = \(),
     });
 
 {
-    generated, precalculated, sinusoid, whiteNoise,
+    generated, precalculated, sinusoid, whiteNoise, silent,
 }
 

@@ -3,8 +3,13 @@ module yetilab.stream.test.test_framer;
 
 fr = load yetilab.stream.framer;
 block = load yetilab.block.block;
+mat = load yetilab.matrix.matrix;
 
-{ compare, testStream } = load yetilab.test.test;
+{ compare, compareUsing, testStream } = load yetilab.test.test;
+
+compareFrames frames1 frames2 =
+    all id (map2 do f1 f2: compareUsing mat.equal f1 f2 done frames1
+       (map mat.newRowVector frames2));
 
 [
 
@@ -66,26 +71,26 @@ block = load yetilab.block.block;
 "frames-2x5": \( 
     fr = fr.frames { framesize = 2, hop = 2 } (testStream 5);
     expected = [ [1,2], [3,4], [5,0] ];
-    compare (map block.list fr) expected;
+    compareFrames fr expected;
 ),
 
 "frames-4.3x4": \( 
     fr = fr.frames { framesize = 4, hop = 3 } (testStream 4);
     expected = [ [0,1,2,3], [3,4,0,0] ];
-    compare (map block.list fr) expected;
+    compareFrames fr expected;
 ),
 
 "frames-3.2x4": \(
     fr = fr.frames { framesize = 3, hop = 2 } (testStream 4);
     expected = [ [0,1,2], [2,3,4], [4,0,0] ];
-    compare (map block.list fr) expected;
+    compareFrames fr expected;
 ),
 
 "frames-3.1x6": \(
     fr = fr.frames { framesize = 3, hop = 1 } (testStream 6);
     expected = [ [0,0,1], [0,1,2], [1,2,3], [2,3,4],
                  [3,4,5], [4,5,6], [5,6,0], [6,0,0] ];
-    compare (map block.list fr) expected;
+    compareFrames fr expected;
 ),
 
 ] is hash<string, () -> boolean>;

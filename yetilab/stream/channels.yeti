@@ -3,70 +3,76 @@ module yetilab.stream.channels;
 
 vec = load yetilab.block.fvector;
 block = load yetilab.block.block;
-mat = load yetilab.block.fmatrix;
+mat = load yetilab.matrix.matrix;
         
 interleaved m = 
-   ({ cols, rows } = mat.dimensions m;
-    v = vec.zeros (cols * rows);
+   ({ columns, rows } = m.size;
+    v = vec.zeros (columns * rows);
     for [0..rows-1] do row:
-        for [0..cols-1] do col:
-            v[col * rows + row] := m[row][col];
+        for [0..columns-1] do col:
+            v[col * rows + row] := m.getAt row col;
         done;
     done;
     block.block v);
 
-deinterleaved rows b =
+deinterleaved channels b = //!!! should generate a RowMajor matrix for faster framing
    (v = block.data b;
     mat.generate do row col:
-        v[rows * col + row]
-    done rows ((vec.length v) / rows));
+        v[channels * col + row]
+    done { rows = channels, columns = ((vec.length v) / channels) });
 
 mixedDown m =
-   (if empty? m then block.zeros 0 else
-        { cols, rows } = mat.dimensions m;
-        v = vec.copyOf m[0];
-        for [1..rows-1] do row:
-            for [0..cols-1] do col:
-                v[col] := v[col] + m[row][col];
-            done;
-        done;
-        block.block v;
-    fi);
-
-mixedDownFromInterleaved rows b =
-   (v = block.data b;
-    cols = ((vec.length v) / rows);
-    v' = vec.zeros cols;
+   ({ columns, rows } = m.size;
+    v = vec.zeros columns;
     for [0..rows-1] do row:
-        for [0..cols-1] do col:
-            v'[col] := v'[col] + v[col * rows + row];
+        for [0..columns-1] do col:
+            v[col] := v[col] + m.getAt row col;
+        done;
+    done;
+    block.block v);
+
+mixedDownFromInterleaved channels b =
+   (v = block.data b;
+    columns = ((vec.length v) / channels);
+    v' = vec.zeros columns;
+    for [0..channels-1] do row:
+        for [0..columns-1] do col:
+            v'[col] := v'[col] + v[col * channels + row];
         done;
     done;
     block.block v');
 
-mixedFromInterleavedTo targetRows rows b = 
-    if targetRows == rows then
+mixedFromInterleavedTo targetChannels channels b = 
+    if targetChannels == channels then
         b;
-    elif targetRows == 1 then
-        mixedDownFromInterleaved rows b;
+    elif targetChannels == 1 then
+        mixedDownFromInterleaved channels b;
     else
         v = block.data b;
-        cols = ((vec.length v) / rows);
-        v' = vec.zeros (cols * targetRows);
-        for [0..targetRows-1] do target:
-            for [0..cols-1] do col:
-                if target < rows then
-                    v'[col * targetRows + target] := v[col * rows + target];
-                elif rows == 1 then
-                    v'[col * targetRows + target] := v[col * rows];
+        columns = ((vec.length v) / channels);
+        v' = vec.zeros (columns * targetChannels);
+        for [0..targetChannels-1] do target:
+            for [0..columns-1] do col:
+                if target < channels then
+                    v'[col * targetChannels + target] := v[col * channels + target];
+                elif channels == 1 then
+                    v'[col * targetChannels + target] := v[col * channels];
                 fi
             done
         done;
         block.block v';
     fi;
 
+mixedAndInterleavedTo targetChannels m = 
+    if targetChannels == 1 then
+        mixedDown m
+    else
+        interleaved
+           (mat.resizedTo { rows = targetChannels, columns = m.size.columns } m)
+    fi;
+
 {
     interleaved, deinterleaved,
-    mixedDown, mixedDownFromInterleaved, mixedFromInterleavedTo,
+    mixedDown, mixedDownFromInterleaved, mixedFromInterleavedTo, mixedAndInterleavedTo
 }
 

@@ -6,15 +6,9 @@ block = load yetilab.block.block;
 
 import yeti.lang: FailureException;
 
-{ compare } = load yetilab.test.test;
+{ compare, compareUsing } = load yetilab.test.test;
 
-compareMatrices obtained expected =
-    if mat.equal obtained expected then
-        true;
-    else
-        println "** expected: \(expected.data)\n   obtained: \(obtained.data)";
-        false;
-    fi;
+compareMatrices = compareUsing mat.equal;
 
 makeTests name flipper =
    (constMatrix n s = flipper (mat.constMatrix n s);
@@ -227,6 +221,27 @@ makeTests name flipper =
     catch FailureException e:
         true
     yrt
+),
+
+"resizedTo-\(name)": \(
+    compareMatrices
+       (mat.resizedTo { rows = 2, columns = 2 }
+           (newMatrix (ColumnMajor ()) [[1,4],[2,5],[3,6]]))
+       (newMatrix (ColumnMajor ()) [[1,4],[2,5],[3,6]]) and
+        compareMatrices
+           (mat.resizedTo { rows = 3, columns = 4 }
+               (newMatrix (ColumnMajor ()) [[1,4],[2,5],[3,6]]))
+           (newMatrix (ColumnMajor ()) [[1,4,0],[2,5,0],[3,6,0],[0,0,0]]) and
+        compareMatrices
+           (mat.resizedTo { rows = 1, columns = 1 }
+               (newMatrix (ColumnMajor ()) [[1,4],[2,5],[3,6]]))
+           (newMatrix (ColumnMajor ()) [[1]])
+),
+
+"zeroSizeMatrix-\(name)": \(
+    compareMatrices
+       (mat.zeroSizeMatrix ())
+       (newMatrix (ColumnMajor ()) [])
 ),
 
 ]);

@@ -3,7 +3,7 @@ module yetilab.stream.framer;
 
 /**
  * Framer expresses a stream (or a file) as a lazy list of (possibly
- * overlapping) frames of mono data.
+ * overlapping) frames of data.
  */
 
 block = load yetilab.block.block;
@@ -11,25 +11,32 @@ bf = load yetilab.block.blockfuncs;
 af = load yetilab.stream.audiofile;
 win = load yetilab.transform.window;
 fft = load yetilab.transform.fft;
+mat = load yetilab.matrix.matrix;
+ch = load yetilab.stream.channels;
 
 blockList framesize stream =
     if stream.finished? then
-       (stream.close (); [] );
+        stream.close ();
+        [ mat.zeroMatrix { rows = stream.channels, columns = 0 } ]
     else
-        block.resizedTo framesize (stream.readMono framesize)
+        mat.resizedTo { rows = stream.channels, columns = framesize }
+           (stream.read framesize)
             :. \(blockList framesize stream);
     fi;
 
 overlappingBlockList size hop stream valid buffer =
    (
-    b = stream.readMono hop;
-    obtained = block.length b;
+    m = stream.read hop;
+    obtained = mat.width m;
 
     // Retain framesize - hop samples from old buffer, add hop samples
     // (zero-padded if necessary) just read
-    buffer = block.concat
-       [block.rangeOf buffer hop (size-hop),
-        block.resizedTo hop b];
+    buffer = map2
+        do buf row:
+            block.concat
+               [block.rangeOf buf hop (size-hop),
+                block.resizedTo hop (m.getRow row)];
+        done buffer [0..stream.channels-1];
 
     // Number of "valid" elements (not tail-end zero-padding) left in buffer
     remaining = valid - (hop - obtained);
@@ -38,7 +45,8 @@ overlappingBlockList size hop stream valid buffer =
         stream.close ();
         [];
     else
-        buffer :. \(overlappingBlockList size hop stream remaining buffer);
+        mat.newMatrix (RowMajor ()) (map block.list buffer)
+            :. \(overlappingBlockList size hop stream remaining buffer);
     fi);
 
 frames { framesize, hop } stream =
@@ -46,12 +54,15 @@ frames { framesize, hop } stream =
         blockList framesize stream
     else
         overlappingBlockList framesize hop stream 
-            framesize (block.zeros framesize);
+            framesize (map \(block.zeros framesize) [0..stream.channels-1]);
     fi;
+
+monoFrames params stream =
+    map ch.mixedDown (frames params stream);
 
 windowedFrames { framesize, hop, window } stream =
    (win = window framesize;
-    map (bf.multiply win) (frames { framesize, hop } stream));
+    map (bf.multiply win) (monoFrames { framesize, hop } stream));
 
 frequencyDomainFrames { framesize, hop } stream =
    (f = fft.realForward framesize;
@@ -59,11 +70,15 @@ frequencyDomainFrames { framesize, hop } stream =
 
 { 
     frames,
+    monoFrames,
     windowedFrames,
     frequencyDomainFrames,
 
     framesOfFile parameters filename =
         frames parameters (af.open filename),
+
+    monoFramesOfFile parameters filename =
+        monoFrames parameters (af.open filename),
 
     windowedFramesOfFile parameters filename = 
         windowedFrames parameters (af.open filename),

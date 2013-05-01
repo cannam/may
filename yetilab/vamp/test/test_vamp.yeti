@@ -4,13 +4,13 @@ v = load yetilab.vamp.vamp;
 synthetic = load yetilab.stream.syntheticstream;
 mat = load yetilab.matrix.matrix;
 
-{ compare, compareWith } = load yetilab.test.test;
+{ compare, compareUsing } = load yetilab.test.test;
 
 testPluginKey = "vamp-test-plugin:vamp-test-plugin";
 
 rate = 44100;
 
-testStream () = synthetic.whiteNoise rate 30;
+testStream () = synthetic.whiteNoise rate;
 
 processTest output = 
     v.processStreamStructured testPluginKey output (testStream ());
@@ -87,7 +87,7 @@ tests =
 "grid-oss": \(
     case processTest "grid-oss" of //!!! test spacing?
     Grid g:
-        compareWith mat.equal g 
+        compareUsing mat.equal g 
            (mat.newMatrix (ColumnMajor ())
                (map do x:
                     floats (map do y:
@@ -101,7 +101,7 @@ tests =
 "grid-fsr": \(
     case processTest "grid-fsr" of //!!! test spacing?
     Grid g:
-        compareWith mat.equal g 
+        compareUsing mat.equal g 
            (mat.newMatrix (ColumnMajor ())
                (map do x:
                     floats (map do y:

@@ -45,7 +45,7 @@ make d = {
         RowM rows: r = rows[row]; (r is ~double[])[col];
         ColM cols: c = cols[col]; (c is ~double[])[row];
         esac,
-    setAt row col n =
+    setAt row col n = //!!! dangerous, could modify copies -- should it be allowed?
         case d of
         RowM rows: r = rows[row]; (r is ~double[])[col] := n;
         ColM cols: c = cols[col]; (c is ~double[])[row] := n;
@@ -77,6 +77,7 @@ generate f { rows, columns } =
 constMatrix n = generate do row col: n done;
 randomMatrix = generate do row col: Math#random() done;
 identityMatrix = constMatrix 1;
+zeroSizeMatrix () = zeroMatrix { rows = 0, columns = 0 };
 
 width m = m.size.columns;
 height m = m.size.rows;
@@ -134,6 +135,16 @@ newColumnVector data =
 scaled factor m =
     generate do row col: factor * m.getAt row col done m.size;
 
+resizedTo newsize m =
+   (oldsize = m.size;
+    if newsize == oldsize then m
+    else 
+        generate do row col:
+            if row < oldsize.rows and col < oldsize.columns
+            then m.getAt row col else 0 fi
+            done newsize;
+    fi);
+
 sum' m1 m2 =
     if m1.size != m2.size
     then failWith "Matrices are not the same size: \(m1.size), \(m2.size)";
@@ -151,7 +162,7 @@ product m1 m2 =
     fi;
 
 {
-constMatrix, randomMatrix, zeroMatrix, identityMatrix,
+constMatrix, randomMatrix, zeroMatrix, identityMatrix, zeroSizeMatrix,
 generate,
 width, height,
 equal,
@@ -159,6 +170,7 @@ copyOf,
 transposed,
 flipped,
 scaled,
+resizedTo,
 sum = sum', product,
 newMatrix, newRowVector, newColumnVector,
 }

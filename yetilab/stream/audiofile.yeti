@@ -9,7 +9,6 @@ import java.io: File, IOException;
 
 import java.nio: ByteBuffer, ByteOrder;
 
-str = load yetilab.stream.stream;
 ch = load yetilab.stream.channels;
 block = load yetilab.block.block;
 
@@ -96,16 +95,13 @@ open name is string -> 'a =
     aistream = AudioSystem#getAudioInputStream(f);
     format = aistream#getFormat();
     len = available' { format, aistream }; // at start of stream
-    str.stream {
-        format,
-        length = Known len,
-        rate = format#getSampleRate(),
-        channels = format#getChannels(),
+    {
         get position () = len - available' { aistream, format },
+        get channels () = format#getChannels(),
+        get sampleRate () = format#getSampleRate(),
         get available () = Known (available' { aistream, format }),
+        get finished? () = not (aistream#available() > 0),
         read = read' { aistream, format },
-        readInterleaved = readInterleaved' { aistream, format },
-        readMono = readMono' { aistream, format },
         close () = close' { aistream },
     });
 

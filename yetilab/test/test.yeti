@@ -1,13 +1,13 @@
 module yetilab.test.test;
 
-vec = load yetilab.block.fvector;
+block = load yetilab.block.block;
 ss = load yetilab.stream.syntheticstream;
 
 import yeti.lang: FailureException;
 
-testStream n is number -> 'a  = ss.precalculated 1000 (vec.vector [1..n]);
+testStream n is number -> 'a  = ss.precalculated 1000 (block.fromList [1..n]);
 
-compareWith comparator obtained expected =
+compareUsing comparator obtained expected =
     if comparator obtained expected then
         true;
     else
@@ -15,7 +15,7 @@ compareWith comparator obtained expected =
         false;
     fi;
 
-compare obtained expected = compareWith (==) obtained expected;
+compare obtained expected = compareUsing (==) obtained expected;
 
 select f = fold do r x: if f x then x::r else r fi done [];
 
@@ -44,6 +44,6 @@ runTests group testHash =
     bad);
 
 {
-    testStream, compare, compareWith, failedTests, runTests
+    testStream, compare, compareUsing, failedTests, runTests
 }
 
