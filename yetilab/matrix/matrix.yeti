@@ -101,8 +101,8 @@ flipped m =
 // Matrices with different storage order but the same contents are
 // equal (but comparing them is slow)
 equal m1 m2 =
-    if m1.isRowMajor? != m2.isRowMajor?
-    then equal (flipped m1) m2;
+    if m1.size != m2.size then false
+    elif m1.isRowMajor? != m2.isRowMajor? then equal (flipped m1) m2;
     else
         compare d1 d2 = all id (map2 vec.equal d1 d2);
         case m1.data of

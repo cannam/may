@@ -91,10 +91,12 @@ makeTests name flipper =
     n = m;
     p = newMatrix (RowMajor ()) [[1,2,3],[4,5,6]];
     q = newMatrix (ColumnMajor ()) [[1,2,3],[4,5,6]];
+    r = newMatrix (ColumnMajor ()) [[1,4],[2,5]];
     compareMatrices m n and
         compareMatrices m p and
         compareMatrices n p and
-        not mat.equal m q
+        not mat.equal m q and
+        not mat.equal m r
 ),
 
 "getAt-\(name)": \(
@@ -227,7 +229,7 @@ makeTests name flipper =
     compareMatrices
        (mat.resizedTo { rows = 2, columns = 2 }
            (newMatrix (ColumnMajor ()) [[1,4],[2,5],[3,6]]))
-       (newMatrix (ColumnMajor ()) [[1,4],[2,5],[3,6]]) and
+       (newMatrix (ColumnMajor ()) [[1,4],[2,5]]) and
         compareMatrices
            (mat.resizedTo { rows = 3, columns = 4 }
                (newMatrix (ColumnMajor ()) [[1,4],[2,5],[3,6]]))
@@ -235,7 +237,7 @@ makeTests name flipper =
         compareMatrices
            (mat.resizedTo { rows = 1, columns = 1 }
                (newMatrix (ColumnMajor ()) [[1,4],[2,5],[3,6]]))
-           (newMatrix (ColumnMajor ()) [[1]])
+           (newMatrix (RowMajor ()) [[1]])
 ),
 
 "zeroSizeMatrix-\(name)": \(
