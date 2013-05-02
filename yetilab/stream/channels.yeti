@@ -72,7 +72,7 @@ mixedFromInterleavedTo targetChannels channels b =
             for [0..columns-1] do col:
                 if target < channels then
                     v'[col * targetChannels + target] := v[col * channels + target];
-                elif channels == 1 then
+                elif channels == 1 and target == 1 then
                     v'[col * targetChannels + target] := v[col * channels];
                 fi
             done
@@ -84,8 +84,13 @@ mixedAndInterleavedTo targetChannels m =
     if targetChannels == 1 then
         mixedDown m
     else
-        interleaved
-           (mat.resizedTo { rows = targetChannels, columns = m.size.columns } m)
+       (interleaved .
+            mat.resizedTo { rows = targetChannels, columns = m.size.columns })
+            if m.size.rows == 1 then
+               (mat.newMatrix (RowMajor ()) [ m.getRow 0, m.getRow 0 ])
+            else
+                m
+            fi;
     fi;
 
 {
