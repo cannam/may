@@ -92,24 +92,29 @@ available' { format is ~AudioFormat, aistream is ~AudioInputStream } =
 close' { aistream is ~AudioInputStream } =
     aistream#close();
 
-open name is string -> stream = 
+openWithReader reader ch name is 'a -> number -> string -> stream =
    (f = new File(name);
     aistream = AudioSystem#getAudioInputStream(f);
     format = aistream#getFormat();
     len = available' { format, aistream }; // at start of stream
     {
         get position () = len - available' { aistream, format },
-        get channels () = format#getChannels(),
+        get channels () = if ch == 0 then format#getChannels() else ch fi,
         get sampleRate () = format#getSampleRate(),
         get available () = Known (available' { aistream, format }),
         get finished? () = not (aistream#available() > 0),
-        read = read' { aistream, format },
+        read = reader { aistream, format },
         close () = close' { aistream },
     });
 
+open = openWithReader read' 0;
+openMono = openWithReader readMono' 1;
+
 {
-    open
+    open,
+    openMono
 } as {
-    open is string -> stream
+    open is string -> stream,
+    openMono is string -> stream
 } 
 
