@@ -45,7 +45,7 @@ truncatedTo nsamples s = //!!! should nsamples be a time in seconds?
 //!!! not really mixed -- what's the word for it? one per channel
 mixed s1 s2 = //!!! could generalise to list of streams
     {
-        get position () = s1.position,
+        get position () = min s1.position s2.position, // can differ after EOS
         get channels () = s1.channels + s2.channels,
         get sampleRate () = s1.sampleRate,
         get available () = minDurationOf s1.available s2.available,
