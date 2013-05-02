@@ -173,29 +173,48 @@ asRows m =
 asColumns m =
     map m.getColumn [0 .. m.size.columns - 1];
 
-concatAgainstGrain tagger getter n mm =
+concatAgainstGrain tagger getter counter mm =
+   (n = counter (head mm).size;
     make (tagger (array
        (map do i:
            block.data (block.concat (map do m: getter m i done mm))
-           done [0..n-1])));
+           done [0..n-1]))));
 
-concatWithGrain tagger getter n mm =
+concatWithGrain tagger getter counter mm =
     make (tagger (array
        (concat
            (map do m:
-               map do i: getter m i done [0..n-1]
+               n = counter m.size;
+               map do i: block.data (getter m i) done [0..n-1]
                done mm))));
+
+checkDimensionsFor direction first mm =
+   (counter = if direction == Horizontal () then (.rows) else (.columns) fi;
+    n = counter first.size;
+    if not (all id (map do m: counter m.size == n done mm)) then
+        failWith "Matrix dimensions incompatible for concat (found \(map do m: counter m.size done mm) not all of which are \(n))";
+    fi);
 
 concat direction mm = //!!! storage order is taken from first matrix in sequence
     if empty? mm then zeroSizeMatrix ()
     else
-        nrows = (head mm).size.rows;
-        tagger = if (head mm).isRowMajor? then RowM else ColM fi;
-        if not (all id (map do m: m.size.rows == nrows done mm)) then
-            failWith "Matrix dimensions incompatible: not all have \(nrows) rows"
-        else
-            concatWithGrain tagger (.getRow) nrows mm;
-        fi
+        first = head mm;
+        checkDimensionsFor direction first mm;
+        row = first.isRowMajor?;
+        // horizontal, row-major: against grain with rows
+        // horizontal, col-major: with grain with cols
+        // vertical, row-major: with grain with rows
+        // vertical, col-major: against grain with cols
+        case direction of
+        Horizontal ():
+            if row then concatAgainstGrain RowM (.getRow) (.rows) mm;
+            else concatWithGrain ColM (.getColumn) (.columns) mm;
+            fi;
+        Vertical ():
+            if row then concatWithGrain RowM (.getRow) (.rows) mm;
+            else concatAgainstGrain ColM (.getColumn) (.columns) mm;
+            fi;
+        esac;
     fi;
 
 {

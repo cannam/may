@@ -278,12 +278,42 @@ makeTests name flipper =
         [[1,4],[2,5],[3,6]];
 ),
 
-"concat-lr-\(name)": \(
+"concat-horiz-\(name)": \(
     compareMatrices
        (mat.concat (Horizontal ()) 
           [(newMatrix (ColumnMajor ()) [[1,4],[2,5]]),
            (newMatrix (RowMajor ()) [[3],[6]])])
        (newMatrix (ColumnMajor ()) [[1,4],[2,5],[3,6]])
+),
+
+"concatFail-horiz-\(name)": \(
+    try
+        \() (mat.concat (Horizontal ()) 
+          [(newMatrix (ColumnMajor ()) [[1,4],[2,5]]),
+           (newMatrix (ColumnMajor ()) [[3],[6]])]);
+        false
+    catch FailureException e:
+        true
+    yrt
+),
+
+"concat-vert-\(name)": \(
+    compareMatrices
+       (mat.concat (Vertical ()) 
+          [(newMatrix (ColumnMajor ()) [[1,4],[2,5]]),
+           (newMatrix (RowMajor ()) [[3,6]])])
+       (newMatrix (ColumnMajor ()) [[1,4,3],[2,5,6]])
+),
+
+"concatFail-vert-\(name)": \(
+    try
+        \() (mat.concat (Vertical ()) 
+          [(newMatrix (ColumnMajor ()) [[1,4],[2,5]]),
+           (newMatrix (RowMajor ()) [[3],[6]])]);
+        false
+    catch FailureException e:
+        true
+    yrt
 ),
 
 ]);
