@@ -2,3 +2,7 @@ syntax: glob
 classes/*
 bin/.test*
 *~
+doc/*
+hs_err_*
+test/.run*
+yetilab.jar
