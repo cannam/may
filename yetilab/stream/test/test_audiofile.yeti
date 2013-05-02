@@ -27,15 +27,17 @@ float n is number -> number =
 ),
 
 "20samples-read": \(
-    f = af.open (testfile "20samples");
-    first15 = f.read 15;
-    last5 = f.read 10;
-    compare first15.size { rows = 1, columns = 15 } and
-        compare last5.size { rows = 1, columns = 5 } and
-        compare (bl.list (first15.getRow 0))
-            [ float (32767/32768),0,0,0,0,0,0,0,0,0,0,0,0,0,0 ] and
-        compare (bl.list (last5.getRow 0)) [ 0,0,0,0,-1 ] and
-        ( f.close () ; true )
+    all id (map do opener:
+        f = opener (testfile "20samples");
+        first15 = f.read 15;
+        last5 = f.read 10;
+        compare first15.size { rows = 1, columns = 15 } and
+            compare last5.size { rows = 1, columns = 5 } and
+            compare (bl.list (first15.getRow 0))
+                [ float (32767/32768),0,0,0,0,0,0,0,0,0,0,0,0,0,0 ] and
+            compare (bl.list (last5.getRow 0)) [ 0,0,0,0,-1 ] and
+            ( f.close () ; true )
+        done [ af.open, af.openMono ]);
 ),
 
 ] is hash<string, () -> boolean>

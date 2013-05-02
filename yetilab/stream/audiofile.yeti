@@ -79,7 +79,7 @@ read' { format is ~AudioFormat, aistream is ~AudioInputStream } n =
 readMono' { format is ~AudioFormat, aistream is ~AudioInputStream } n =
    (b = readInterleaved' { format, aistream } n;
     channels = format#getChannels();
-    ch.mixedDownFromInterleaved channels b;
+    ch.deinterleaved 1 (ch.mixedDownFromInterleaved channels b);
    );
 
 // Note, all this assumes aistream is non-blocking (i.e. available()
