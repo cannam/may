@@ -59,7 +59,7 @@ mixed s1 s2 = //!!! could generalise to list of streams
             mat.newMatrix (RowMajor ())
                 (concat (map mat.asRows outs))
             ),
-        close = (s1.close (); s2.close ())
+        close () = (s1.close (); s2.close ())
     };
 
 {

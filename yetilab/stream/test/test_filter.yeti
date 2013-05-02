@@ -19,7 +19,8 @@ filt = load yetilab.stream.filter;
         compare str.available (Known 3) and
         compare str.finished? false and
         compare (bl.list ((str.read 4).getRow 0)) [ 0, 0.5, 1 ] and
-        compare str.position 3
+        compare str.position 3 and
+        ( str.close (); true )
 ),
 
 "mixed-inf-inf": \(
@@ -32,7 +33,8 @@ filt = load yetilab.stream.filter;
         compare (map bl.list (mat.asRows (str.read 4)))
             [[0,0.5,1.0,1.5], [0,-0.5,-1,-1.5]] and
         compare str.available (Infinite ()) and
-        compare str.position 4
+        compare str.position 4 and
+        ( str.close (); true )
 ),
 
 "mixed-inf-trunc": \(
@@ -46,7 +48,8 @@ filt = load yetilab.stream.filter;
             [[0,0.5,1.0], [0,-0.5,-1]] and
         compare str.available (Known 0) and
         compare str.finished? true and
-        compare str.position 3
+        compare str.position 3 and
+        ( str.close (); true )
 ),
 
 "mixed-precalc-trunc": \(
@@ -60,7 +63,24 @@ filt = load yetilab.stream.filter;
         compare (map bl.list (mat.asRows (str.read 4))) [[1,2], [0,-0.5]] and
         compare str.available (Known 0) and
         compare str.finished? true and
-        compare str.position 2
+        compare str.position 2 and
+        ( str.close (); true )
+),
+
+"mixed-2-1": \(
+    str = filt.mixed (syn.precalculated 2 (bl.fromList [1,2]))
+       (filt.mixed (syn.precalculated 2 (bl.fromList [3,4]))
+           (filt.truncatedTo 3 (syn.generated 2 (0-))));
+    compare str.position 0 and
+        compare str.channels 3 and
+        compare str.sampleRate 2 and
+        compare str.available (Known 2) and
+        compare str.finished? false and
+        compare (map bl.list (mat.asRows (str.read 4))) [[1,2], [3,4], [0,-0.5]] and
+        compare str.available (Known 0) and
+        compare str.finished? true and
+        compare str.position 2 and
+        ( str.close (); true )
 ),
 
 ] is hash<string, () -> boolean>
