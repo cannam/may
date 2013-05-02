@@ -173,6 +173,31 @@ asRows m =
 asColumns m =
     map m.getColumn [0 .. m.size.columns - 1];
 
+concatAgainstGrain tagger getter n mm =
+    make (tagger (array
+       (map do i:
+           block.data (block.concat (map do m: getter m i done mm))
+           done [0..n-1])));
+
+concatWithGrain tagger getter n mm =
+    make (tagger (array
+       (concat
+           (map do m:
+               map do i: getter m i done [0..n-1]
+               done mm))));
+
+concat direction mm = //!!! storage order is taken from first matrix in sequence
+    if empty? mm then zeroSizeMatrix ()
+    else
+        nrows = (head mm).size.rows;
+        tagger = if (head mm).isRowMajor? then RowM else ColM fi;
+        if not (all id (map do m: m.size.rows == nrows done mm)) then
+            failWith "Matrix dimensions incompatible: not all have \(nrows) rows"
+        else
+            concatWithGrain tagger (.getRow) nrows mm;
+        fi
+    fi;
+
 {
 constMatrix, randomMatrix, zeroMatrix, identityMatrix, zeroSizeMatrix,
 generate,
@@ -185,6 +210,7 @@ scaled,
 resizedTo,
 asRows, asColumns,
 sum = sum', product,
+concat,
 newMatrix, newRowVector, newColumnVector,
 }
 
