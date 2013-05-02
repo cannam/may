@@ -108,8 +108,8 @@ filt = load yetilab.stream.filter;
         ( str.close (); true )
 ),
 
-"mixed-inf-inf": \(
-    str = filt.mixed (syn.generated 2 id) (syn.generated 2 (0-));
+"multiplexed-inf-inf": \(
+    str = filt.multiplexed [syn.generated 2 id, syn.generated 2 (0-)];
     compare str.position 0 and
         compare str.channels 2 and
         compare str.sampleRate 2 and
@@ -122,8 +122,8 @@ filt = load yetilab.stream.filter;
         ( str.close (); true )
 ),
 
-"mixed-inf-trunc": \(
-    str = filt.mixed (syn.generated 2 id) (filt.truncatedTo 3 (syn.generated 2 (0-)));
+"multiplexed-inf-trunc": \(
+    str = filt.multiplexed [syn.generated 2 id, filt.truncatedTo 3 (syn.generated 2 (0-))];
     compare str.position 0 and
         compare str.channels 2 and
         compare str.sampleRate 2 and
@@ -137,9 +137,10 @@ filt = load yetilab.stream.filter;
         ( str.close (); true )
 ),
 
-"mixed-precalc-trunc": \(
-    str = filt.mixed (syn.precalculated 2 (bl.fromList [1,2]))
-       (filt.truncatedTo 3 (syn.generated 2 (0-)));
+"multiplexed-precalc-trunc": \(
+    str = filt.multiplexed
+       [syn.precalculated 2 (bl.fromList [1,2]),
+        filt.truncatedTo 3 (syn.generated 2 (0-))];
     compare str.position 0 and
         compare str.channels 2 and
         compare str.sampleRate 2 and
@@ -152,10 +153,11 @@ filt = load yetilab.stream.filter;
         ( str.close (); true )
 ),
 
-"mixed-2-1": \(
-    str = filt.mixed (syn.precalculated 2 (bl.fromList [1,2]))
-       (filt.mixed (syn.precalculated 2 (bl.fromList [3,4]))
-           (filt.truncatedTo 3 (syn.generated 2 (0-))));
+"multiplexed-2-1": \(
+    str = filt.multiplexed
+       [syn.precalculated 2 (bl.fromList [1,2]),
+        filt.multiplexed [syn.precalculated 2 (bl.fromList [3,4]),
+                          filt.truncatedTo 3 (syn.generated 2 (0-))]];
     compare str.position 0 and
         compare str.channels 3 and
         compare str.sampleRate 2 and

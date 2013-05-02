@@ -71,30 +71,29 @@ delayedBy nsamples s = //!!! should nsamples be a time in seconds?
         close = s.close
     });
 
-//!!! not really mixed -- what's the word for it? one per channel
-mixed s1 s2 = //!!! could generalise to list of streams
+multiplexed streams = 
     {
-        get position () = min s1.position s2.position, // can differ after EOS
-        get channels () = s1.channels + s2.channels,
-        get sampleRate () = s1.sampleRate,
-        get available () = minDurationOf s1.available s2.available,
-        get finished? () = s1.finished? or s2.finished?,
+        get position () = head (sort (map (.position) streams)), // can differ after EOS
+        get channels () = sum (map (.channels) streams),
+        get sampleRate () = (head streams).sampleRate,
+        get available () = 
+            fold do dur s: minDurationOf dur s.available done (Infinite ()) streams,
+        get finished? () = any id (map (.finished?) streams),
         read count =
-           (outs = map do s: s.read count done [ s1, s2 ];
+           (outs = map do s: s.read count done streams;
             minlen = head (sort (map do m: m.size.columns done outs));
             outs = map do m:
                 mat.resizedTo { rows = m.size.rows, columns = minlen } m
                 done outs;
-            mat.newMatrix (RowMajor ())
-                (concat (map mat.asRows outs))
+            mat.concat (Vertical ()) outs
             ),
-        close () = (s1.close (); s2.close ())
+        close () = for streams do s: s.close() done,
     };
 
 {
     truncatedTo, 
     delayedBy,
-    mixed,
+    multiplexed,
 //!!!} as {
 //    truncatedTo is number -> stream -> stream
 }
