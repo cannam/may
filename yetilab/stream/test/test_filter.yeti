@@ -170,5 +170,24 @@ filt = load yetilab.stream.filter;
         ( str.close (); true )
 ),
 
+"multiplexed-2-1b": \(
+    str = filt.multiplexed
+       [syn.precalculated 2 (bl.fromList [1,2]),
+        syn.precalculated 2 (bl.fromList [3,4]),
+        filt.truncatedTo 3 (syn.generated 2 (0-))];
+    compare str.position 0 and
+        compare str.channels 3 and
+        compare str.sampleRate 2 and
+        compare str.available (Known 2) and
+        compare str.finished? false and
+        compare (map bl.list (mat.asRows (str.read 4))) [[1,2], [3,4], [0,-0.5]] and
+        compare str.available (Known 0) and
+        compare str.finished? true and
+        compare str.position 2 and
+        ( str.close (); true )
+),
+
+//!!! still no tests for filters with multi-channel inputs
+
 ] is hash<string, () -> boolean>
 
