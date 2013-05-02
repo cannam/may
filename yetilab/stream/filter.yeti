@@ -45,13 +45,9 @@ truncatedTo nsamples s = //!!! should nsamples be a time in seconds?
 delayedBy nsamples s = //!!! should nsamples be a time in seconds?
    (var prepos = 0;
     delay = nsamples;
-    zeros n = 
+    zeros n = mat.toRowMajor
        (prepos := prepos + n;
         mat.zeroMatrix { rows = s.channels, columns = n });
-    glueMatrices m1 m2 =
-        mat.newMatrix (RowMajor ())
-           (map2 do row1 row2: bl.concat [ row1, row2 ] done 
-               (mat.asRows m1) (mat.asRows m2));
     {
         get position () = 
             if prepos < delay then prepos else s.position + delay fi,
@@ -70,7 +66,7 @@ delayedBy nsamples s = //!!! should nsamples be a time in seconds?
                 nleft = delay - prepos;
                 left = zeros nleft;
                 right = s.read (count - nleft);
-                glueMatrices left right;
+                mat.concat (Horizontal ()) [left, right];
             fi,
         close = s.close
     });
