@@ -20,6 +20,91 @@ filt = load yetilab.stream.filter;
         compare str.finished? false and
         compare (bl.list ((str.read 4).getRow 0)) [ 0, 0.5, 1 ] and
         compare str.position 3 and
+        compare str.available (Known 0) and
+        compare str.finished? true and
+        ( str.close (); true )
+),
+
+"delayedBy-0-3": \(
+    str = filt.delayedBy 0 (filt.truncatedTo 3 (syn.generated 2 id));
+    compare str.position 0 and
+        compare str.channels 1 and
+        compare str.sampleRate 2 and
+        compare str.available (Known 3) and
+        compare str.finished? false and
+        compare (bl.list ((str.read 4).getRow 0)) [ 0, 0.5, 1 ] and
+        compare str.position 3 and
+        compare str.available (Known 0) and
+        compare str.finished? true and
+        ( str.close (); true )
+),
+
+"delayedBy-0-inf": \(
+    str = filt.delayedBy 0 (syn.generated 2 id);
+    compare str.position 0 and
+        compare str.channels 1 and
+        compare str.sampleRate 2 and
+        compare str.available (Infinite ()) and
+        compare str.finished? false and
+        compare (bl.list ((str.read 4).getRow 0)) [ 0, 0.5, 1, 1.5 ] and
+        compare str.position 4 and
+        compare str.available (Infinite ()) and
+        compare str.finished? false and
+        ( str.close (); true )
+),
+
+"delayedBy-2-3": \(
+    str = filt.delayedBy 2 (filt.truncatedTo 3 (syn.generated 2 id));
+    compare str.position 0 and
+        compare str.channels 1 and
+        compare str.sampleRate 2 and
+        compare str.available (Known 5) and
+        compare str.finished? false and
+        compare (bl.list ((str.read 4).getRow 0)) [ 0, 0, 0, 0.5 ] and
+        compare str.position 4 and
+        compare str.available (Known 1) and
+        compare str.finished? false and
+        compare (bl.list ((str.read 4).getRow 0)) [ 1 ] and
+        compare str.position 5 and
+        compare str.available (Known 0) and
+        compare str.finished? true and
+        ( str.close (); true )
+),
+
+"delayedBy-2-3b": \(
+    str = filt.delayedBy 2 (filt.truncatedTo 3 (syn.generated 2 id));
+    compare str.position 0 and
+        compare str.channels 1 and
+        compare str.sampleRate 2 and
+        compare str.available (Known 5) and
+        compare str.finished? false and
+        compare (bl.list ((str.read 0).getRow 0)) [ ] and
+        compare str.position 0 and
+        compare str.available (Known 5) and
+        compare str.finished? false and
+        compare (bl.list ((str.read 5).getRow 0)) [ 0, 0, 0, 0.5, 1 ] and
+        compare str.position 5 and
+        compare str.available (Known 0) and
+        compare str.finished? true and
+        ( str.close (); true )
+),
+
+"delayedBy-2-inf": \(
+    str = filt.delayedBy 2 (syn.generated 2 id);
+    compare str.position 0 and
+        compare str.channels 1 and
+        compare str.sampleRate 2 and
+        compare str.available (Infinite ()) and
+        compare str.finished? false and
+        compare (bl.list ((str.read 2).getRow 0)) [ 0, 0 ] and
+        compare str.position 2 and
+        compare str.finished? false and
+        compare (bl.list ((str.read 2).getRow 0)) [ 0, 0.5 ] and
+        compare str.position 4 and
+        compare str.finished? false and
+        compare (bl.list ((str.read 2).getRow 0)) [ 1, 1.5 ] and
+        compare str.position 6 and
+        compare str.finished? false and
         ( str.close (); true )
 ),
 

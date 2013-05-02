@@ -1,14 +1,14 @@
 module yetilab.test.test;
 
 block = load yetilab.block.block;
-ss = load yetilab.stream.syntheticstream;
 
 import yeti.lang: FailureException;
 
-testStream n is number -> 'a  = ss.precalculated 1000 (block.fromList [1..n]);
+var goodCompares = 0;
 
 compareUsing comparator obtained expected =
     if comparator obtained expected then
+        goodCompares := goodCompares + 1;
         true;
     else
         println "** expected: \(expected)\n   obtained: \(obtained)";
@@ -44,6 +44,7 @@ runTests group testHash =
     bad);
 
 {
-    testStream, compare, compareUsing, failedTests, runTests
+    compare, compareUsing,
+    runTests, 
 }
 

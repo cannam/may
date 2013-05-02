@@ -2,6 +2,7 @@
 module yetilab.stream.filter;
 
 mat = load yetilab.matrix.matrix;
+bl = load yetilab.block.block;
 
 load yetilab.stream.streamtype;
 
@@ -41,6 +42,38 @@ truncatedTo nsamples s = //!!! should nsamples be a time in seconds?
         close = s.close,
     };
 
+delayedBy nsamples s = //!!! should nsamples be a time in seconds?
+   (var prepos = 0;
+    delay = nsamples;
+    zeros n = 
+       (prepos := prepos + n;
+        mat.zeroMatrix { rows = s.channels, columns = n });
+    glueMatrices m1 m2 =
+        mat.newMatrix (RowMajor ())
+           (map2 do row1 row2: bl.concat [ row1, row2 ] done 
+               (mat.asRows m1) (mat.asRows m2));
+    {
+        get position () = 
+            if prepos < delay then prepos else s.position + delay fi,
+        get channels () = s.channels,
+        get sampleRate () = s.sampleRate,
+        get available () = 
+            case s.available of 
+            Known a: Known (a + delay - prepos); 
+            other: other 
+            esac,
+        get finished? () = (prepos >= delay) and s.finished?,
+        read count =
+            if prepos >= delay then s.read count
+            elif prepos + count < delay then zeros count
+            else
+                nleft = delay - prepos;
+                left = zeros nleft;
+                right = s.read (count - nleft);
+                glueMatrices left right;
+            fi,
+        close = s.close
+    });
 
 //!!! not really mixed -- what's the word for it? one per channel
 mixed s1 s2 = //!!! could generalise to list of streams
@@ -64,6 +97,7 @@ mixed s1 s2 = //!!! could generalise to list of streams
 
 {
     truncatedTo, 
+    delayedBy,
     mixed,
 //!!!} as {
 //    truncatedTo is number -> stream -> stream

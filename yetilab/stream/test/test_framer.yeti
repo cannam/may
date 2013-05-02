@@ -4,8 +4,11 @@ module yetilab.stream.test.test_framer;
 fr = load yetilab.stream.framer;
 block = load yetilab.block.block;
 mat = load yetilab.matrix.matrix;
+syn = load yetilab.stream.syntheticstream;
 
-{ compare, compareUsing, testStream } = load yetilab.test.test;
+{ compare, compareUsing } = load yetilab.test.test;
+
+testStream n is number -> 'a  = syn.precalculated 1000 (block.fromList [1..n]);
 
 compareFrames frames1 frames2 =
     all id (map2 do f1 f2: compareUsing mat.equal f1 f2 done frames1
