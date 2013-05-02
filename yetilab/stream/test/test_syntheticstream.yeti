@@ -1,0 +1,80 @@
+
+module yetilab.stream.test.test_syntheticstream;
+
+bl = load yetilab.block.block;
+mat = load yetilab.matrix.matrix;
+syn = load yetilab.stream.syntheticstream;
+
+{ compare, compareUsing } = load yetilab.test.test;
+
+compareApprox eps =
+    compareUsing do v1 v2: all id (map2 do f1 f2: abs (f1 - f2) < eps done v1 v2) done;
+
+epsilon = 0.000001;
+
+[
+
+"generated": \(
+    str = syn.generated 2 id;
+    compare str.position 0 and
+        compare str.channels 1 and
+        compare str.sampleRate 2 and
+        compare str.available (Infinite ()) and
+        compare str.finished? false and
+        compare (bl.list ((str.read 4).getRow 0)) [ 0, 0.5, 1, 1.5 ] and
+        compare str.position 4
+),
+
+"sinusoid": \(
+    // 2Hz sine sampled 8 times a second
+    str = syn.sinusoid 8 2;
+    compare str.position 0 and
+        compare str.channels 1 and
+        compare str.sampleRate 8 and
+        compare str.available (Infinite ()) and
+        compare str.finished? false and
+        compareApprox epsilon (bl.list ((str.read 6).getRow 0)) [ 0, 1, 0, -1, 0, 1 ] and
+        compare str.position 6
+),
+
+"silent": \(
+    str = syn.silent 8;
+    compare str.position 0 and
+        compare str.channels 1 and
+        compare str.sampleRate 8 and
+        compare str.available (Infinite ()) and
+        compare str.finished? false and
+        compare (bl.list ((str.read 3).getRow 0)) [ 0, 0, 0 ] and
+        compare str.position 3
+),
+
+"precalculated-empty": \(
+    str = syn.precalculated 2 (bl.fromList []);
+    compare str.position 0 and
+        compare str.channels 1 and
+        compare str.sampleRate 2 and
+        compare str.available (Known 0) and
+        compare str.finished? true and
+        compare (bl.list ((str.read 3).getRow 0)) [] and
+        compare str.position 0
+),
+
+"precalculated": \(
+    str = syn.precalculated 2 (bl.fromList [ 1, 2, 3, 4 ]);
+    compare str.position 0 and
+        compare str.channels 1 and
+        compare str.sampleRate 2 and
+        compare str.available (Known 4) and
+        compare str.finished? false and
+        compare (bl.list ((str.read 3).getRow 0)) [ 1, 2, 3 ] and
+        compare str.position 3 and
+        compare str.available (Known 1) and
+        compare str.finished? false and
+        compare (bl.list ((str.read 3).getRow 0)) [ 4 ] and
+        compare str.position 4 and
+        compare str.available (Known 0) and
+        compare str.finished? true
+),
+
+] is hash<string, () -> boolean>
+

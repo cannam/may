@@ -27,7 +27,7 @@ generated sampleRate generator =
     });
 
 sinusoid rate freq =
-    generated rate (sin . (* (freq / (2*pi * rate))));
+    generated rate (sin . (* (2 * pi * freq)));
 
 whiteNoise rate =
     generated rate \((Math#random() * 2.0) - 1.0);
