@@ -5,7 +5,25 @@ mat = load yetilab.matrix.matrix;
 
 load yetilab.stream.streamtype;
 
-truncatedTo nsamples s =
+minDurationOf d1 d2 =
+    case d1 of 
+    Known a:
+        case d2 of 
+        Known b: Known (min a b);
+        Unknown (): Unknown ();
+        Infinite (): Known a;
+        esac;
+    Unknown ():
+        case d2 of 
+        Known b: Known b;
+        Unknown (): Unknown ();
+        Infinite (): Unknown ();
+        esac;
+    Infinite ():
+        d2;
+    esac;
+
+truncatedTo nsamples s = //!!! should nsamples be a time in seconds?
     {
         get position () = s.position,
         get channels () = s.channels, 
@@ -23,8 +41,30 @@ truncatedTo nsamples s =
         close = s.close,
     };
 
+
+//!!! not really mixed -- what's the word for it? one per channel
+mixed s1 s2 = //!!! could generalise to list of streams
+    {
+        get position () = s1.position,
+        get channels () = s1.channels + s2.channels,
+        get sampleRate () = s1.sampleRate,
+        get available () = minDurationOf s1.available s2.available,
+        get finished? () = s1.finished? or s2.finished?,
+        read count =
+           (outs = map do s: s.read count done [ s1, s2 ];
+            minlen = head (sort (map do m: m.size.columns done outs));
+            outs = map do m:
+                mat.resizedTo { rows = m.size.rows, columns = minlen } m
+                done outs;
+            mat.newMatrix (RowMajor ())
+                (concat (map mat.asRows outs))
+            ),
+        close = (s1.close (); s2.close ())
+    };
+
 {
     truncatedTo, 
+    mixed,
 //!!!} as {
 //    truncatedTo is number -> stream -> stream
 }

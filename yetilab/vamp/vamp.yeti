@@ -209,7 +209,7 @@ plugin key p is string -> ~Plugin -> 'a =
         None (): map (outputDescriptor (None ())) p#getOutputDescriptors();
         esac,
     process frame time is 'a -> ~RealTime -> 'b = 
-        featureSet p#process((mat.asRows frame) as ~float[][], 0, time),
+        featureSet p#process((map bl.floats (mat.asRows frame)) as ~float[][], 0, time),
     getRemainingFeatures () = featureSet p#getRemainingFeatures(),
     dispose () = p#dispose(),
     });

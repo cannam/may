@@ -168,10 +168,10 @@ product m1 m2 =
     fi;
 
 asRows m =
-    map (block.list . m.getRow) [0 .. m.size.rows - 1];
+    map m.getRow [0 .. m.size.rows - 1];
 
 asColumns m =
-    map (block.list . m.getColumn) [0 .. m.size.columns - 1];
+    map m.getColumn [0 .. m.size.columns - 1];
 
 {
 constMatrix, randomMatrix, zeroMatrix, identityMatrix, zeroSizeMatrix,

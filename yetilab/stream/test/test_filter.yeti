@@ -1,0 +1,38 @@
+
+module yetilab.stream.test.test_filter;
+
+bl = load yetilab.block.block;
+mat = load yetilab.matrix.matrix;
+syn = load yetilab.stream.syntheticstream;
+filt = load yetilab.stream.filter;
+
+{ compare, compareUsing } = load yetilab.test.test;
+
+[
+
+"truncatedTo": \(
+    // nb the basic generated function is tested in test_syntheticstream
+    str = filt.truncatedTo 3 (syn.generated 2 id);
+    compare str.position 0 and
+        compare str.channels 1 and
+        compare str.sampleRate 2 and
+        compare str.available (Known 3) and
+        compare str.finished? false and
+        compare (bl.list ((str.read 4).getRow 0)) [ 0, 0.5, 1 ] and
+        compare str.position 3
+),
+
+"mixed-inf-inf": \(
+    str = filt.mixed (syn.generated 2 id) (syn.generated 2 (0-));
+    compare str.position 0 and
+        compare str.channels 2 and
+        compare str.sampleRate 2 and
+        compare str.available (Infinite ()) and
+        compare str.finished? false and
+        compare (map bl.list (mat.asRows (str.read 4))) [[0,1,2,3], [0,-1,-2,-3]] and
+        compare str.available (Infinite ()) and
+        compare str.position 4
+),
+
+] is hash<string, () -> boolean>
+
