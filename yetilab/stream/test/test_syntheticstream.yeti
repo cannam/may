@@ -21,7 +21,7 @@ epsilon = 0.000001;
         compare str.sampleRate 2 and
         compare str.available (Infinite ()) and
         compare str.finished? false and
-        compare (bl.list ((str.read 4).getRow 0)) [ 0, 0.5, 1, 1.5 ] and
+        compare (bl.list ((str.read 4).getRow 0)) [ 0,1,2,3 ] and
         compare str.position 4
 ),
 

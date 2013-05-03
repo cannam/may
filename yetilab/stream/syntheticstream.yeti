@@ -8,7 +8,7 @@ block = load yetilab.block.block;
 load yetilab.stream.streamtype;
 
 generated sampleRate generator =
-   (// generator takes time in seconds as arg, returns number in -1,+1 range
+   (// generator takes sample number as arg, returns number in -1,+1 range
     var position = 0;
     {
         get position () = position,
@@ -19,7 +19,7 @@ generated sampleRate generator =
         read count = ch.deinterleaved 1
            (result = vec.zeros count;
             for [0..count-1] do i:
-                result[i] := generator ((position + i) / sampleRate)
+                result[i] := generator (position + i)
             done;
             position := position + count;
             block.block result),
@@ -27,7 +27,7 @@ generated sampleRate generator =
     });
 
 sinusoid rate freq =
-    generated rate (sin . (* (2 * pi * freq)));
+    generated rate (sin . (* (2 * pi * freq / rate)));
 
 whiteNoise rate =
     generated rate \((Math#random() * 2.0) - 1.0);
