@@ -6,7 +6,18 @@ filt = load yetilab.stream.filter;
 vec = load yetilab.block.fvector;
 block = load yetilab.block.block;
 
-pulseChannel rate = syn.silent rate; //!!! to be implemented!
+pulseChannel rate =
+   (pulseFreq = 2;
+    pulseWidth = 0.01 * rate;
+    generator i =
+       (pulseNo = int ((i * pulseFreq) / rate);
+        index = (i * pulseFreq) - (rate * pulseNo);
+        if index < pulseWidth then
+	    s = 1.0 - abs(pulseWidth/2 - index) / (pulseWidth/2);
+	    if pulseNo % 2 != 0 then (-s) else s fi
+        else 0
+        fi);
+    syn.generated rate generator);
 
 referenceChannels rate =
    (leftovers rate n =
