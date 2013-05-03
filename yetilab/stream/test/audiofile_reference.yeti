@@ -2,9 +2,22 @@
 module yetilab.stream.test.audiofile_reference;
 
 syn = load yetilab.stream.syntheticstream;
+filt = load yetilab.stream.filter;
 vec = load yetilab.block.fvector;
 block = load yetilab.block.block;
 
-//!!!
+pulseChannel rate = syn.silent rate; //!!! to be implemented!
+
+referenceChannels rate =
+   (leftovers rate n =
+       (syn.generated rate \(n / 20) :. \(leftovers rate (n+1)));
+    syn.sinusoid rate 600 :: pulseChannel rate :: leftovers rate 2);
+
+afReference rate channels =
+    filt.multiplexed (take channels (referenceChannels rate));
     
-();
+{
+    afReference
+}
+
+
