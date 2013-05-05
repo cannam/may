@@ -89,6 +89,20 @@ filt = load yetilab.stream.filter;
         ( str.close (); true )
 ),
 
+"delayedBy-2-3c": \(
+    str = filt.delayedBy 2 (filt.truncatedTo 3 (syn.generated 2 id));
+    compare str.position 0 and
+        compare str.channels 1 and
+        compare str.sampleRate 2 and
+        compare str.available (Known 5) and
+        compare str.finished? false and
+        compare (bl.list ((str.read 7).getRow 0)) [ 0,0,0,1,2 ] and
+        compare str.position 5 and
+        compare str.available (Known 0) and
+        compare str.finished? true and
+        ( str.close (); true )
+),
+
 "delayedBy-2-inf": \(
     str = filt.delayedBy 2 (syn.generated 2 id);
     compare str.position 0 and
