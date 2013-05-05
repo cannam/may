@@ -34,7 +34,7 @@ overlappingBlockList size hop stream valid buffer =
     buffer = map2
         do buf row:
             block.concat
-               [block.rangeOf buf hop (size-hop),
+               [block.rangeOf hop (size-hop) buf,
                 block.resizedTo hop (m.getRow row)];
         done buffer [0..stream.channels-1];
 

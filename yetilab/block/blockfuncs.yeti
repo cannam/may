@@ -43,12 +43,12 @@ sqrt' =
 fftshift bl =
    (len = b.length bl;
     half = int(len/2 + 0.5); // round up for odd-length sequences
-    b.concat [b.rangeOf bl half (len-half), b.rangeOf bl 0 half]);
+    b.concat [b.rangeOf half (len-half) bl, b.rangeOf 0 half bl]);
 
 ifftshift bl =
    (len = b.length bl;
     half = int(len/2); // round down for odd-length sequences
-    b.concat [b.rangeOf bl half (len-half), b.rangeOf bl 0 half]);
+    b.concat [b.rangeOf half (len-half) bl, b.rangeOf 0 half bl]);
 
 {
 sum = sum',

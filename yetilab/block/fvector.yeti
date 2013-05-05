@@ -54,7 +54,7 @@ equal v1 v2 =
 copyOf v is ~double[] -> ~double[] =
     Arrays#copyOf(v, list' v |> length);
 
-rangeOf v start len is ~double[] -> number -> number -> ~double[] =
+rangeOf start len v is number -> number -> ~double[] -> ~double[] =
     Arrays#copyOfRange(v, start, start + len);
 
 resizedTo n v is number -> ~double[] -> ~double[] =

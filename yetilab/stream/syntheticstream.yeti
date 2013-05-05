@@ -46,7 +46,7 @@ precalculated rate data =
         get finished? () = not (n > position),
         read count = ch.deinterleaved 1
            (rc = min count (n - position);
-            result = block.rangeOf data position rc;
+            result = block.rangeOf position rc data;
             position := position + rc;
             result),
         close = \(),

@@ -38,7 +38,7 @@ typedef opaque block = ~double[];
     empty? is block -> boolean,
     equal is block -> block -> boolean,
     copyOf is block -> block,
-    rangeOf is block -> number -> number -> block,
+    rangeOf is number -> number -> block -> block, //!!! not well-named now block arg is at the end
     resizedTo is number -> block -> block,
     concat is list?<block> -> block,
 }

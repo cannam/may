@@ -87,8 +87,8 @@ vec = load yetilab.block.fvector;
 
 "rangeOf": \(
     v = vec.vector [1,2,3,4];
-    vec.equal (vec.rangeOf v 0 4) v and (
-        vec.equal (vec.rangeOf v 2 2) (vec.vector [3,4])
+    vec.equal (vec.rangeOf 0 4 v) v and (
+        vec.equal (vec.rangeOf 2 2 v) (vec.vector [3,4])
     )
 ),
 
