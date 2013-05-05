@@ -115,6 +115,7 @@ repeated s =
         {
             get position () = pos,
             get channels () = s.channels,
+            get sampleRate () = s.sampleRate,
             get available () = Infinite (),
             get finished? () = false,
             read count =

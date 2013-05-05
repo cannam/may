@@ -200,6 +200,25 @@ filt = load yetilab.stream.filter;
         ( str.close (); true )
 ),
 
+"repeated-2": \(
+    str = filt.repeated
+       (syn.precalculated 2 (bl.fromList [1,2,3]));
+    compare str.position 0 and
+        compare str.channels 1 and
+        compare str.sampleRate 2 and
+        compare str.available (Infinite ()) and
+        compare str.finished? false and
+        compare (map bl.list (mat.asRows (str.read 1))) [[1]] and
+        compare (map bl.list (mat.asRows (str.read 2))) [[2,3]] and
+        compare (map bl.list (mat.asRows (str.read 3))) [[1,2,3]] and
+        compare (map bl.list (mat.asRows (str.read 5))) [[1,2,3,1,2]] and
+        compare (map bl.list (mat.asRows (str.read 2))) [[3,1]] and
+        compare str.available (Infinite ()) and
+        compare str.finished? true and
+        compare str.position 13 and
+        ( str.close (); true )
+),
+
 //!!! still no tests for filters with multi-channel inputs
 
 ] is hash<string, () -> boolean>
