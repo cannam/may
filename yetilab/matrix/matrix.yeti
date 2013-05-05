@@ -197,9 +197,8 @@ checkDimensionsFor direction first mm =
 
 concat direction mm = //!!! doc: storage order is taken from first matrix in sequence
     //!!! would this be better as separate concatHorizontal/concatVertical functions?
-    if empty? mm then zeroSizeMatrix ()
-    else
-        first = head mm;
+    case mm of
+    first::rest: 
         checkDimensionsFor direction first mm;
         row = first.isRowMajor?;
         // horizontal, row-major: against grain with rows
@@ -216,7 +215,9 @@ concat direction mm = //!!! doc: storage order is taken from first matrix in seq
             else concatAgainstGrain ColM (.getColumn) (.columns) mm;
             fi;
         esac;
-    fi;
+    [single]: single;
+    _: zeroSizeMatrix ();
+    esac;
 
 rowSlice start count m = //!!! doc: storage order same as input
     if m.isRowMajor? then

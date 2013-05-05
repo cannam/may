@@ -209,13 +209,17 @@ filt = load yetilab.stream.filter;
         compare str.available (Infinite ()) and
         compare str.finished? false and
         compare (map bl.list (mat.asRows (str.read 1))) [[1]] and
+        compare str.position 1 and
         compare (map bl.list (mat.asRows (str.read 2))) [[2,3]] and
+        compare str.position 3 and
         compare (map bl.list (mat.asRows (str.read 3))) [[1,2,3]] and
+        compare str.position 6 and
         compare (map bl.list (mat.asRows (str.read 5))) [[1,2,3,1,2]] and
+        compare (map bl.list (mat.asRows (str.read 9))) [[3,1,2,3,1,2,3,1,2]] and
         compare (map bl.list (mat.asRows (str.read 2))) [[3,1]] and
         compare str.available (Infinite ()) and
-        compare str.finished? true and
-        compare str.position 13 and
+        compare str.finished? false and
+        compare str.position 22 and
         ( str.close (); true )
 ),
 

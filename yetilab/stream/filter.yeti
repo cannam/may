@@ -91,27 +91,38 @@ multiplexed streams =
     };
 
 repeated s =
-    // There is no way to reset a stream (in principle, they might be
-    // "live") so we can't read from the same stream repeatedly -- we
-    // have to cache its output and then repeat that. This is tricky
-    // to do efficiently without knowing how much is going to be
-    // requested at a time.
+    // There is no way to reset a stream (as in principle, they might
+    // be "live") so we can't read from the same stream repeatedly --
+    // we have to cache its output and then repeat that. This is a
+    // little tricky to do efficiently without knowing how long the
+    // stream is (in general) or how much is going to be requested at
+    // a time.
     if s.available == Infinite () then s
     else
         var pos = 0;
         var cache = mat.zeroSizeMatrix ();
         chunks = array [];
+        cachedPartsFor count =
+           (start = pos % cache.size.columns;
+            avail = cache.size.columns - start;
+            if avail >= count then
+                pos := pos + count;
+                [mat.columnSlice start count cache]
+            else
+                pos := pos + avail;
+                mat.columnSlice start avail cache ::
+                    cachedPartsFor (count - avail);
+            fi);
         readFromCache count =
            (if cache.size.columns == 0 then
-                cache := mat.concat (Horizontal ()) chunks;
+                cache := mat.concat (Horizontal ()) (list chunks);
                 clearArray chunks;
             fi;
-
-            //!!! implement
-            result = mat.zeroSizeMatrix ();
-
-            pos := pos + count;
-            result);
+            if cache.size.columns == 0 then
+                cache
+            else
+                mat.concat (Horizontal ()) (cachedPartsFor count);
+            fi);
         {
             get position () = pos,
             get channels () = s.channels,
