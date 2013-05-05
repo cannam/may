@@ -195,7 +195,8 @@ checkDimensionsFor direction first mm =
         failWith "Matrix dimensions incompatible for concat (found \(map do m: counter m.size done mm) not all of which are \(n))";
     fi);
 
-concat direction mm = //!!! storage order is taken from first matrix in sequence
+concat direction mm = //!!! doc: storage order is taken from first matrix in sequence
+    //!!! would this be better as separate concatHorizontal/concatVertical functions?
     if empty? mm then zeroSizeMatrix ()
     else
         first = head mm;
@@ -217,6 +218,20 @@ concat direction mm = //!!! storage order is taken from first matrix in sequence
         esac;
     fi;
 
+rowSlice start count m = //!!! doc: storage order same as input
+    if m.isRowMajor? then
+        make (RowM (array (map (block.data . m.getRow) [start .. start + count - 1])))
+    else 
+        make (ColM (array (map (block.data . (block.rangeOf start count)) (asColumns m))))
+    fi;
+
+columnSlice start count m = //!!! doc: storage order same as input
+    if not m.isRowMajor? then
+        make (ColM (array (map (block.data . m.getColumn) [start .. start + count - 1])))
+    else 
+        make (RowM (array (map (block.data . (block.rangeOf start count)) (asRows m))))
+    fi;
+
 {
 constMatrix, randomMatrix, zeroMatrix, identityMatrix, zeroSizeMatrix,
 generate,
@@ -230,6 +245,7 @@ resizedTo,
 asRows, asColumns,
 sum = sum', product,
 concat,
+rowSlice, columnSlice,
 newMatrix, newRowVector, newColumnVector,
 }
 
