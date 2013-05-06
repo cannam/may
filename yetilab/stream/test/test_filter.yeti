@@ -9,12 +9,12 @@ filt = load yetilab.stream.filter;
 { compare, compareUsing } = load yetilab.test.test;
 
 makeTests name withUnknown =
-   (truncatedTo n str =
+   (withDuration n str =
         // Truncate a stream, but if withUnknown is true, return it
         // with availability Unknown -- so as to test that other
         // filter functions behave correctly even if availability is
         // not known on their underlying streams
-       (ts = filt.truncatedTo n str;
+       (ts = filt.withDuration n str;
         if withUnknown then
             ts with
             { 
@@ -32,10 +32,10 @@ makeTests name withUnknown =
 [
 
 "truncatedTo-\(name)": \(
-    // not using truncatedTo wrapper above, because we're actually
-    // testing filt.truncatedTo here rather than just generating a
+    // not using withDuration wrapper above, because we're actually
+    // testing filt.withDuration here rather than just generating a
     // stream for use in another test
-    str = filt.truncatedTo 3 (syn.generated 2 id);
+    str = filt.withDuration 3 (syn.generated 2 id);
     compare str.position 0 and
         compare str.channels 1 and
         compare str.sampleRate 2 and
@@ -48,12 +48,27 @@ makeTests name withUnknown =
         ( str.close (); true )
 ),
 
+"truncatedTo-b-\(name)": \(
+    // as above
+    str = filt.withDuration 3 (syn.generated 2 id);
+    compare str.position 0 and
+        compare (bl.list ((str.read 2).getRow 0)) [ 0,1 ] and
+        compare str.position 2 and
+        compare str.available (Known 1) and
+        compare str.finished? false and
+        compare (bl.list ((str.read 2).getRow 0)) [ 2 ] and
+        compare str.position 3 and
+        compare str.available (Known 0) and
+        compare str.finished? true and
+        ( str.close (); true )
+),
+
 "extendedTo-\(name)": \(
-    // not using truncatedTo wrapper above for the outer call, because
-    // we're actually testing filt.truncatedTo here rather than just
+    // not using withDuration wrapper above for the outer call, because
+    // we're actually testing filt.withDuration here rather than just
     // generating a stream for use in another test. The inner call
     // does use the wrapper.
-    str = filt.truncatedTo 5 (truncatedTo 3 (syn.generated 2 id));
+    str = filt.withDuration 5 (withDuration 3 (syn.generated 2 id));
     compare str.position 0 and
         compare str.channels 1 and
         compare str.sampleRate 2 and
@@ -63,7 +78,7 @@ makeTests name withUnknown =
         compare str.position 4 and
         compare str.available (Known 1) and
         compare str.finished? false and
-        compare (bl.list ((str.read 2).getRow 0)) [ 0,0 ] and
+        compare (bl.list ((str.read 2).getRow 0)) [ 0 ] and
         compare str.position 5 and
         compare str.available (Known 0) and
         compare str.finished? true and
@@ -71,7 +86,7 @@ makeTests name withUnknown =
 ),
 
 "delayedBy-0-3-\(name)": \(
-    str = filt.delayedBy 0 (truncatedTo 3 (syn.generated 2 id));
+    str = filt.delayedBy 0 (withDuration 3 (syn.generated 2 id));
     compare str.position 0 and
         compare str.channels 1 and
         compare str.sampleRate 2 and
@@ -99,7 +114,7 @@ makeTests name withUnknown =
 ),
 
 "delayedBy-2-3-\(name)": \(
-    str = filt.delayedBy 2 (truncatedTo 3 (syn.generated 2 id));
+    str = filt.delayedBy 2 (withDuration 3 (syn.generated 2 id));
     compare str.position 0 and
         compare str.channels 1 and
         compare str.sampleRate 2 and
@@ -117,7 +132,7 @@ makeTests name withUnknown =
 ),
 
 "delayedBy-2-3b-\(name)": \(
-    str = filt.delayedBy 2 (truncatedTo 3 (syn.generated 2 id));
+    str = filt.delayedBy 2 (withDuration 3 (syn.generated 2 id));
     compare str.position 0 and
         compare str.channels 1 and
         compare str.sampleRate 2 and
@@ -135,7 +150,7 @@ makeTests name withUnknown =
 ),
 
 "delayedBy-2-3c-\(name)": \(
-    str = filt.delayedBy 2 (truncatedTo 3 (syn.generated 2 id));
+    str = filt.delayedBy 2 (withDuration 3 (syn.generated 2 id));
     compare str.position 0 and
         compare str.channels 1 and
         compare str.sampleRate 2 and
@@ -182,7 +197,7 @@ makeTests name withUnknown =
 ),
 
 "multiplexed-inf-trunc-\(name)": \(
-    str = filt.multiplexed [syn.generated 2 id, truncatedTo 3 (syn.generated 2 (0-))];
+    str = filt.multiplexed [syn.generated 2 id, withDuration 3 (syn.generated 2 (0-))];
     compare str.position 0 and
         compare str.channels 2 and
         compare str.sampleRate 2 and
@@ -198,7 +213,7 @@ makeTests name withUnknown =
 "multiplexed-precalc-trunc-\(name)": \(
     str = filt.multiplexed
        [syn.precalculated 2 (bl.fromList [1,2]),
-        truncatedTo 3 (syn.generated 2 (0-))];
+        withDuration 3 (syn.generated 2 (0-))];
     compare str.position 0 and
         compare str.channels 2 and
         compare str.sampleRate 2 and
@@ -215,7 +230,7 @@ makeTests name withUnknown =
     str = filt.multiplexed
        [syn.precalculated 2 (bl.fromList [1,2]),
         filt.multiplexed [syn.precalculated 2 (bl.fromList [3,4]),
-                          truncatedTo 3 (syn.generated 2 (0-))]];
+                          withDuration 3 (syn.generated 2 (0-))]];
     compare str.position 0 and
         compare str.channels 3 and
         compare str.sampleRate 2 and
@@ -232,7 +247,7 @@ makeTests name withUnknown =
     str = filt.multiplexed
        [syn.precalculated 2 (bl.fromList [1,2]),
         syn.precalculated 2 (bl.fromList [3,4]),
-        truncatedTo 3 (syn.generated 2 (0-))];
+        withDuration 3 (syn.generated 2 (0-))];
     compare str.position 0 and
         compare str.channels 3 and
         compare str.sampleRate 2 and

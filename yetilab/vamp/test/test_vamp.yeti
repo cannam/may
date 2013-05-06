@@ -12,7 +12,7 @@ testPluginKey = "vamp-test-plugin:vamp-test-plugin";
 
 rate = 44100;
 
-testStream () = filter.truncatedTo (rate * 20) (synthetic.whiteNoise rate);
+testStream () = filter.withDuration (rate * 20) (synthetic.whiteNoise rate);
 
 processTest output = 
     v.processStreamStructured testPluginKey output (testStream ());

@@ -24,25 +24,32 @@ minDurationOf d1 d2 =
         d2;
     esac;
 
-truncatedTo nsamples s = //!!! should nsamples be a time in seconds?
+withDuration nsamples s = //!!! should nsamples be a time in seconds? (no)
+   (var pos = 0;
     {
-        get position () = s.position,
+        get position () = pos,
         get channels () = s.channels, 
         get sampleRate () = s.sampleRate,
-        get available () = Known (nsamples - s.position),
-        get finished? () = not (nsamples > s.position),
+        get available () = Known (nsamples - pos),
+        get finished? () = not (nsamples > pos),
         read count =
-            if nsamples > s.position + count then
-                s.read count;
-            elif nsamples > s.position then
-                s.read (nsamples - s.position)
-            else
-                mat.zeroMatrix { columns = 0, rows = s.channels }
-            fi,
+           (n = min count (nsamples - pos);
+            pos := pos + n;
+            if not s.finished? then
+                fromStream = s.read n;
+                got = fromStream.size.columns;
+                mat.concat (Horizontal ())
+                   (fromStream ::
+                    if got == n then []
+                    else [mat.zeroMatrix { columns = n - got, rows = s.channels}]
+                    fi);
+            else 
+                mat.zeroMatrix { columns = n, rows = s.channels }
+            fi),
         close = s.close,
-    };
+    });
 
-delayedBy nsamples s = //!!! should nsamples be a time in seconds?
+delayedBy nsamples s = //!!! should nsamples be a time in seconds? (no)
    (var prepos = 0;
     delay = nsamples;
     zeros n = mat.toRowMajor
@@ -148,12 +155,12 @@ repeated s =
     fi;
 
 {
-    truncatedTo, 
+    withDuration, 
     delayedBy,
     multiplexed,
     repeated,
 //!!!} as {
-//    truncatedTo is number -> stream -> stream
+//    withDuration is number -> stream -> stream
 }
 
 
