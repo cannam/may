@@ -72,11 +72,53 @@ delayedBy nsamples s = //!!! should nsamples be a time in seconds? (no)
         close = s.close
     });
 
+//!!! what should happen if we mix or multiplex a finite-length and an
+//infinite-length stream? or even two streams with differing finite
+//lengths? write tests for this. At the moment the resulting stream
+//has duration equal to the shortest source stream and finishes as
+//soon as any one of them finishes
+
+mixed streams =
+   (mix m1 m2 =
+       (sz = { rows = max m1.size.rows m2.size.rows,
+               columns = min m1.size.columns m2.size.columns };
+        if sz.columns == 0 then
+            mat.zeroSizeMatrix ()
+        else
+            mat.sum (mat.resizedTo sz m1) (mat.resizedTo sz m2);
+        fi);
+    {
+        get position () = head (sort (map (.position) streams)),
+        get channels () = head (sortBy (>) (map (.channels) streams)),
+        get sampleRate () = (head streams).sampleRate, //!!! document this
+        get available () =
+            fold do dur s: minDurationOf dur s.available done (Infinite ()) streams,
+        get finished? () = any id (map (.finished?) streams),
+        read count =
+           (readTo acc ss count =
+               case ss of
+               first::rest:
+                   part = first.read count;
+                   case acc of 
+                   Some m:
+                       readTo (Some (mix m part)) rest count;
+                   None ():
+                       readTo (Some part) rest count;
+                   esac;
+                _: acc;
+               esac;
+            case readTo (None ()) streams count of
+            None (): mat.zeroSizeMatrix ();
+            Some m: m;
+            esac),
+        close () = for streams do s: s.close() done,
+    });
+
 multiplexed streams = 
     {
         get position () = head (sort (map (.position) streams)), // can differ after EOS
         get channels () = sum (map (.channels) streams),
-        get sampleRate () = (head streams).sampleRate,
+        get sampleRate () = (head streams).sampleRate, //!!! document this
         get available () = 
             fold do dur s: minDurationOf dur s.available done (Infinite ()) streams,
         get finished? () = any id (map (.finished?) streams),
@@ -151,6 +193,7 @@ repeated s =
 {
     withDuration is number -> stream -> stream,
     delayedBy is number -> stream -> stream,
+    mixed is list<stream> -> stream,
     multiplexed is list<stream> -> stream,
     repeated is stream -> stream,
 }

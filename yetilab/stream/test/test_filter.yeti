@@ -182,6 +182,83 @@ makeTests name withUnknown =
         ( str.close (); true )
 ),
 
+"mixed-inf-inf-\(name)": \(
+    str = filt.mixed [syn.generated 2 (2*), syn.generated 2 (0-)];
+    compare str.position 0 and
+        compare str.channels 1 and
+        compare str.sampleRate 2 and
+        compare str.available (Infinite ()) and
+        compare str.finished? false and
+        compare (map bl.list (mat.asRows (str.read 4))) [[0,1,2,3]] and
+        compare str.available (Infinite ()) and
+        compare str.position 4 and
+        ( str.close (); true )
+),
+
+"mixed-inf-trunc-\(name)": \(
+    str = filt.mixed [syn.generated 2 (2*), withDuration 3 (syn.generated 2 (0-))];
+    compare str.position 0 and
+        compare str.channels 1 and
+        compare str.sampleRate 2 and
+        compare str.available (maybeKnown 3) and
+        compare str.finished? false and
+        compare (map bl.list (mat.asRows (str.read 4))) [[0,1,2]] and
+        compare str.available (Known 0) and
+        compare str.finished? true and
+        compare str.position 3 and
+        ( str.close (); true )
+),
+
+"mixed-precalc-trunc-\(name)": \(
+    str = filt.mixed
+       [syn.precalculated 2 (bl.fromList [1,2]),
+        withDuration 3 (syn.generated 2 (0-))];
+    compare str.position 0 and
+        compare str.channels 1 and
+        compare str.sampleRate 2 and
+        compare str.available (maybeKnown 2) and
+        compare str.finished? false and
+        compare (map bl.list (mat.asRows (str.read 4))) [[1,1]] and
+        compare str.available (Known 0) and
+        compare str.finished? true and
+        compare str.position 2 and
+        ( str.close (); true )
+),
+
+"mixed-2-1-\(name)": \(
+    str = filt.mixed
+       [syn.precalculated 2 (bl.fromList [1,2]),
+        filt.multiplexed [syn.precalculated 2 (bl.fromList [3,4]),
+                          withDuration 3 (syn.generated 2 (0-))]];
+    compare str.position 0 and
+        compare str.channels 2 and
+        compare str.sampleRate 2 and
+        compare str.available (maybeKnown 2) and
+        compare str.finished? false and
+        compare (map bl.list (mat.asRows (str.read 4))) [[4,6], [0,-1]] and
+        compare str.available (Known 0) and
+        compare str.finished? true and
+        compare str.position 2 and
+        ( str.close (); true )
+),
+
+"mixed-3-\(name)": \(
+    str = filt.mixed
+       [syn.precalculated 2 (bl.fromList [1,2]),
+        syn.precalculated 2 (bl.fromList [3,4]),
+        withDuration 3 (syn.generated 2 (0-))];
+    compare str.position 0 and
+        compare str.channels 1 and
+        compare str.sampleRate 2 and
+        compare str.available (maybeKnown 2) and
+        compare str.finished? false and
+        compare (map bl.list (mat.asRows (str.read 4))) [[4,5]] and
+        compare str.available (Known 0) and
+        compare str.finished? true and
+        compare str.position 2 and
+        ( str.close (); true )
+),
+
 "multiplexed-inf-inf-\(name)": \(
     str = filt.multiplexed [syn.generated 2 id, syn.generated 2 (0-)];
     compare str.position 0 and
