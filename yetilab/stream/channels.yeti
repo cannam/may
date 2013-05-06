@@ -80,12 +80,11 @@ mixedFromInterleavedTo targetChannels channels b =
         block.block v';
     fi;
 
-mixedAndInterleavedTo targetChannels m = 
+mixedTo targetChannels m = 
     if targetChannels == 1 then
-        mixedDown m
+        deinterleaved 1 (mixedDown m)
     else
-       (interleaved .
-            mat.resizedTo { rows = targetChannels, columns = m.size.columns })
+        mat.resizedTo { rows = targetChannels, columns = m.size.columns }
             if m.size.rows == 1 then
                (mat.newMatrix (RowMajor ()) [ m.getRow 0, m.getRow 0 ])
             else
@@ -93,8 +92,17 @@ mixedAndInterleavedTo targetChannels m =
             fi;
     fi;
 
+mixedAndInterleavedTo targetChannels m = 
+    if targetChannels == 1 then
+        mixedDown m
+    else
+        interleaved (mixedTo targetChannels m);
+    fi;
+
+//!!! some of these names are terrible
 {
     interleaved, deinterleaved,
-    mixedDown, mixedDownFromInterleaved, mixedFromInterleavedTo, mixedAndInterleavedTo
+    mixedDown, mixedDownFromInterleaved,
+    mixedFromInterleavedTo, mixedTo, mixedAndInterleavedTo
 }
 

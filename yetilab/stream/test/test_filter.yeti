@@ -182,6 +182,70 @@ makeTests name withUnknown =
         ( str.close (); true )
 ),
 
+"mixedTo-1-2-\(name)": \(
+    str = filt.mixedTo 2 (withDuration 3 (syn.generated 2 id));
+    compare str.position 0 and
+        compare str.channels 2 and
+        compare str.sampleRate 2 and
+        compare str.available (maybeKnown 3) and
+        compare str.finished? false and
+        compare (map bl.list (mat.asRows (str.read 4))) [[0,1,2],[0,1,2]] and
+        compare str.position 3 and
+        compare str.available (Known 0) and
+        compare str.finished? true and
+        ( str.close (); true )
+),
+
+"mixedTo-2-1-\(name)": \(
+    str = filt.mixedTo 1
+       (filt.multiplexed
+          [withDuration 3 (syn.generated 2 id),
+           withDuration 3 (syn.generated 2 id)]);
+    compare str.position 0 and
+        compare str.channels 1 and
+        compare str.sampleRate 2 and
+        compare str.available (maybeKnown 3) and
+        compare str.finished? false and
+        compare (map bl.list (mat.asRows (str.read 4))) [[0,2,4]] and
+        compare str.position 3 and
+        compare str.available (Known 0) and
+        compare str.finished? true and
+        ( str.close (); true )
+),
+
+//!!! is this what we want? zeros in subsequent channels? cross-check with channels module
+"mixedTo-2-3-\(name)": \(
+    str = filt.mixedTo 3
+       (filt.multiplexed
+          [withDuration 3 (syn.generated 2 id),
+           withDuration 3 (syn.generated 2 (+1))]);
+    compare str.position 0 and
+        compare str.channels 3 and
+        compare str.sampleRate 2 and
+        compare str.available (maybeKnown 3) and
+        compare str.finished? false and
+        compare (map bl.list (mat.asRows (str.read 4))) [[0,1,2],[1,2,3],[0,0,0]] and
+        compare str.position 3 and
+        compare str.available (Known 0) and
+        compare str.finished? true and
+        ( str.close (); true )
+),
+
+//!!! is this what we want? zeros in subsequent channels? cross-check with channels module and behaviour of 1->2 mixing
+"mixedTo-1-3-\(name)": \(
+    str = filt.mixedTo 3 (withDuration 3 (syn.generated 2 id));
+    compare str.position 0 and
+        compare str.channels 3 and
+        compare str.sampleRate 2 and
+        compare str.available (maybeKnown 3) and
+        compare str.finished? false and
+        compare (map bl.list (mat.asRows (str.read 4))) [[0,1,2],[0,0,0],[0,0,0]] and
+        compare str.position 3 and
+        compare str.available (Known 0) and
+        compare str.finished? true and
+        ( str.close (); true )
+),
+
 "mixed-inf-inf-\(name)": \(
     str = filt.mixed [syn.generated 2 (2*), syn.generated 2 (0-)];
     compare str.position 0 and

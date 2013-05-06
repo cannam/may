@@ -3,6 +3,7 @@ module yetilab.stream.filter;
 
 mat = load yetilab.matrix.matrix;
 bl = load yetilab.block.block;
+ch = load yetilab.stream.channels;
 
 load yetilab.stream.streamtype;
 
@@ -44,6 +45,7 @@ withDuration nsamples s = //!!! should nsamples be a time in seconds? (no)
     });
 
 delayedBy nsamples s = //!!! should nsamples be a time in seconds? (no)
+//!!! should allow nsamples < 0!
    (var prepos = 0;
     delay = nsamples;
     zeros n = mat.toRowMajor
@@ -71,6 +73,14 @@ delayedBy nsamples s = //!!! should nsamples be a time in seconds? (no)
             fi,
         close = s.close
     });
+
+//!!! poor name, confusion with mixed, but consistent with channels.yeti
+mixedTo targetChannels s =
+    s with //!!! should use this more in this module
+    {
+        get channels () = targetChannels,
+        read count = ch.mixedTo targetChannels (s.read count),
+    };
 
 //!!! what should happen if we mix or multiplex a finite-length and an
 //infinite-length stream? or even two streams with differing finite
@@ -193,6 +203,7 @@ repeated s =
 {
     withDuration is number -> stream -> stream,
     delayedBy is number -> stream -> stream,
+    mixedTo is number -> stream -> stream,
     mixed is list<stream> -> stream,
     multiplexed is list<stream> -> stream,
     repeated is stream -> stream,
