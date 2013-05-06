@@ -60,16 +60,23 @@ make d = {
         esac,
     };
 
-newStorage { rows, columns } = 
+newColMajorStorage { rows, columns } = 
     if rows < 1 then array []
     else array (map \(vec.zeros rows) [1..columns])
     fi;
 
 zeroMatrix { rows, columns } = 
-    make (ColM (newStorage { rows, columns }));
+    make (ColM (newColMajorStorage { rows, columns }));
+
+zeroMatrixWithTypeOf m { rows, columns } = 
+    if m.isRowMajor? then
+        make (RowM (newColMajorStorage { rows = columns, columns = rows }));
+    else
+        make (ColM (newColMajorStorage { rows, columns }));
+    fi;
 
 generate f { rows, columns } =
-   (m = newStorage { rows, columns };
+   (m = newColMajorStorage { rows, columns };
     for [0..columns-1] do col:
         for [0..rows-1] do row:
             m[col][row] := f row col;
@@ -131,7 +138,7 @@ copyOf m =
 newMatrix type data = //!!! NB does not copy data
    (tagger = case type of RowMajor (): RowM; ColumnMajor (): ColM esac;
     if empty? data or block.empty? (head data)
-    then zeroMatrix { rows = 0, columns = 0 }
+    then zeroSizeMatrix ()
     else make (tagger (array (map block.data data)))
     fi);
 
@@ -143,16 +150,6 @@ newColumnVector data = //!!! NB does not copy data
 
 scaled factor m = //!!! v inefficient
     generate do row col: factor * m.getAt row col done m.size;
-
-resizedTo newsize m = //!!! also v inefficient
-   (oldsize = m.size;
-    if newsize == oldsize then m
-    else 
-        generate do row col:
-            if row < oldsize.rows and col < oldsize.columns
-            then m.getAt row col else 0 fi
-            done newsize;
-    fi);
 
 sum' m1 m2 =
     if m1.size != m2.size
@@ -234,6 +231,33 @@ columnSlice start count m = //!!! doc: storage order same as input
         make (ColM (array (map (block.data . m.getColumn) [start .. start + count - 1])))
     else 
         make (RowM (array (map (block.data . (block.rangeOf start count)) (asRows m))))
+    fi;
+
+resizedTo newsize m =
+    if newsize == m.size then
+        m
+    else
+        growrows = newsize.rows - m.size.rows;
+        growcols = newsize.columns - m.size.columns;
+        rowm = m.isRowMajor?;
+        resizedTo newsize
+            if rowm and growrows < 0 then
+                rowSlice 0 newsize.rows m
+            elif (not rowm) and growcols < 0 then 
+                columnSlice 0 newsize.columns m
+            elif growrows < 0 then 
+                rowSlice 0 newsize.rows m
+            elif growcols < 0 then 
+                columnSlice 0 newsize.columns m
+            else
+                if growrows > 0 then
+                    concat (Vertical ())
+                       [m, zeroMatrixWithTypeOf m (m.size with { rows = growrows })]
+                else
+                    concat (Horizontal ())
+                       [m, zeroMatrixWithTypeOf m (m.size with { columns = growcols })]
+                fi
+            fi
     fi;
 
 {
