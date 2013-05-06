@@ -16,7 +16,10 @@ makeTests name withUnknown =
         // not known on their underlying streams
        (ts = filt.truncatedTo n str;
         if withUnknown then
-            ts with { get available () = Unknown (); }
+            ts with
+            { 
+                get available () = if ts.finished? then Known 0 else Unknown () fi;
+            }
         else
             ts
         fi);
