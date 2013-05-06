@@ -4,6 +4,8 @@ module yetilab.block.blockfuncs;
 b = load yetilab.block.block;
 vec = load yetilab.block.fvector;
 
+load yetilab.block.blocktype;
+
 sum' bl =
    (v = b.data bl;
     tot = new double[1];
@@ -51,13 +53,15 @@ ifftshift bl =
     b.concat [b.rangeOf half (len-half) bl, b.rangeOf 0 half bl]);
 
 {
-sum = sum',
-mean,
-multiply, divideBy, sqr,
-sqrt = sqrt',
-rms,
-fftshift,
-ifftshift,
+sum is block -> number = sum',
+mean is block -> number,
+multiply is block -> block -> block, 
+divideBy is number -> block -> block, 
+sqr is block -> block,
+sqrt is block -> block = sqrt',
+rms is block -> number,
+fftshift is block -> block,
+ifftshift is block -> block,
 }
 
 
