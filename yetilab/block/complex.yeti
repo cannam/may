@@ -74,6 +74,17 @@ angles cc is list?<~Cplx> -> block =
     bl.fromList (map angle cc);
 
 {
+   real,
+   imaginary,
+   complex,
+   magnitude,
+   angle,
+   add,
+   scale,
+   zeros,
+   magnitudes,
+   angles,
+} as {
    real is cplx -> number,
    imaginary is cplx -> number,
    complex is number -> number -> cplx,
