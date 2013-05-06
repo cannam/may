@@ -5,6 +5,7 @@ ch = load yetilab.stream.channels;
 vec = load yetilab.block.fvector;
 block = load yetilab.block.block;
 
+load yetilab.block.blocktype;
 load yetilab.stream.streamtype;
 
 generated sampleRate generator =
@@ -60,7 +61,7 @@ precalculated rate data =
     silent,
 } as {
     generated is number -> (number -> number) -> stream, 
-    precalculated is number -> 'a -> stream, //!!! 'a is block 
+    precalculated is number -> block -> stream,
     sinusoid is number -> number -> stream, 
     whiteNoise is number -> stream,
     silent is number -> stream,
