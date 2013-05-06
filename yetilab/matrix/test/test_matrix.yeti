@@ -255,7 +255,11 @@ makeTests name flipper =
         compareMatrices
            (mat.resizedTo { rows = 1, columns = 1 }
                (newMatrix (ColumnMajor ()) [[1,4],[2,5],[3,6]]))
-           (newMatrix (RowMajor ()) [[1]])
+           (newMatrix (RowMajor ()) [[1]]) and
+        compareMatrices
+           (mat.resizedTo { rows = 2, columns = 3 }
+               (mat.zeroSizeMatrix ()))
+           (newMatrix (RowMajor ()) [[0,0,0],[0,0,0]])
 ),
 
 "zeroSizeMatrix-\(name)": \(

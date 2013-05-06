@@ -234,8 +234,10 @@ columnSlice start count m = //!!! doc: storage order same as input
     fi;
 
 resizedTo newsize m =
-    if newsize == m.size then
+   (if newsize == m.size then
         m
+    elif m.size.rows == 0 or m.size.columns == 0 then
+        zeroMatrixWithTypeOf m newsize;
     else
         growrows = newsize.rows - m.size.rows;
         growcols = newsize.columns - m.size.columns;
@@ -258,7 +260,7 @@ resizedTo newsize m =
                        [m, zeroMatrixWithTypeOf m (m.size with { columns = growcols })]
                 fi
             fi
-    fi;
+    fi);
 
 {
     generate is (number -> number -> number) -> { .rows is number, .columns is number } -> matrix,
