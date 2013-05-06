@@ -11,7 +11,6 @@ filt = load yetilab.stream.filter;
 [
 
 "truncatedTo": \(
-    // nb the basic generated function is tested in test_syntheticstream
     str = filt.truncatedTo 3 (syn.generated 2 id);
     compare str.position 0 and
         compare str.channels 1 and
@@ -20,6 +19,24 @@ filt = load yetilab.stream.filter;
         compare str.finished? false and
         compare (bl.list ((str.read 4).getRow 0)) [ 0,1,2 ] and
         compare str.position 3 and
+        compare str.available (Known 0) and
+        compare str.finished? true and
+        ( str.close (); true )
+),
+
+"extendedTo": \(
+    str = filt.truncatedTo 5 (filt.truncatedTo 3 (syn.generated 2 id));
+    compare str.position 0 and
+        compare str.channels 1 and
+        compare str.sampleRate 2 and
+        compare str.available (Known 5) and
+        compare str.finished? false and
+        compare (bl.list ((str.read 4).getRow 0)) [ 0,1,2,0 ] and
+        compare str.position 4 and
+        compare str.available (Known 1) and
+        compare str.finished? false and
+        compare (bl.list ((str.read 2).getRow 0)) [ 0,0 ] and
+        compare str.position 5 and
         compare str.available (Known 0) and
         compare str.finished? true and
         ( str.close (); true )
