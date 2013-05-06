@@ -8,9 +8,30 @@ filt = load yetilab.stream.filter;
 
 { compare, compareUsing } = load yetilab.test.test;
 
+makeTests name withUnknown =
+   (truncatedTo n str =
+        // Truncate a stream, but if withUnknown is true, return it
+        // with availability Unknown -- so as to test that other
+        // filter functions behave correctly even if availability is
+        // not known on their underlying streams
+       (ts = filt.truncatedTo n str;
+        if withUnknown then
+            ts with { get available () = Unknown (); }
+        else
+            ts
+        fi);
+    maybeKnown n =
+        if withUnknown then
+            Unknown ()
+        else
+            Known n
+        fi;
 [
 
-"truncatedTo": \(
+"truncatedTo-\(name)": \(
+    // not using truncatedTo wrapper above, because we're actually
+    // testing filt.truncatedTo here rather than just generating a
+    // stream for use in another test
     str = filt.truncatedTo 3 (syn.generated 2 id);
     compare str.position 0 and
         compare str.channels 1 and
@@ -24,8 +45,12 @@ filt = load yetilab.stream.filter;
         ( str.close (); true )
 ),
 
-"extendedTo": \(
-    str = filt.truncatedTo 5 (filt.truncatedTo 3 (syn.generated 2 id));
+"extendedTo-\(name)": \(
+    // not using truncatedTo wrapper above for the outer call, because
+    // we're actually testing filt.truncatedTo here rather than just
+    // generating a stream for use in another test. The inner call
+    // does use the wrapper.
+    str = filt.truncatedTo 5 (truncatedTo 3 (syn.generated 2 id));
     compare str.position 0 and
         compare str.channels 1 and
         compare str.sampleRate 2 and
@@ -42,12 +67,12 @@ filt = load yetilab.stream.filter;
         ( str.close (); true )
 ),
 
-"delayedBy-0-3": \(
-    str = filt.delayedBy 0 (filt.truncatedTo 3 (syn.generated 2 id));
+"delayedBy-0-3-\(name)": \(
+    str = filt.delayedBy 0 (truncatedTo 3 (syn.generated 2 id));
     compare str.position 0 and
         compare str.channels 1 and
         compare str.sampleRate 2 and
-        compare str.available (Known 3) and
+        compare str.available (maybeKnown 3) and
         compare str.finished? false and
         compare (bl.list ((str.read 4).getRow 0)) [ 0,1,2 ] and
         compare str.position 3 and
@@ -56,7 +81,7 @@ filt = load yetilab.stream.filter;
         ( str.close (); true )
 ),
 
-"delayedBy-0-inf": \(
+"delayedBy-0-inf-\(name)": \(
     str = filt.delayedBy 0 (syn.generated 2 id);
     compare str.position 0 and
         compare str.channels 1 and
@@ -70,16 +95,16 @@ filt = load yetilab.stream.filter;
         ( str.close (); true )
 ),
 
-"delayedBy-2-3": \(
-    str = filt.delayedBy 2 (filt.truncatedTo 3 (syn.generated 2 id));
+"delayedBy-2-3-\(name)": \(
+    str = filt.delayedBy 2 (truncatedTo 3 (syn.generated 2 id));
     compare str.position 0 and
         compare str.channels 1 and
         compare str.sampleRate 2 and
-        compare str.available (Known 5) and
+        compare str.available (maybeKnown 5) and
         compare str.finished? false and
         compare (bl.list ((str.read 4).getRow 0)) [ 0,0,0,1 ] and
         compare str.position 4 and
-        compare str.available (Known 1) and
+        compare str.available (maybeKnown 1) and
         compare str.finished? false and
         compare (bl.list ((str.read 4).getRow 0)) [ 2 ] and
         compare str.position 5 and
@@ -88,16 +113,16 @@ filt = load yetilab.stream.filter;
         ( str.close (); true )
 ),
 
-"delayedBy-2-3b": \(
-    str = filt.delayedBy 2 (filt.truncatedTo 3 (syn.generated 2 id));
+"delayedBy-2-3b-\(name)": \(
+    str = filt.delayedBy 2 (truncatedTo 3 (syn.generated 2 id));
     compare str.position 0 and
         compare str.channels 1 and
         compare str.sampleRate 2 and
-        compare str.available (Known 5) and
+        compare str.available (maybeKnown 5) and
         compare str.finished? false and
         compare (bl.list ((str.read 1).getRow 0)) [ 0 ] and
         compare str.position 1 and
-        compare str.available (Known 4) and
+        compare str.available (maybeKnown 4) and
         compare str.finished? false and
         compare (bl.list ((str.read 4).getRow 0)) [ 0,0,1,2 ] and
         compare str.position 5 and
@@ -106,12 +131,12 @@ filt = load yetilab.stream.filter;
         ( str.close (); true )
 ),
 
-"delayedBy-2-3c": \(
-    str = filt.delayedBy 2 (filt.truncatedTo 3 (syn.generated 2 id));
+"delayedBy-2-3c-\(name)": \(
+    str = filt.delayedBy 2 (truncatedTo 3 (syn.generated 2 id));
     compare str.position 0 and
         compare str.channels 1 and
         compare str.sampleRate 2 and
-        compare str.available (Known 5) and
+        compare str.available (maybeKnown 5) and
         compare str.finished? false and
         compare (bl.list ((str.read 7).getRow 0)) [ 0,0,0,1,2 ] and
         compare str.position 5 and
@@ -120,7 +145,7 @@ filt = load yetilab.stream.filter;
         ( str.close (); true )
 ),
 
-"delayedBy-2-inf": \(
+"delayedBy-2-inf-\(name)": \(
     str = filt.delayedBy 2 (syn.generated 2 id);
     compare str.position 0 and
         compare str.channels 1 and
@@ -139,7 +164,7 @@ filt = load yetilab.stream.filter;
         ( str.close (); true )
 ),
 
-"multiplexed-inf-inf": \(
+"multiplexed-inf-inf-\(name)": \(
     str = filt.multiplexed [syn.generated 2 id, syn.generated 2 (0-)];
     compare str.position 0 and
         compare str.channels 2 and
@@ -153,12 +178,12 @@ filt = load yetilab.stream.filter;
         ( str.close (); true )
 ),
 
-"multiplexed-inf-trunc": \(
-    str = filt.multiplexed [syn.generated 2 id, filt.truncatedTo 3 (syn.generated 2 (0-))];
+"multiplexed-inf-trunc-\(name)": \(
+    str = filt.multiplexed [syn.generated 2 id, truncatedTo 3 (syn.generated 2 (0-))];
     compare str.position 0 and
         compare str.channels 2 and
         compare str.sampleRate 2 and
-        compare str.available (Known 3) and
+        compare str.available (maybeKnown 3) and
         compare str.finished? false and
         compare (map bl.list (mat.asRows (str.read 4))) [[0,1,2], [0,-1,-2]] and
         compare str.available (Known 0) and
@@ -167,14 +192,14 @@ filt = load yetilab.stream.filter;
         ( str.close (); true )
 ),
 
-"multiplexed-precalc-trunc": \(
+"multiplexed-precalc-trunc-\(name)": \(
     str = filt.multiplexed
        [syn.precalculated 2 (bl.fromList [1,2]),
-        filt.truncatedTo 3 (syn.generated 2 (0-))];
+        truncatedTo 3 (syn.generated 2 (0-))];
     compare str.position 0 and
         compare str.channels 2 and
         compare str.sampleRate 2 and
-        compare str.available (Known 2) and
+        compare str.available (maybeKnown 2) and
         compare str.finished? false and
         compare (map bl.list (mat.asRows (str.read 4))) [[1,2], [0,-1]] and
         compare str.available (Known 0) and
@@ -183,15 +208,15 @@ filt = load yetilab.stream.filter;
         ( str.close (); true )
 ),
 
-"multiplexed-2-1": \(
+"multiplexed-2-1-\(name)": \(
     str = filt.multiplexed
        [syn.precalculated 2 (bl.fromList [1,2]),
         filt.multiplexed [syn.precalculated 2 (bl.fromList [3,4]),
-                          filt.truncatedTo 3 (syn.generated 2 (0-))]];
+                          truncatedTo 3 (syn.generated 2 (0-))]];
     compare str.position 0 and
         compare str.channels 3 and
         compare str.sampleRate 2 and
-        compare str.available (Known 2) and
+        compare str.available (maybeKnown 2) and
         compare str.finished? false and
         compare (map bl.list (mat.asRows (str.read 4))) [[1,2], [3,4], [0,-1]] and
         compare str.available (Known 0) and
@@ -200,15 +225,15 @@ filt = load yetilab.stream.filter;
         ( str.close (); true )
 ),
 
-"multiplexed-2-1b": \(
+"multiplexed-2-1b-\(name)": \(
     str = filt.multiplexed
        [syn.precalculated 2 (bl.fromList [1,2]),
         syn.precalculated 2 (bl.fromList [3,4]),
-        filt.truncatedTo 3 (syn.generated 2 (0-))];
+        truncatedTo 3 (syn.generated 2 (0-))];
     compare str.position 0 and
         compare str.channels 3 and
         compare str.sampleRate 2 and
-        compare str.available (Known 2) and
+        compare str.available (maybeKnown 2) and
         compare str.finished? false and
         compare (map bl.list (mat.asRows (str.read 4))) [[1,2], [3,4], [0,-1]] and
         compare str.available (Known 0) and
@@ -217,7 +242,7 @@ filt = load yetilab.stream.filter;
         ( str.close (); true )
 ),
 
-"repeated-2": \(
+"repeated-2-\(name)": \(
     str = filt.repeated
        (syn.precalculated 2 (bl.fromList [1,2,3]));
     compare str.position 0 and
@@ -242,5 +267,13 @@ filt = load yetilab.stream.filter;
 
 //!!! still no tests for filters with multi-channel inputs
 
-] is hash<string, () -> boolean>
+]);
+
+knowns = makeTests "known" false;
+unknowns = makeTests "unknown" true;
+
+all = [:];
+for [ knowns, unknowns ] do h: for (keys h) do k: all[k] := h[k] done done;
+
+all is hash<string, () -> boolean>;
 
