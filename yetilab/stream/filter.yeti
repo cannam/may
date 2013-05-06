@@ -36,8 +36,6 @@ withDuration nsamples s = //!!! should nsamples be a time in seconds? (no)
            (n = min count (nsamples - pos);
             pos := pos + n;
             if not s.finished? then
-                fromStream = s.read n;
-                got = fromStream.size.columns;
                 mat.concat (Horizontal ())
                    (fromStream ::
                     if got == n then []
@@ -159,10 +157,12 @@ repeated s =
     delayedBy,
     multiplexed,
     repeated,
-//!!!} as {
-//    withDuration is number -> stream -> stream
+} as {
+    withDuration is number -> stream -> stream,
+    delayedBy is number -> stream -> stream,
+    multiplexed is list<stream> -> stream,
+    repeated is stream -> stream,
 }
-
 
 
 

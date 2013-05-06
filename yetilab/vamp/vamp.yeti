@@ -235,7 +235,7 @@ loadPlugin rate key =
 
 //!!! bring block typedef into scope -- this shouldn't be necessary,
 //but see comment in processed below
-load yetilab.block.block;
+load yetilab.block.blocktype;
 
 processed { p, sampleRate, hop } frames count 
     // I don't know why this type declaration is necessary. Without

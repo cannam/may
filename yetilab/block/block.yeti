@@ -3,7 +3,7 @@ module yetilab.block.block;
 
 vec = load yetilab.block.fvector;
 
-typedef opaque block = ~double[];
+load yetilab.block.blocktype;
 
 {
     zeros = vec.zeros,

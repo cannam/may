@@ -1,6 +1,8 @@
 
 module yetilab.stream.streamtype;
 
+load yetilab.matrix.matrixtype;
+
 typedef stream =
     {
         position is number,
@@ -8,7 +10,7 @@ typedef stream =
         sampleRate is number,
         available is Known number | Unknown () | Infinite (),
         finished? is boolean,
-        read is number -> 'a, // actually a matrix
+        read is number -> matrix,
         close is () -> (),
     };
 

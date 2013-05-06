@@ -1,7 +1,9 @@
 
 module yetilab.block.complex;
 
-load yetilab.block.block;
+load yetilab.block.blocktype;
+
+bl = load yetilab.block.block;
 
 import java.lang: ClassCastException;
 
@@ -66,10 +68,10 @@ zeros n is number -> array<~Cplx> =
     array (map \(complex 0 0) [1..n]);
 
 magnitudes cc is list?<~Cplx> -> block =
-    fromList (map magnitude cc);
+    bl.fromList (map magnitude cc);
 
 angles cc is list?<~Cplx> -> block =
-    fromList (map angle cc);
+    bl.fromList (map angle cc);
 
 {
    real,

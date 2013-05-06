@@ -13,6 +13,9 @@ vec = load yetilab.block.fvector;
 block = load yetilab.block.block;
 bf = load yetilab.block.blockfuncs;
 
+load yetilab.block.blocktype;
+load yetilab.matrix.matrixtype;
+
 make d = {
     get data () = d,
     get size () =
@@ -138,10 +141,10 @@ newRowVector data = //!!! NB does not copy data
 newColumnVector data = //!!! NB does not copy data
     make (ColM (array [block.data data]));
 
-scaled factor m =
+scaled factor m = //!!! v inefficient
     generate do row col: factor * m.getAt row col done m.size;
 
-resizedTo newsize m =
+resizedTo newsize m = //!!! also v inefficient
    (oldsize = m.size;
     if newsize == oldsize then m
     else 
@@ -234,19 +237,46 @@ columnSlice start count m = //!!! doc: storage order same as input
     fi;
 
 {
-constMatrix, randomMatrix, zeroMatrix, identityMatrix, zeroSizeMatrix,
-generate,
-width, height,
-equal,
-copyOf,
-transposed,
-flipped, toRowMajor, toColumnMajor,
-scaled,
-resizedTo,
-asRows, asColumns,
-sum = sum', product,
-concat,
-rowSlice, columnSlice,
-newMatrix, newRowVector, newColumnVector,
+    generate,
+    constMatrix, randomMatrix, zeroMatrix, identityMatrix, zeroSizeMatrix,
+    width, height,
+    equal,
+    copyOf,
+    transposed,
+    flipped, toRowMajor, toColumnMajor,
+    scaled,
+    resizedTo,
+    asRows, asColumns,
+    sum = sum', product,
+    concat,
+    rowSlice, columnSlice,
+    newMatrix, newRowVector, newColumnVector,
+} as {
+    generate is (number -> number -> number) -> { .rows is number, .columns is number } -> matrix,
+    constMatrix is number -> { .rows is number, .columns is number } -> matrix,
+    randomMatrix is { .rows is number, .columns is number } -> matrix,
+    zeroMatrix is { .rows is number, .columns is number } -> matrix, 
+    identityMatrix is { .rows is number, .columns is number } -> matrix, 
+    zeroSizeMatrix is () -> matrix,
+    width is matrix -> number,
+    height is matrix -> number,
+    equal is matrix -> matrix -> boolean,
+    copyOf is matrix -> matrix,
+    transposed is matrix -> matrix,
+    flipped is matrix -> matrix, 
+    toRowMajor is matrix -> matrix, 
+    toColumnMajor is matrix -> matrix,
+    scaled is number -> matrix -> matrix,
+    resizedTo is { .rows is number, .columns is number } -> matrix -> matrix,
+    asRows is matrix -> list<block>, 
+    asColumns is matrix -> list<block>,
+    sum is matrix -> matrix -> matrix,
+    product is matrix -> matrix -> matrix,
+    concat is (Horizontal () | Vertical ()) -> list<matrix> -> matrix,
+    rowSlice is number -> number -> matrix -> matrix, 
+    columnSlice is number -> number -> matrix -> matrix,
+    newMatrix is (ColumnMajor () | RowMajor ()) -> list<block> -> matrix, 
+    newRowVector is block -> matrix, 
+    newColumnVector is block -> matrix,
 }
 
