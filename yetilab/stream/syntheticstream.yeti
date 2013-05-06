@@ -54,12 +54,6 @@ precalculated rate data =
     });
 
 {
-    generated, 
-    precalculated, 
-    sinusoid, 
-    whiteNoise, 
-    silent,
-} as {
     generated is number -> (number -> number) -> stream, 
     precalculated is number -> block -> stream,
     sinusoid is number -> number -> stream, 

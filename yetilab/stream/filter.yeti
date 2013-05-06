@@ -149,11 +149,6 @@ repeated s =
     fi;
 
 {
-    withDuration, 
-    delayedBy,
-    multiplexed,
-    repeated,
-} as {
     withDuration is number -> stream -> stream,
     delayedBy is number -> stream -> stream,
     multiplexed is list<stream> -> stream,

@@ -237,21 +237,6 @@ columnSlice start count m = //!!! doc: storage order same as input
     fi;
 
 {
-    generate,
-    constMatrix, randomMatrix, zeroMatrix, identityMatrix, zeroSizeMatrix,
-    width, height,
-    equal,
-    copyOf,
-    transposed,
-    flipped, toRowMajor, toColumnMajor,
-    scaled,
-    resizedTo,
-    asRows, asColumns,
-    sum = sum', product,
-    concat,
-    rowSlice, columnSlice,
-    newMatrix, newRowVector, newColumnVector,
-} as {
     generate is (number -> number -> number) -> { .rows is number, .columns is number } -> matrix,
     constMatrix is number -> { .rows is number, .columns is number } -> matrix,
     randomMatrix is { .rows is number, .columns is number } -> matrix,
@@ -270,7 +255,7 @@ columnSlice start count m = //!!! doc: storage order same as input
     resizedTo is { .rows is number, .columns is number } -> matrix -> matrix,
     asRows is matrix -> list<block>, 
     asColumns is matrix -> list<block>,
-    sum is matrix -> matrix -> matrix,
+    sum is matrix -> matrix -> matrix = sum',
     product is matrix -> matrix -> matrix,
     concat is (Horizontal () | Vertical ()) -> list<matrix> -> matrix,
     rowSlice is number -> number -> matrix -> matrix, 
