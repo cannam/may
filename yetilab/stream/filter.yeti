@@ -36,11 +36,7 @@ withDuration nsamples s = //!!! should nsamples be a time in seconds? (no)
            (n = min count (nsamples - pos);
             pos := pos + n;
             if not s.finished? then
-                mat.concat (Horizontal ())
-                   (fromStream ::
-                    if got == n then []
-                    else [mat.zeroMatrix { columns = n - got, rows = s.channels}]
-                    fi);
+                mat.resizedTo { rows = s.channels, columns = n } (s.read n);
             else 
                 mat.zeroMatrix { columns = n, rows = s.channels }
             fi),
