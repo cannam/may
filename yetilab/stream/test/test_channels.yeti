@@ -69,7 +69,7 @@ compareBlocks b1 b2 =
         compareBlocks (ch.mixedAndInterleavedTo 2 (newMatrix [[1],[2],[3]]))
            (bl.fromList [1,1,2,2,3,3]) and
         compareBlocks (ch.mixedAndInterleavedTo 3 (newMatrix [[1],[2],[3]]))
-           (bl.fromList [1,1,0,2,2,0,3,3,0])
+           (bl.fromList [1,1,1,2,2,2,3,3,3])
 ),
 
 ] is hash<string, () -> boolean>;

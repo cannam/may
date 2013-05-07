@@ -34,7 +34,7 @@ deinterleaved channels b =
         mat.newMatrix (RowMajor ()) (map block.block vv);
     fi;
 
-mixedDown m =
+mixedDown m =  //!!! sum or average? at the moment we sum
    ({ columns, rows } = m.size;
     v = vec.zeros columns;
     for [0..rows-1] do row:
@@ -81,15 +81,14 @@ mixedFromInterleavedTo targetChannels channels b =
     fi;
 
 mixedTo targetChannels m = 
-    if targetChannels == 1 then
+    if targetChannels == m.size.rows then    // n -> n: pass unmodified
+        m
+    elif targetChannels == 1 then            // n -> 1: mix down
         deinterleaved 1 (mixedDown m)
-    else
-        mat.resizedTo { rows = targetChannels, columns = m.size.columns }
-            if m.size.rows == 1 then
-               (mat.newMatrix (RowMajor ()) [ m.getRow 0, m.getRow 0 ])
-            else
-                m
-            fi;
+    elif m.size.rows == 1 then               // 1 -> n: copy to all channels
+        mat.newMatrix (RowMajor ()) (map \(m.getRow 0) [1..targetChannels])
+    else                                     // n -> m: truncate or add zeros
+        mat.resizedTo { rows = targetChannels, columns = m.size.columns } m
     fi;
 
 mixedAndInterleavedTo targetChannels m = 
