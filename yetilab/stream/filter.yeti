@@ -27,10 +27,9 @@ minDurationOf d1 d2 =
 
 withDuration nsamples s = //!!! should nsamples be a time in seconds? (no)
    (var pos = 0;
+    s with
     {
         get position () = pos,
-        get channels () = s.channels, 
-        get sampleRate () = s.sampleRate,
         get available () = Known (nsamples - pos),
         get finished? () = not (nsamples > pos),
         read count =
@@ -41,7 +40,6 @@ withDuration nsamples s = //!!! should nsamples be a time in seconds? (no)
             else 
                 mat.zeroMatrix { columns = n, rows = s.channels }
             fi),
-        close = s.close,
     });
 
 delayedBy nsamples s = //!!! should nsamples be a time in seconds? (no)
@@ -76,7 +74,7 @@ delayedBy nsamples s = //!!! should nsamples be a time in seconds? (no)
 
 //!!! poor name, confusion with mixed, but consistent with channels.yeti
 mixedTo targetChannels s =
-    s with //!!! should use this more in this module
+    s with
     {
         get channels () = targetChannels,
         read count = ch.mixedTo targetChannels (s.read count),
@@ -176,10 +174,9 @@ repeated s =
             else
                 mat.concat (Horizontal ()) (cachedPartsFor count);
             fi);
+        s with
         {
             get position () = pos,
-            get channels () = s.channels,
-            get sampleRate () = s.sampleRate,
             get available () = Infinite (),
             get finished? () = false,
             read count =
@@ -196,7 +193,6 @@ repeated s =
                            [part, readFromCache (count - len)];
                     fi;
                 fi,
-            close = s.close
         }
     fi;
 
