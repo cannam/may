@@ -5,6 +5,8 @@ vec = load yetilab.block.fvector;
 
 load yetilab.block.blocktype;
 
+//!!! doc: block provides no api to modify contents, though it can be done through data accessor... consider formalising this somehow
+
 {
     zeros = vec.zeros,
     consts = vec.consts,

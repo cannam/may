@@ -3,15 +3,7 @@ module yetilab.matrix.matrixtype;
 
 load yetilab.block.blocktype;
 
-typedef matrix = {
-    data is RowM array<~double[]> | ColM array<~double[]>,
-    size is { rows is number, columns is number },
-    getColumn is number -> block,
-    getRow is number -> block,
-    getAt is number -> number -> number,
-    setAt is number -> number -> number -> (),
-    isRowMajor? is boolean
-};
+typedef opaque matrix = RowM array<block> | ColM array<block>;
 
 ();
 
