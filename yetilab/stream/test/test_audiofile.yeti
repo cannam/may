@@ -3,6 +3,7 @@ module yetilab.stream.test.test_audiofile;
 
 af = load yetilab.stream.audiofile;
 bl = load yetilab.block.block;
+mat = load yetilab.matrix.matrix;
 
 { compare } = load yetilab.test.test;
 
@@ -31,11 +32,11 @@ float n is number -> number =
         f = opener (testfile "20samples");
         first15 = f.read 15;
         last5 = f.read 10;
-        compare first15.size { rows = 1, columns = 15 } and
-            compare last5.size { rows = 1, columns = 5 } and
-            compare (bl.list (first15.getRow 0))
+        compare (mat.size first15) { rows = 1, columns = 15 } and
+            compare (mat.size last5) { rows = 1, columns = 5 } and
+            compare (bl.list (mat.getRow 0 first15))
                 [ float (32767/32768),0,0,0,0,0,0,0,0,0,0,0,0,0,0 ] and
-            compare (bl.list (last5.getRow 0)) [ 0,0,0,0,-1 ] and
+            compare (bl.list (mat.getRow 0 last5)) [ 0,0,0,0,-1 ] and
             ( f.close () ; true )
         done [ af.open, af.openMono ]);
 ),

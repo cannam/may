@@ -21,7 +21,7 @@ epsilon = 0.000001;
         compare str.sampleRate 2 and
         compare str.available (Infinite ()) and
         compare str.finished? false and
-        compare (bl.list ((str.read 4).getRow 0)) [ 0,1,2,3 ] and
+        compare (bl.list (mat.getRow 0 (str.read 4))) [ 0,1,2,3 ] and
         compare str.position 4
 ),
 
@@ -33,7 +33,7 @@ epsilon = 0.000001;
         compare str.sampleRate 8 and
         compare str.available (Infinite ()) and
         compare str.finished? false and
-        compareApprox epsilon (bl.list ((str.read 6).getRow 0)) [ 0, 1, 0, -1, 0, 1 ] and
+        compareApprox epsilon (bl.list (mat.getRow 0 (str.read 6))) [ 0, 1, 0, -1, 0, 1 ] and
         compare str.position 6
 ),
 
@@ -44,7 +44,7 @@ epsilon = 0.000001;
         compare str.sampleRate 8 and
         compare str.available (Infinite ()) and
         compare str.finished? false and
-        compare (bl.list ((str.read 3).getRow 0)) [ 0, 0, 0 ] and
+        compare (bl.list (mat.getRow 0 (str.read 3))) [ 0, 0, 0 ] and
         compare str.position 3
 ),
 
@@ -55,7 +55,7 @@ epsilon = 0.000001;
         compare str.sampleRate 2 and
         compare str.available (Known 0) and
         compare str.finished? true and
-        compare (bl.list ((str.read 3).getRow 0)) [] and
+        compare (bl.list (mat.getRow 0 (str.read 3))) [] and
         compare str.position 0
 ),
 
@@ -66,11 +66,11 @@ epsilon = 0.000001;
         compare str.sampleRate 2 and
         compare str.available (Known 4) and
         compare str.finished? false and
-        compare (bl.list ((str.read 3).getRow 0)) [ 1, 2, 3 ] and
+        compare (bl.list (mat.getRow 0 (str.read 3))) [ 1, 2, 3 ] and
         compare str.position 3 and
         compare str.available (Known 1) and
         compare str.finished? false and
-        compare (bl.list ((str.read 3).getRow 0)) [ 4 ] and
+        compare (bl.list (mat.getRow 0 (str.read 3))) [ 4 ] and
         compare str.position 4 and
         compare str.available (Known 0) and
         compare str.finished? true

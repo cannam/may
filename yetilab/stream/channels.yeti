@@ -6,14 +6,14 @@ block = load yetilab.block.block;
 mat = load yetilab.matrix.matrix;
         
 interleaved m = 
-   ({ columns, rows } = m.size;
+   ({ columns, rows } = (mat.size m);
     if rows == 1 then
-        m.getRow 0
+        mat.getRow 0 m
     else
         v = vec.zeros (columns * rows);
         for [0..rows-1] do row:
             for [0..columns-1] do col:
-                v[col * rows + row] := m.getAt row col;
+                v[col * rows + row] := mat.getAt row col m;
             done;
         done;
         block.block v;
@@ -35,11 +35,11 @@ deinterleaved channels b =
     fi;
 
 mixedDown m =  //!!! sum or average? at the moment we sum
-   ({ columns, rows } = m.size;
+   ({ columns, rows } = (mat.size m);
     v = vec.zeros columns;
     for [0..rows-1] do row:
         for [0..columns-1] do col:
-            v[col] := v[col] + m.getAt row col;
+            v[col] := v[col] + mat.getAt row col m;
         done;
     done;
     block.block v);
@@ -81,14 +81,14 @@ mixedFromInterleavedTo targetChannels channels b =
     fi;
 
 mixedTo targetChannels m = 
-    if targetChannels == m.size.rows then    // n -> n: pass unmodified
+    if targetChannels == mat.height m then   // n -> n: pass unmodified
         m
     elif targetChannels == 1 then            // n -> 1: mix down
         deinterleaved 1 (mixedDown m)
-    elif m.size.rows == 1 then               // 1 -> n: copy to all channels
-        mat.newMatrix (RowMajor ()) (map \(m.getRow 0) [1..targetChannels])
+    elif mat.height m == 1 then              // 1 -> n: copy to all channels
+        mat.newMatrix (RowMajor ()) (map \(mat.getRow 0 m) [1..targetChannels])
     else                                     // n -> m: truncate or add zeros
-        mat.resizedTo { rows = targetChannels, columns = m.size.columns } m
+        mat.resizedTo { rows = targetChannels, columns = mat.width m } m
     fi;
 
 mixedAndInterleavedTo targetChannels m = 

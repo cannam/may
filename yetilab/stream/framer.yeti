@@ -35,7 +35,7 @@ overlappingBlockList size hop stream valid buffer =
         do buf row:
             block.concat
                [block.rangeOf hop (size-hop) buf,
-                block.resizedTo hop (m.getRow row)];
+                block.resizedTo hop (mat.getRow row m)];
         done buffer [0..stream.channels-1];
 
     // Number of "valid" elements (not tail-end zero-padding) left in buffer
