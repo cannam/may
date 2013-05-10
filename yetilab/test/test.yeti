@@ -1,7 +1,5 @@
 module yetilab.test.test;
 
-block = load yetilab.block.block;
-
 import yeti.lang: FailureException;
 
 var goodCompares = 0;

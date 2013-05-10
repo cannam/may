@@ -1,7 +1,0 @@
-
-module yetilab.block.blocktype;
-
-typedef opaque block = ~double[];
-
-();
-
