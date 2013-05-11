@@ -10,7 +10,7 @@ vec = load yetilab.block.vector;
 newMatrix data = mat.newMatrix (ColumnMajor ()) (map vec.fromList data);
 
 compareBlocks b1 b2 =
-    compare (vec.list b1) (bl.list b2);
+    compare (vec.list b1) (vec.list b2);
 
 [
 

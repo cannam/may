@@ -233,9 +233,9 @@ loadPlugin rate key =
         Error "Failed to load Vamp plugin with key \(key)"
     yrt;
 
-//!!! bring block typedef into scope -- this shouldn't be necessary,
+//!!! bring vector typedef into scope -- this shouldn't be necessary,
 //but see comment in processed below
-load yetilab.block.blocktype;
+load yetilab.block.vectortype;
 
 processed { p, sampleRate, hop } frames count 
     // I don't know why this type declaration is necessary. Without
@@ -247,7 +247,7 @@ processed { p, sampleRate, hop } frames count
                   list<{ timestamp is Time number | Untimed (), 
                          duration  is Time number | Untimed (),
                          label is string,
-                         values is block
+                         values is vector
                        }>>> =
     case frames of
     frame::rest:

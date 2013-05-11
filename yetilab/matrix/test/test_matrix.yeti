@@ -4,6 +4,9 @@ module yetilab.matrix.test.test_matrix;
 mat = load yetilab.matrix.matrix;
 vec = load yetilab.block.vector;
 
+load yetilab.block.vectortype;
+load yetilab.matrix.matrixtype;
+
 import yeti.lang: FailureException;
 
 { compare, compareUsing } = load yetilab.test.test;
@@ -107,7 +110,7 @@ makeTests name flipper =
            (map do col: mat.getAt row col m == generator row col done [0..2])
             done [0..1])
 ),
-
+/*!!!
 "setAt-\(name)": \(
     generator row col = row * 10 + col;
     m = generate generator { rows = 2, columns = 3 };
@@ -130,7 +133,7 @@ makeTests name flipper =
     mat.setAt 0 0 6 m;
     compareMatrices m' m and not mat.equal m m'';
 ),
-
+*/
 "transposedEmpty-\(name)": \(
     compare (mat.size (mat.transposed (constMatrix 2 { rows = 0, columns = 0 }))) { columns = 0, rows = 0 } and
         compare (mat.size (mat.transposed (constMatrix 2 { rows = 0, columns = 4 }))) { columns = 0, rows = 0 } and

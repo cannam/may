@@ -2,7 +2,6 @@
 module yetilab.stream.filter;
 
 mat = load yetilab.matrix.matrix;
-vec = load yetilab.block.vector;
 ch = load yetilab.stream.channels;
 
 load yetilab.stream.streamtype;

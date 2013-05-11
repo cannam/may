@@ -2,7 +2,6 @@
 module yetilab.stream.playback;
 
 vec = load yetilab.block.vector;
-fr = load yetilab.stream.framer;
 af = load yetilab.stream.audiofile;
 ch = load yetilab.stream.channels;
 
@@ -20,8 +19,7 @@ playBlock line b is ~SourceDataLine -> 'a -> () =
     bb#order(ByteOrder#LITTLE_ENDIAN);
     sb = bb#asShortBuffer();
     for [0..len-1] do i: sb#put(i, samples[i] * 32767.0); () done;
-    actual = line#write(bytes, 0, nb); 
-    ());
+    \() line#write(bytes, 0, nb));
 
 play line blocks = for blocks (playBlock line);
     

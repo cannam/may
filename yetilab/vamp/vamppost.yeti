@@ -76,14 +76,14 @@ structureSeries features =
         {
             start = t0,
             step = t1 - t0,
-            values = map do f: (vec.data f.values)[0] done features;
+            values = map do f: vec.at 0 f.values done features;
         }
     fi;
 
 structureCurve features =
     map do f: {
         time = timeOf f,
-        value = (vec.data f.values)[0],
+        value = vec.at 0 f.values,
         label = f.label
     } done features;
 
@@ -96,7 +96,7 @@ structureInstants features =
 structureSegmentation features =
     map do f: {
         time = timeOf f,
-        type = (vec.data f.values)[0],
+        type = vec.at 0 f.values,
         label = f.label
     } done features;
 
@@ -104,7 +104,7 @@ structureNotes features =
     map do f: {
         time = timeOf f,
         duration = f.duration,
-        pitch = (vec.data f.values)[0], //!!! no, might be empty
+        pitch = vec.at 0 f.values, //!!! no, might be empty
         otherValues = array (tail (vec.list f.values)), //!!! no, might be empty
         label = f.label
     } done features;
