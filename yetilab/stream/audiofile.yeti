@@ -66,7 +66,7 @@ readInterleaved' { format is ~AudioFormat, aistream is ~AudioInputStream } nfram
         n = int(bytesRead / bytesPerSample);
         doubles = new double[n];
         decode { format } bytes doubles n;
-        vec.block doubles;
+        vec.vector doubles;
     fi;
    );
 

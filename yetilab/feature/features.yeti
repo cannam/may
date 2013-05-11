@@ -6,7 +6,7 @@ cplx = load yetilab.block.complex;
 fr = load yetilab.stream.framer;
 
 magdiff frame1 frame2 =
-    sum (map2 do a b: abs(a - b) done (vec.data frame1) (block.data frame2));
+    sum (map2 do a b: abs(a - b) done (vec.list frame1) (vec.list frame2));
 
 emptyFrameFor frames =
     vec.zeros

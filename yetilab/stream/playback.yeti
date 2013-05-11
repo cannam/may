@@ -13,7 +13,7 @@ import java.nio: ByteBuffer, ByteOrder;
 
 playBlock line b is ~SourceDataLine -> 'a -> () =
    (len = vec.length b;
-    samples = vec.data b;
+    samples = vec.primitive b;
     nb = len * 2;
     bytes = new byte[nb];
     bb = ByteBuffer#wrap(bytes, 0, nb);
