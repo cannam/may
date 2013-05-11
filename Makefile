@@ -10,7 +10,7 @@ yetilab.jar:	$(SOURCES)
 	jar cf $@ -C classes yetilab 
 
 clean:	
-	rm -rf com bin/.testrun
+	rm -rf com bin/.testrun classes
 
 distclean:	clean
 	rm -f yetilab.jar

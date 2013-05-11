@@ -1,67 +1,72 @@
 
 module yetilab.block.blockfuncs;
 
-b = load yetilab.block.block;
-vec = load yetilab.block.fvector;
+vec = load yetilab.block.vector;
 
-load yetilab.block.blocktype;
+load yetilab.block.vectortype;
 
-sum' bl =
-   (v = b.data bl;
+//!!! "internal" vector function to retrieve data for read-only
+// purposes without copying
+raw =
+   (raw' v is ~double[] -> ~double[] = v;
+    raw' as vector -> ~double[]);
+
+sum' v =
+   (dat = raw v;
     tot = new double[1];
-    for [0..length v - 1] do i:
-        tot[0] := tot[0] + v[i]
+    for [0..length dat - 1] do i:
+        tot[0] := tot[0] + dat[i]
     done;
     tot[0]);
 
-mean bl =
-    case b.length bl of
+mean v =
+    case vec.length v of
         0: 0;
-        len: sum' bl / len
+        len: sum' v / len
     esac;
 
 multiply b1 b2 =
-   (v1 = b.data b1;
-    v2 = b.data b2;
+   (v1 = raw b1;
+    v2 = raw b2;
     len = if length v1 < length v2 then length v1 else length v2 fi;
-    bb = vec.zeros len;
+    out = new double[len];
     for [0..len-1] do i:
-        bb[i] := v1[i] * v2[i]
+        out[i] := v1[i] * v2[i]
     done;
-    b.block bb);
+    vec.vector out);
 
-divideBy n bl =
-    b.fromList (map (/ n) (b.list bl));
+divideBy n v =
+    vec.fromList (map (/ n) (vec.list v));
 
-sqr bl =
-    multiply bl bl;
+sqr v =
+    multiply v v;
 
 rms =
     sqrt . mean . sqr;
 
 sqrt' =
-    b.fromList . (map sqrt) . b.list;
+    vec.fromList . (map sqrt) . vec.list;
 
-fftshift bl =
-   (len = b.length bl;
+fftshift v =
+   (len = vec.length v;
     half = int(len/2 + 0.5); // round up for odd-length sequences
-    b.concat [b.rangeOf half (len-half) bl, b.rangeOf 0 half bl]);
+    vec.concat [vec.rangeOf half (len-half) v, vec.rangeOf 0 half v]);
 
-ifftshift bl =
-   (len = b.length bl;
+ifftshift v =
+   (len = vec.length v;
     half = int(len/2); // round down for odd-length sequences
-    b.concat [b.rangeOf half (len-half) bl, b.rangeOf 0 half bl]);
+    vec.concat [vec.rangeOf half (len-half) v, vec.rangeOf 0 half v]);
 
 {
-sum is block -> number = sum',
-mean is block -> number,
-multiply is block -> block -> block, 
-divideBy is number -> block -> block, 
-sqr is block -> block,
-sqrt is block -> block = sqrt',
-rms is block -> number,
-fftshift is block -> block,
-ifftshift is block -> block,
+sum is vector -> number = sum',
+mean is vector -> number,
+multiply is vector -> vector -> vector, 
+divideBy is number -> vector -> vector, 
+sqr is vector -> vector,
+sqrt is vector -> vector = sqrt',
+rms is vector -> number,
+fftshift is vector -> vector,
+ifftshift is vector -> vector,
 }
 
 
