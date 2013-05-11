@@ -10,7 +10,7 @@ module yetilab.transform.test.test_fft;
 testFFT orig reals imags =
    (out = realForward (length orig) (fromList orig);
     back = realInverse (length orig) out;
-    compare out (array (map2 complex reals imags)) and compare orig (list back));
+    compare out (array (map2 complex reals imags)) and compare (list back) orig);
 
 [
 

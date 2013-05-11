@@ -19,14 +19,16 @@ packedToComplex len p is number -> ~double[] -> array<cplx> =
 
 complexToPacked arr =
    (n = length arr;
-    v = (map do i:
-            ix = int (i/2);
+    v = new double[n*2-2];
+    for [0..(n-1)*2-1] do i:
+        ix = int (i/2);
+        v[i] :=
             if i == ix*2 then
                 complex.real arr[ix]
             else 
                 complex.imaginary arr[ix] 
             fi;
-            done [0..(n-1)*2-1]) as ~double[];
+    done;
     v[1] := complex.real arr[n-1];
     v);
 
