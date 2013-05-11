@@ -40,6 +40,9 @@ length' =
 empty?' =
     empty? . list';
 
+at' n v is number -> ~double[] -> number =
+    v[n];
+
 floats a is ~double[] -> ~float[] =
    (len = length' a;
     f = new float[len];
@@ -92,6 +95,7 @@ concat vv is list?<~double[]> -> ~double[] =
     array = array',
     length = length',
     empty? = empty?',
+    at = at',
     equal,
     rangeOf,
     resizedTo,
@@ -109,6 +113,7 @@ concat vv is list?<~double[]> -> ~double[] =
     array is vector -> array<number>,
     length is vector -> number,
     empty? is vector -> boolean,
+    at is number -> vector -> number,
     equal is vector -> vector -> boolean,
     rangeOf is number -> number -> vector -> vector, //!!! not well-named now vector arg is at the end
     resizedTo is number -> vector -> vector,

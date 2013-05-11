@@ -1,7 +1,7 @@
 
 module yetilab.matrix.matrix;
 
-// A matrix is an array of blocks.
+// A matrix is an array of vectors.
 
 // A matrix can be stored in either column-major (the default) or
 // row-major format. Storage order is an efficiency concern only:
@@ -9,10 +9,12 @@ module yetilab.matrix.matrix;
 // result regardless of storage order.  (The transpose function just
 // switches the row/column order without moving the elements.)
 
-bl = load yetilab.block.block;
+//!!! check that we are not unnecessarily copying in the transform functions
+
+vec = load yetilab.block.vector;
 bf = load yetilab.block.blockfuncs;
 
-load yetilab.block.blocktype;
+load yetilab.block.vectortype;
 load yetilab.matrix.matrixtype;
 
 size m =
@@ -21,12 +23,12 @@ size m =
         major = length r;
         { 
             rows = major, 
-            columns = if major > 0 then bl.length r[0] else 0 fi,
+            columns = if major > 0 then vec.length r[0] else 0 fi,
         };
     ColM c:
         major = length c;
         { 
-            rows = if major > 0 then bl.length c[0] else 0 fi,
+            rows = if major > 0 then vec.length c[0] else 0 fi,
             columns = major, 
         };
     esac;
@@ -36,27 +38,29 @@ height m = (size m).rows;
 
 getAt row col m =
     case m of
-    RowM rows: r = rows[row]; (bl.data r)[col];
-    ColM cols: c = cols[col]; (bl.data c)[row];
+    RowM rows: r = rows[row]; vec.at col r;
+    ColM cols: c = cols[col]; vec.at row c;
     esac;
 
 getColumn j m =
     case m of
-    RowM rows: bl.fromList (map do i: getAt i j m done [0..length rows-1]);
+    RowM rows: vec.fromList (map do i: getAt i j m done [0..length rows-1]);
     ColM cols: cols[j];
     esac;
 
 getRow i m =
     case m of
     RowM rows: rows[i];
-    ColM cols: bl.fromList (map do j: getAt i j m done [0..length cols-1]);
+    ColM cols: vec.fromList (map do j: getAt i j m done [0..length cols-1]);
     esac;
 
+/*
 setAt row col n m = //!!! dangerous, could modify copies -- should it be allowed?
     case m of
-    RowM rows: r = rows[row]; (bl.data r)[col] := n;
-    ColM cols: c = cols[col]; (bl.data c)[row] := n;
+    RowM rows: r = rows[row]; (vec.data r)[col] := n;
+    ColM cols: c = cols[col]; (vec.data c)[row] := n;
     esac;
+*/
 
 isRowMajor? m =
     case m of
@@ -66,7 +70,7 @@ isRowMajor? m =
 
 newColMajorStorage { rows, columns } = 
     if rows < 1 then array []
-    else array (map \(bl.zeros rows) [1..columns])
+    else array (map \(vec.zeros rows) [1..columns])
     fi;
 
 zeroMatrix { rows, columns } = 
@@ -79,19 +83,23 @@ zeroMatrixWithTypeOf m { rows, columns } =
         ColM (newColMajorStorage { rows, columns });
     fi;
 
+zeroSizeMatrix () = zeroMatrix { rows = 0, columns = 0 };
+
 generate f { rows, columns } =
-   (m = newColMajorStorage { rows, columns };
-    for [0..columns-1] do col:
-        for [0..rows-1] do row:
-            (bl.data m[col])[row] := f row col;
+    if rows < 1 or columns < 1 then zeroSizeMatrix ()
+    else
+        m = array (map \(new double[rows]) [1..columns]);
+        for [0..columns-1] do col:
+            for [0..rows-1] do row:
+                m[col][row] := f row col;
+            done;
         done;
-    done;
-    ColM m);
+        ColM (array (map vec.vector m))
+    fi;
 
 constMatrix n = generate do row col: n done;
 randomMatrix = generate do row col: Math#random() done;
 identityMatrix = constMatrix 1;
-zeroSizeMatrix () = zeroMatrix { rows = 0, columns = 0 };
 
 transposed m =
     case m of
@@ -120,23 +128,25 @@ equal m1 m2 =
     if size m1 != size m2 then false
     elif isRowMajor? m1 != isRowMajor? m2 then equal (flipped m1) m2;
     else
-        compare d1 d2 = all id (map2 bl.equal d1 d2);
+        compare d1 d2 = all id (map2 vec.equal d1 d2);
         case m1 of
         RowM d1: case m2 of RowM d2: compare d1 d2; _: false; esac;
         ColM d1: case m2 of ColM d2: compare d1 d2; _: false; esac;
         esac
     fi;
 
+/*!!! not needed now it's immutable?
 copyOf m =
-   (copyOfData d = (array (map bl.copyOf d));
+   (copyOfData d = (array (map vec.copyOf d));
     case m of
     RowM d: RowM (copyOfData d);
     ColM d: ColM (copyOfData d);
     esac);
+*/
 
 newMatrix type data = //!!! NB does not copy data
    (tagger = case type of RowMajor (): RowM; ColumnMajor (): ColM esac;
-    if empty? data or bl.empty? (head data)
+    if empty? data or vec.empty? (head data)
     then zeroSizeMatrix ()
     else tagger (array data)
     fi);
@@ -176,7 +186,7 @@ concatAgainstGrain tagger getter counter mm =
    (n = counter (size (head mm));
     tagger (array
        (map do i:
-           bl.concat (map (getter i) mm)
+           vec.concat (map (getter i) mm)
            done [0..n-1])));
 
 concatWithGrain tagger getter counter mm =
@@ -222,14 +232,14 @@ rowSlice start count m = //!!! doc: storage order same as input
     if isRowMajor? m then
         RowM (array (map ((flip getRow) m) [start .. start + count - 1]))
     else 
-        ColM (array (map (bl.rangeOf start count) (asColumns m)))
+        ColM (array (map (vec.rangeOf start count) (asColumns m)))
     fi;
 
 columnSlice start count m = //!!! doc: storage order same as input
     if not isRowMajor? m then
         ColM (array (map ((flip getColumn) m) [start .. start + count - 1]))
     else 
-        RowM (array (map (bl.rangeOf start count) (asRows m)))
+        RowM (array (map (vec.rangeOf start count) (asRows m)))
     fi;
 
 resizedTo newsize m =
@@ -268,7 +278,7 @@ resizedTo newsize m =
     getAt,
     getColumn,
     getRow,
-    setAt,
+//    setAt,
     isRowMajor?,
     generate,
     constMatrix,
@@ -277,7 +287,7 @@ resizedTo newsize m =
     identityMatrix,
     zeroSizeMatrix,
     equal,
-    copyOf,
+//    copyOf,
     transposed,
     flipped,
     toRowMajor,
@@ -303,9 +313,9 @@ as
     width is matrix -> number,
     height is matrix -> number,
     getAt is number -> number -> matrix -> number,
-    getColumn is number -> matrix -> block,
-    getRow is number -> matrix -> block,
-    setAt is number -> number -> number -> matrix -> (), //!!! lose?
+    getColumn is number -> matrix -> vector,
+    getRow is number -> matrix -> vector,
+//    setAt is number -> number -> number -> matrix -> (), //!!! lose?
     isRowMajor? is matrix -> boolean,
     generate is (number -> number -> number) -> { .rows is number, .columns is number } -> matrix,
     constMatrix is number -> { .rows is number, .columns is number } -> matrix,
@@ -314,22 +324,22 @@ as
     identityMatrix is { .rows is number, .columns is number } -> matrix, 
     zeroSizeMatrix is () -> matrix,
     equal is matrix -> matrix -> boolean,
-    copyOf is matrix -> matrix,
+//    copyOf is matrix -> matrix,
     transposed is matrix -> matrix,
     flipped is matrix -> matrix, 
     toRowMajor is matrix -> matrix, 
     toColumnMajor is matrix -> matrix,
     scaled is number -> matrix -> matrix,
     resizedTo is { .rows is number, .columns is number } -> matrix -> matrix,
-    asRows is matrix -> list<block>, 
-    asColumns is matrix -> list<block>,
+    asRows is matrix -> list<vector>, 
+    asColumns is matrix -> list<vector>,
     sum is matrix -> matrix -> matrix,
     product is matrix -> matrix -> matrix,
     concat is (Horizontal () | Vertical ()) -> list<matrix> -> matrix,
     rowSlice is number -> number -> matrix -> matrix, 
     columnSlice is number -> number -> matrix -> matrix,
-    newMatrix is (ColumnMajor () | RowMajor ()) -> list<block> -> matrix, 
-    newRowVector is block -> matrix, 
-    newColumnVector is block -> matrix,
+    newMatrix is (ColumnMajor () | RowMajor ()) -> list<vector> -> matrix, 
+    newRowVector is vector -> matrix, 
+    newColumnVector is vector -> matrix,
 }
 
