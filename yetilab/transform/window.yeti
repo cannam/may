@@ -1,7 +1,7 @@
 
 module yetilab.transform.window;
 
-b = load yetilab.block.block;
+vec = load yetilab.block.vector;
 bf = load yetilab.block.blockfuncs;
 
 cosinewin a0 a1 a2 a3 n =

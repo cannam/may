@@ -1,7 +1,7 @@
 
 module yetilab.feature.features;
 
-block = load yetilab.block.block;
+vec = load yetilab.block.vector;
 cplx = load yetilab.block.complex;
 fr = load yetilab.stream.framer;
 

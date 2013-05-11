@@ -5,7 +5,7 @@ module yetilab.block.test.test_complex;
 
 { compare } = load yetilab.test.test;
 
-block = load yetilab.block.block;
+vec = load yetilab.block.vector;
 
 [
 

@@ -2,7 +2,7 @@
 module yetilab.stream.test.test_framer;
 
 fr = load yetilab.stream.framer;
-block = load yetilab.block.block;
+vec = load yetilab.block.vector;
 mat = load yetilab.matrix.matrix;
 syn = load yetilab.stream.syntheticstream;
 

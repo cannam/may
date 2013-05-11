@@ -3,7 +3,7 @@ module yetilab.stream.test.audiofile_reference;
 
 syn = load yetilab.stream.syntheticstream;
 filt = load yetilab.stream.filter;
-block = load yetilab.block.block;
+vec = load yetilab.block.vector;
 
 pulseChannel rate =
    (pulseFreq = 2;

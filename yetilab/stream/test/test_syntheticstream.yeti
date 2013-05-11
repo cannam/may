@@ -1,7 +1,7 @@
 
 module yetilab.stream.test.test_syntheticstream;
 
-bl = load yetilab.block.block;
+vec = load yetilab.block.vector;
 mat = load yetilab.matrix.matrix;
 syn = load yetilab.stream.syntheticstream;
 

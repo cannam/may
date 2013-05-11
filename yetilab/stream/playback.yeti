@@ -1,7 +1,7 @@
 
 module yetilab.stream.playback;
 
-block = load yetilab.block.block;
+vec = load yetilab.block.vector;
 fr = load yetilab.stream.framer;
 af = load yetilab.stream.audiofile;
 ch = load yetilab.stream.channels;

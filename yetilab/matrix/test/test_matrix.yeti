@@ -2,7 +2,7 @@
 module yetilab.matrix.test.test_matrix;
 
 mat = load yetilab.matrix.matrix;
-block = load yetilab.block.block;
+vec = load yetilab.block.vector;
 
 import yeti.lang: FailureException;
 

@@ -2,7 +2,7 @@
 module yetilab.stream.test.test_audiofile;
 
 af = load yetilab.stream.audiofile;
-bl = load yetilab.block.block;
+vec = load yetilab.block.vector;
 mat = load yetilab.matrix.matrix;
 
 { compare } = load yetilab.test.test;

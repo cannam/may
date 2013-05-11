@@ -10,7 +10,7 @@ import java.lang: UnsatisfiedLinkError;
 
 import java.util: Map, List;
 
-bl = load yetilab.block.block;
+vec = load yetilab.block.vector;
 fr = load yetilab.stream.framer;
 af = load yetilab.stream.audiofile;
 mat = load yetilab.matrix.matrix;

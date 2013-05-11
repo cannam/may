@@ -2,7 +2,7 @@
 module yetilab.transform.test.test_fft;
 
 { realForward, realInverse } = load yetilab.transform.fft;
-{ list, fromList } = load yetilab.block.block;
+{ list, fromList } = load yetilab.block.vector;
 { complex } = load yetilab.block.complex;
 
 { compare } = load yetilab.test.test;
