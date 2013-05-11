@@ -1,7 +1,7 @@
 
-module yetilab.block.test.test_vector;
+module yetilab.vector.test.test_vector;
 
-vec = load yetilab.block.vector;
+vec = load yetilab.vector.vector;
 
 { compare } = load yetilab.test.test;
 

@@ -1,7 +1,7 @@
 module yetilab.vamp.vamppost;
 
 mat = load yetilab.matrix.matrix;
-vec = load yetilab.block.vector;
+vec = load yetilab.vector.vector;
 
 fillOneSamplePerStep config features =
    (fill' n pending features =

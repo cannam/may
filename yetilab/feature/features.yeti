@@ -1,8 +1,8 @@
 
 module yetilab.feature.features;
 
-vec = load yetilab.block.vector;
-cplx = load yetilab.block.complex;
+vec = load yetilab.vector.vector;
+cplx = load yetilab.vector.complex;
 fr = load yetilab.stream.framer;
 
 magdiff frame1 frame2 =

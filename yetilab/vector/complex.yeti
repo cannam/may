@@ -1,10 +1,10 @@
 
-module yetilab.block.complex;
+module yetilab.vector.complex;
 
-load yetilab.block.vectortype;
-load yetilab.block.complextype;
+load yetilab.vector.vectortype;
+load yetilab.vector.complextype;
 
-vec = load yetilab.block.vector;
+vec = load yetilab.vector.vector;
 
 import java.lang: ClassCastException;
 

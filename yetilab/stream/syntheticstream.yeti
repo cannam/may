@@ -2,9 +2,9 @@
 module yetilab.stream.syntheticstream;
 
 ch = load yetilab.stream.channels;
-vec = load yetilab.block.vector;
+vec = load yetilab.vector.vector;
 
-load yetilab.block.vectortype;
+load yetilab.vector.vectortype;
 load yetilab.stream.streamtype;
 
 generated sampleRate generator =

@@ -4,7 +4,7 @@ v = load yetilab.vamp.vamp;
 synthetic = load yetilab.stream.syntheticstream;
 filter = load yetilab.stream.filter;
 mat = load yetilab.matrix.matrix;
-vec = load yetilab.block.vector;
+vec = load yetilab.vector.vector;
 
 { compare, compareUsing } = load yetilab.test.test;
 

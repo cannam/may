@@ -1,5 +1,5 @@
 
-module yetilab.block.complextype;
+module yetilab.vector.complextype;
 
 typedef opaque cplx = ~Cplx;
 

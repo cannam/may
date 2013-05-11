@@ -1,8 +1,8 @@
 
 module yetilab.transform.window;
 
-vec = load yetilab.block.vector;
-bf = load yetilab.block.blockfuncs;
+vec = load yetilab.vector.vector;
+bf = load yetilab.vector.blockfuncs;
 
 cosinewin a0 a1 a2 a3 n =
     vec.fromList

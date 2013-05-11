@@ -4,9 +4,9 @@ program yetilab.test.all;
 { runTests } = load yetilab.test.test;
 
 tests = [
-"vector"     : load yetilab.block.test.test_vector,
-"blockfuncs" : load yetilab.block.test.test_blockfuncs,
-"complex"    : load yetilab.block.test.test_complex,
+"vector"     : load yetilab.vector.test.test_vector,
+"blockfuncs" : load yetilab.vector.test.test_blockfuncs,
+"complex"    : load yetilab.vector.test.test_complex,
 "framer"     : load yetilab.stream.test.test_framer,
 "channels"   : load yetilab.stream.test.test_channels,
 "audiofile"  : load yetilab.stream.test.test_audiofile,

@@ -1,7 +1,7 @@
 
 module yetilab.matrix.matrixtype;
 
-load yetilab.block.vectortype;
+load yetilab.vector.vectortype;
 
 typedef opaque matrix = RowM. array<vector> | ColM. array<vector>;
 

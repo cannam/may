@@ -1,5 +1,5 @@
 
-module yetilab.block.vectortype;
+module yetilab.vector.vectortype;
 
 typedef opaque vector = ~double[];
 

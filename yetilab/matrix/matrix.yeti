@@ -11,10 +11,10 @@ module yetilab.matrix.matrix;
 
 //!!! check that we are not unnecessarily copying in the transform functions
 
-vec = load yetilab.block.vector;
-bf = load yetilab.block.blockfuncs;
+vec = load yetilab.vector.vector;
+bf = load yetilab.vector.blockfuncs;
 
-load yetilab.block.vectortype;
+load yetilab.vector.vectortype;
 load yetilab.matrix.matrixtype;
 
 size m =

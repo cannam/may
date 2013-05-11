@@ -2,9 +2,9 @@
 module yetilab.matrix.test.test_matrix;
 
 mat = load yetilab.matrix.matrix;
-vec = load yetilab.block.vector;
+vec = load yetilab.vector.vector;
 
-load yetilab.block.vectortype;
+load yetilab.vector.vectortype;
 load yetilab.matrix.matrixtype;
 
 import yeti.lang: FailureException;

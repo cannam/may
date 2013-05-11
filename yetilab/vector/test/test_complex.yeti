@@ -1,11 +1,11 @@
-module yetilab.block.test.test_complex;
+module yetilab.vector.test.test_complex;
 
 { real, imaginary, complex, magnitude, angle, add, scale, zeros, magnitudes, angles }
-   = load yetilab.block.complex;
+   = load yetilab.vector.complex;
 
 { compare } = load yetilab.test.test;
 
-vec = load yetilab.block.vector;
+vec = load yetilab.vector.vector;
 
 [
 

@@ -10,7 +10,7 @@ import java.lang: UnsatisfiedLinkError;
 
 import java.util: Map, List;
 
-vec = load yetilab.block.vector;
+vec = load yetilab.vector.vector;
 fr = load yetilab.stream.framer;
 af = load yetilab.stream.audiofile;
 mat = load yetilab.matrix.matrix;
@@ -235,7 +235,7 @@ loadPlugin rate key =
 
 //!!! bring vector typedef into scope -- this shouldn't be necessary,
 //but see comment in processed below
-load yetilab.block.vectortype;
+load yetilab.vector.vectortype;
 
 processed { p, sampleRate, hop } frames count 
     // I don't know why this type declaration is necessary. Without
