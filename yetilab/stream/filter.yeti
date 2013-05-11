@@ -41,16 +41,23 @@ withDuration nsamples s = //!!! should nsamples be a time in seconds? (no)
             fi),
     });
 
-delayedBy nsamples s = //!!! should nsamples be a time in seconds? (no)
-//!!! should allow nsamples < 0!
+delayedBy nsamples s = //!!! doc: nsamples may be -ve
    (var prepos = 0;
-    delay = nsamples;
     zeros n = mat.toRowMajor
        (prepos := prepos + n;
         mat.zeroMatrix { rows = s.channels, columns = n });
+    delay = 
+        if nsamples < 0 then
+            \0 (s.read (-nsamples));
+        else
+            nsamples
+        fi;
     {
         get position () = 
-            if prepos < delay then prepos else s.position + delay fi,
+            if prepos < delay then prepos
+            elif s.position + nsamples < 0 then 0
+            else s.position + nsamples
+            fi,
         get channels () = s.channels,
         get sampleRate () = s.sampleRate,
         get available () = 

@@ -131,6 +131,31 @@ makeTests name withUnknown =
         ( str.close (); true )
 ),
 
+"delayedBy-m2-3-\(name)": \(
+    str = filt.delayedBy (-2) (withDuration 3 (syn.generated 2 id));
+    compare str.position 0 and
+        compare str.channels 1 and
+        compare str.sampleRate 2 and
+        compare str.available (maybeKnown 1) and
+        compare str.finished? false and
+        compare (vec.list (mat.getRow 0 (str.read 4))) [ 2 ] and
+        compare str.position 1 and
+        compare str.available (Known 0) and
+        compare str.finished? true and
+        ( str.close (); true )
+),
+
+"delayedBy-m4-3-\(name)": \(
+    str = filt.delayedBy (-4) (withDuration 3 (syn.generated 2 id));
+    compare str.position 0 and
+        compare str.channels 1 and
+        compare str.sampleRate 2 and
+        compare str.available (Known 0) and
+        compare str.finished? true and 
+        //!!! with this and others, need to check that we read an empty matrix after finished (perhaps have a helper function that checks finished properties such as available count as well)
+        ( str.close (); true )
+),
+
 "delayedBy-2-3b-\(name)": \(
     str = filt.delayedBy 2 (withDuration 3 (syn.generated 2 id));
     compare str.position 0 and
@@ -178,6 +203,19 @@ makeTests name withUnknown =
         compare str.finished? false and
         compare (vec.list (mat.getRow 0 (str.read 2))) [ 2,3 ] and
         compare str.position 6 and
+        compare str.finished? false and
+        ( str.close (); true )
+),
+
+"delayedBy-m2-inf-\(name)": \(
+    str = filt.delayedBy (-2) (syn.generated 2 id);
+    compare str.position 0 and
+        compare str.channels 1 and
+        compare str.sampleRate 2 and
+        compare str.available (Infinite ()) and
+        compare str.finished? false and
+        compare (vec.list (mat.getRow 0 (str.read 2))) [ 2,3 ] and
+        compare str.position 2 and
         compare str.finished? false and
         ( str.close (); true )
 ),
