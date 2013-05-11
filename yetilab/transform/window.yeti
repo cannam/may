@@ -5,7 +5,7 @@ vec = load yetilab.block.vector;
 bf = load yetilab.block.blockfuncs;
 
 cosinewin a0 a1 a2 a3 n =
-    b.fromList
+    vec.fromList
        (map do i:
             a0
             - a1 * cos(2 * pi * i / n)
@@ -18,10 +18,10 @@ hamming = cosinewin 0.54 0.46 0.0 0.0;
 blackman = cosinewin 0.42 0.50 0.08 0.0;
 nuttall = cosinewin 0.3635819 0.4891775 0.1365995 0.0106411;
 blackmanHarris = cosinewin 0.35875 0.48829 0.14128 0.01168;
-boxcar = b.consts 0.5;
+boxcar = vec.consts 0.5;
 
 bartlett n =
-    b.fromList
+    vec.fromList
        (m = n/2;
         concat [
             map do i:
@@ -36,7 +36,7 @@ windowed windowFunc frames =
     case frames of
         []: frames;
          _: (first = head frames;
-             window = windowFunc (b.length first);
+             window = windowFunc (vec.length first);
              map (bf.multiply window) frames);
     esac;
 

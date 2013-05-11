@@ -16,7 +16,7 @@ makeTests name flipper =
     randomMatrix s = flipper (mat.randomMatrix s);
     identityMatrix s = flipper (mat.identityMatrix s);
     generate f s = flipper (mat.generate f s);
-    newMatrix t d = flipper (mat.newMatrix t (map block.fromList d));
+    newMatrix t d = flipper (mat.newMatrix t (map vec.fromList d));
 [
 
 "constMatrixEmpty-\(name)": \(
@@ -32,8 +32,8 @@ makeTests name flipper =
 "constMatrix-\(name)": \(
     m = constMatrix 2 { rows = 3, columns = 4 };
     compare (mat.size m) { columns = 4, rows = 3 } and
-        all id (map do row: compare (block.list (mat.getRow row m)) [2,2,2,2] done [0..2]) and
-        all id (map do col: compare (block.list (mat.getColumn col m)) [2,2,2] done [0..3])
+        all id (map do row: compare (vec.list (mat.getRow row m)) [2,2,2,2] done [0..2]) and
+        all id (map do col: compare (vec.list (mat.getColumn col m)) [2,2,2] done [0..3])
 ),
 
 "randomMatrixEmpty-\(name)": \(
@@ -54,8 +54,8 @@ makeTests name flipper =
 "zeroMatrix-\(name)": \(
     m = zeroMatrix { rows = 3, columns = 4 };
     compare (mat.size m) { columns = 4, rows = 3 } and
-        all id (map do row: compare (block.list (mat.getRow row m)) [0,0,0,0] done [0..2]) and
-        all id (map do col: compare (block.list (mat.getColumn col m)) [0,0,0] done [0..3])
+        all id (map do row: compare (vec.list (mat.getRow row m)) [0,0,0,0] done [0..2]) and
+        all id (map do col: compare (vec.list (mat.getColumn col m)) [0,0,0] done [0..3])
 ),
 
 "identityMatrixEmpty-\(name)": \(
@@ -66,8 +66,8 @@ makeTests name flipper =
 "identityMatrix-\(name)": \(
     m = identityMatrix { rows = 3, columns = 4 };
     compare (mat.size m) { columns = 4, rows = 3 } and
-        all id (map do row: compare (block.list (mat.getRow row m)) [1,1,1,1] done [0..2]) and
-        all id (map do col: compare (block.list (mat.getColumn col m)) [1,1,1] done [0..3])
+        all id (map do row: compare (vec.list (mat.getRow row m)) [1,1,1,1] done [0..2]) and
+        all id (map do col: compare (vec.list (mat.getColumn col m)) [1,1,1] done [0..3])
 ),
 
 "generateEmpty-\(name)": \(
@@ -77,8 +77,8 @@ makeTests name flipper =
 
 "generate-\(name)": \(
     m = generate do row col: row * 10 + col done { rows = 2, columns = 3 };
-    compare (block.list (mat.getRow 0 m)) [0,1,2] and
-        compare (block.list (mat.getRow 1 m)) [10,11,12]
+    compare (vec.list (mat.getRow 0 m)) [0,1,2] and
+        compare (vec.list (mat.getRow 1 m)) [10,11,12]
 ),
 
 "widthAndHeight-\(name)": \(
@@ -270,14 +270,14 @@ makeTests name flipper =
 
 "asRows-\(name)": \(
     compare
-       (map block.list
+       (map vec.list
            (mat.asRows (newMatrix (ColumnMajor ()) [[1,4],[2,5],[3,6]])))
         [[1,2,3],[4,5,6]];
 ),
 
 "asColumns-\(name)": \(
     compare
-       (map block.list
+       (map vec.list
            (mat.asColumns (newMatrix (ColumnMajor ()) [[1,4],[2,5],[3,6]])))
         [[1,4],[2,5],[3,6]];
 ),

@@ -24,7 +24,7 @@ realTime r is ~RealTime -> number = r#sec() + (r#nsec() / 1000000000);
 feature f is ~Feature -> 'a = {
     timestamp = if f#hasTimestamp then Time (realTime f#timestamp) else Untimed () fi,
     duration = if f#hasDuration then Time (realTime f#duration) else Untimed () fi,
-    values = bl.fromFloats f#values,
+    values = vec.fromFloats f#values,
     label = f#label,
     };
 
@@ -209,7 +209,7 @@ plugin key p is string -> ~Plugin -> 'a =
         None (): map (outputDescriptor (None ())) p#getOutputDescriptors();
         esac,
     process frame time is 'a -> ~RealTime -> 'b = 
-        featureSet p#process((map bl.floats (mat.asRows frame)) as ~float[][], 0, time),
+        featureSet p#process((map vec.floats (mat.asRows frame)) as ~float[][], 0, time),
     getRemainingFeatures () = featureSet p#getRemainingFeatures(),
     dispose () = p#dispose(),
     });

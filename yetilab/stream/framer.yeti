@@ -33,9 +33,9 @@ overlappingBlockList size hop stream valid buffer =
     // (zero-padded if necessary) just read
     buffer = map2
         do buf row:
-            block.concat
-               [block.rangeOf hop (size-hop) buf,
-                block.resizedTo hop (mat.getRow row m)];
+            vec.concat
+               [vec.rangeOf hop (size-hop) buf,
+                vec.resizedTo hop (mat.getRow row m)];
         done buffer [0..stream.channels-1];
 
     // Number of "valid" elements (not tail-end zero-padding) left in buffer
@@ -54,7 +54,7 @@ frames { framesize, hop } stream =
         blockList framesize stream
     else
         overlappingBlockList framesize hop stream 
-            framesize (map \(block.zeros framesize) [0..stream.channels-1]);
+            framesize (map \(vec.zeros framesize) [0..stream.channels-1]);
     fi;
 
 monoFrames params stream =

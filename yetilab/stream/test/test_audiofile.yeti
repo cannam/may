@@ -34,9 +34,9 @@ float n is number -> number =
         last5 = f.read 10;
         compare (mat.size first15) { rows = 1, columns = 15 } and
             compare (mat.size last5) { rows = 1, columns = 5 } and
-            compare (bl.list (mat.getRow 0 first15))
+            compare (vec.list (mat.getRow 0 first15))
                 [ float (32767/32768),0,0,0,0,0,0,0,0,0,0,0,0,0,0 ] and
-            compare (bl.list (mat.getRow 0 last5)) [ 0,0,0,0,-1 ] and
+            compare (vec.list (mat.getRow 0 last5)) [ 0,0,0,0,-1 ] and
             ( f.close () ; true )
         done [ af.open, af.openMono ]);
 ),

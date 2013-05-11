@@ -41,7 +41,7 @@ makeTests name withUnknown =
         compare str.sampleRate 2 and
         compare str.available (Known 3) and
         compare str.finished? false and
-        compare (bl.list (mat.getRow 0 (str.read 4))) [ 0,1,2 ] and
+        compare (vec.list (mat.getRow 0 (str.read 4))) [ 0,1,2 ] and
         compare str.position 3 and
         compare str.available (Known 0) and
         compare str.finished? true and
@@ -52,11 +52,11 @@ makeTests name withUnknown =
     // as above
     str = filt.withDuration 3 (syn.generated 2 id);
     compare str.position 0 and
-        compare (bl.list (mat.getRow 0 (str.read 2))) [ 0,1 ] and
+        compare (vec.list (mat.getRow 0 (str.read 2))) [ 0,1 ] and
         compare str.position 2 and
         compare str.available (Known 1) and
         compare str.finished? false and
-        compare (bl.list (mat.getRow 0 (str.read 2))) [ 2 ] and
+        compare (vec.list (mat.getRow 0 (str.read 2))) [ 2 ] and
         compare str.position 3 and
         compare str.available (Known 0) and
         compare str.finished? true and
@@ -74,11 +74,11 @@ makeTests name withUnknown =
         compare str.sampleRate 2 and
         compare str.available (Known 5) and
         compare str.finished? false and
-        compare (bl.list (mat.getRow 0 (str.read 4))) [ 0,1,2,0 ] and
+        compare (vec.list (mat.getRow 0 (str.read 4))) [ 0,1,2,0 ] and
         compare str.position 4 and
         compare str.available (Known 1) and
         compare str.finished? false and
-        compare (bl.list (mat.getRow 0 (str.read 2))) [ 0 ] and
+        compare (vec.list (mat.getRow 0 (str.read 2))) [ 0 ] and
         compare str.position 5 and
         compare str.available (Known 0) and
         compare str.finished? true and
@@ -92,7 +92,7 @@ makeTests name withUnknown =
         compare str.sampleRate 2 and
         compare str.available (maybeKnown 3) and
         compare str.finished? false and
-        compare (bl.list (mat.getRow 0 (str.read 4))) [ 0,1,2 ] and
+        compare (vec.list (mat.getRow 0 (str.read 4))) [ 0,1,2 ] and
         compare str.position 3 and
         compare str.available (Known 0) and
         compare str.finished? true and
@@ -106,7 +106,7 @@ makeTests name withUnknown =
         compare str.sampleRate 2 and
         compare str.available (Infinite ()) and
         compare str.finished? false and
-        compare (bl.list (mat.getRow 0 (str.read 4))) [ 0,1,2,3 ] and
+        compare (vec.list (mat.getRow 0 (str.read 4))) [ 0,1,2,3 ] and
         compare str.position 4 and
         compare str.available (Infinite ()) and
         compare str.finished? false and
@@ -120,11 +120,11 @@ makeTests name withUnknown =
         compare str.sampleRate 2 and
         compare str.available (maybeKnown 5) and
         compare str.finished? false and
-        compare (bl.list (mat.getRow 0 (str.read 4))) [ 0,0,0,1 ] and
+        compare (vec.list (mat.getRow 0 (str.read 4))) [ 0,0,0,1 ] and
         compare str.position 4 and
         compare str.available (maybeKnown 1) and
         compare str.finished? false and
-        compare (bl.list (mat.getRow 0 (str.read 4))) [ 2 ] and
+        compare (vec.list (mat.getRow 0 (str.read 4))) [ 2 ] and
         compare str.position 5 and
         compare str.available (Known 0) and
         compare str.finished? true and
@@ -138,11 +138,11 @@ makeTests name withUnknown =
         compare str.sampleRate 2 and
         compare str.available (maybeKnown 5) and
         compare str.finished? false and
-        compare (bl.list (mat.getRow 0 (str.read 1))) [ 0 ] and
+        compare (vec.list (mat.getRow 0 (str.read 1))) [ 0 ] and
         compare str.position 1 and
         compare str.available (maybeKnown 4) and
         compare str.finished? false and
-        compare (bl.list (mat.getRow 0 (str.read 4))) [ 0,0,1,2 ] and
+        compare (vec.list (mat.getRow 0 (str.read 4))) [ 0,0,1,2 ] and
         compare str.position 5 and
         compare str.available (Known 0) and
         compare str.finished? true and
@@ -156,7 +156,7 @@ makeTests name withUnknown =
         compare str.sampleRate 2 and
         compare str.available (maybeKnown 5) and
         compare str.finished? false and
-        compare (bl.list (mat.getRow 0 (str.read 7))) [ 0,0,0,1,2 ] and
+        compare (vec.list (mat.getRow 0 (str.read 7))) [ 0,0,0,1,2 ] and
         compare str.position 5 and
         compare str.available (Known 0) and
         compare str.finished? true and
@@ -170,13 +170,13 @@ makeTests name withUnknown =
         compare str.sampleRate 2 and
         compare str.available (Infinite ()) and
         compare str.finished? false and
-        compare (bl.list (mat.getRow 0 (str.read 2))) [ 0,0 ] and
+        compare (vec.list (mat.getRow 0 (str.read 2))) [ 0,0 ] and
         compare str.position 2 and
         compare str.finished? false and
-        compare (bl.list (mat.getRow 0 (str.read 2))) [ 0,1 ] and
+        compare (vec.list (mat.getRow 0 (str.read 2))) [ 0,1 ] and
         compare str.position 4 and
         compare str.finished? false and
-        compare (bl.list (mat.getRow 0 (str.read 2))) [ 2,3 ] and
+        compare (vec.list (mat.getRow 0 (str.read 2))) [ 2,3 ] and
         compare str.position 6 and
         compare str.finished? false and
         ( str.close (); true )
@@ -189,7 +189,7 @@ makeTests name withUnknown =
         compare str.sampleRate 2 and
         compare str.available (maybeKnown 3) and
         compare str.finished? false and
-        compare (map bl.list (mat.asRows (str.read 4))) [[0,1,2],[0,1,2]] and
+        compare (map vec.list (mat.asRows (str.read 4))) [[0,1,2],[0,1,2]] and
         compare str.position 3 and
         compare str.available (Known 0) and
         compare str.finished? true and
@@ -206,7 +206,7 @@ makeTests name withUnknown =
         compare str.sampleRate 2 and
         compare str.available (maybeKnown 3) and
         compare str.finished? false and
-        compare (map bl.list (mat.asRows (str.read 4))) [[0,2,4]] and
+        compare (map vec.list (mat.asRows (str.read 4))) [[0,2,4]] and
         compare str.position 3 and
         compare str.available (Known 0) and
         compare str.finished? true and
@@ -223,7 +223,7 @@ makeTests name withUnknown =
         compare str.sampleRate 2 and
         compare str.available (maybeKnown 3) and
         compare str.finished? false and
-        compare (map bl.list (mat.asRows (str.read 4))) [[0,1,2],[1,2,3],[0,0,0]] and
+        compare (map vec.list (mat.asRows (str.read 4))) [[0,1,2],[1,2,3],[0,0,0]] and
         compare str.position 3 and
         compare str.available (Known 0) and
         compare str.finished? true and
@@ -237,7 +237,7 @@ makeTests name withUnknown =
         compare str.sampleRate 2 and
         compare str.available (maybeKnown 3) and
         compare str.finished? false and
-        compare (map bl.list (mat.asRows (str.read 4))) [[0,1,2],[0,1,2],[0,1,2]] and
+        compare (map vec.list (mat.asRows (str.read 4))) [[0,1,2],[0,1,2],[0,1,2]] and
         compare str.position 3 and
         compare str.available (Known 0) and
         compare str.finished? true and
@@ -251,7 +251,7 @@ makeTests name withUnknown =
         compare str.sampleRate 2 and
         compare str.available (Infinite ()) and
         compare str.finished? false and
-        compare (map bl.list (mat.asRows (str.read 4))) [[0,1,2,3]] and
+        compare (map vec.list (mat.asRows (str.read 4))) [[0,1,2,3]] and
         compare str.available (Infinite ()) and
         compare str.position 4 and
         ( str.close (); true )
@@ -264,7 +264,7 @@ makeTests name withUnknown =
         compare str.sampleRate 2 and
         compare str.available (maybeKnown 3) and
         compare str.finished? false and
-        compare (map bl.list (mat.asRows (str.read 4))) [[0,1,2]] and
+        compare (map vec.list (mat.asRows (str.read 4))) [[0,1,2]] and
         compare str.available (Known 0) and
         compare str.finished? true and
         compare str.position 3 and
@@ -273,14 +273,14 @@ makeTests name withUnknown =
 
 "mixed-precalc-trunc-\(name)": \(
     str = filt.mixed
-       [syn.precalculated 2 (bl.fromList [1,2]),
+       [syn.precalculated 2 (vec.fromList [1,2]),
         withDuration 3 (syn.generated 2 (0-))];
     compare str.position 0 and
         compare str.channels 1 and
         compare str.sampleRate 2 and
         compare str.available (maybeKnown 2) and
         compare str.finished? false and
-        compare (map bl.list (mat.asRows (str.read 4))) [[1,1]] and
+        compare (map vec.list (mat.asRows (str.read 4))) [[1,1]] and
         compare str.available (Known 0) and
         compare str.finished? true and
         compare str.position 2 and
@@ -289,15 +289,15 @@ makeTests name withUnknown =
 
 "mixed-2-1-\(name)": \(
     str = filt.mixed
-       [syn.precalculated 2 (bl.fromList [1,2]),
-        filt.multiplexed [syn.precalculated 2 (bl.fromList [3,4]),
+       [syn.precalculated 2 (vec.fromList [1,2]),
+        filt.multiplexed [syn.precalculated 2 (vec.fromList [3,4]),
                           withDuration 3 (syn.generated 2 (0-))]];
     compare str.position 0 and
         compare str.channels 2 and
         compare str.sampleRate 2 and
         compare str.available (maybeKnown 2) and
         compare str.finished? false and
-        compare (map bl.list (mat.asRows (str.read 4))) [[4,6], [0,-1]] and
+        compare (map vec.list (mat.asRows (str.read 4))) [[4,6], [0,-1]] and
         compare str.available (Known 0) and
         compare str.finished? true and
         compare str.position 2 and
@@ -306,15 +306,15 @@ makeTests name withUnknown =
 
 "mixed-3-\(name)": \(
     str = filt.mixed
-       [syn.precalculated 2 (bl.fromList [1,2]),
-        syn.precalculated 2 (bl.fromList [3,4]),
+       [syn.precalculated 2 (vec.fromList [1,2]),
+        syn.precalculated 2 (vec.fromList [3,4]),
         withDuration 3 (syn.generated 2 (0-))];
     compare str.position 0 and
         compare str.channels 1 and
         compare str.sampleRate 2 and
         compare str.available (maybeKnown 2) and
         compare str.finished? false and
-        compare (map bl.list (mat.asRows (str.read 4))) [[4,5]] and
+        compare (map vec.list (mat.asRows (str.read 4))) [[4,5]] and
         compare str.available (Known 0) and
         compare str.finished? true and
         compare str.position 2 and
@@ -328,7 +328,7 @@ makeTests name withUnknown =
         compare str.sampleRate 2 and
         compare str.available (Infinite ()) and
         compare str.finished? false and
-        compare (map bl.list (mat.asRows (str.read 4)))
+        compare (map vec.list (mat.asRows (str.read 4)))
             [[0,1,2,3], [0,-1,-2,-3]] and
         compare str.available (Infinite ()) and
         compare str.position 4 and
@@ -342,7 +342,7 @@ makeTests name withUnknown =
         compare str.sampleRate 2 and
         compare str.available (maybeKnown 3) and
         compare str.finished? false and
-        compare (map bl.list (mat.asRows (str.read 4))) [[0,1,2], [0,-1,-2]] and
+        compare (map vec.list (mat.asRows (str.read 4))) [[0,1,2], [0,-1,-2]] and
         compare str.available (Known 0) and
         compare str.finished? true and
         compare str.position 3 and
@@ -351,14 +351,14 @@ makeTests name withUnknown =
 
 "multiplexed-precalc-trunc-\(name)": \(
     str = filt.multiplexed
-       [syn.precalculated 2 (bl.fromList [1,2]),
+       [syn.precalculated 2 (vec.fromList [1,2]),
         withDuration 3 (syn.generated 2 (0-))];
     compare str.position 0 and
         compare str.channels 2 and
         compare str.sampleRate 2 and
         compare str.available (maybeKnown 2) and
         compare str.finished? false and
-        compare (map bl.list (mat.asRows (str.read 4))) [[1,2], [0,-1]] and
+        compare (map vec.list (mat.asRows (str.read 4))) [[1,2], [0,-1]] and
         compare str.available (Known 0) and
         compare str.finished? true and
         compare str.position 2 and
@@ -367,15 +367,15 @@ makeTests name withUnknown =
 
 "multiplexed-2-1-\(name)": \(
     str = filt.multiplexed
-       [syn.precalculated 2 (bl.fromList [1,2]),
-        filt.multiplexed [syn.precalculated 2 (bl.fromList [3,4]),
+       [syn.precalculated 2 (vec.fromList [1,2]),
+        filt.multiplexed [syn.precalculated 2 (vec.fromList [3,4]),
                           withDuration 3 (syn.generated 2 (0-))]];
     compare str.position 0 and
         compare str.channels 3 and
         compare str.sampleRate 2 and
         compare str.available (maybeKnown 2) and
         compare str.finished? false and
-        compare (map bl.list (mat.asRows (str.read 4))) [[1,2], [3,4], [0,-1]] and
+        compare (map vec.list (mat.asRows (str.read 4))) [[1,2], [3,4], [0,-1]] and
         compare str.available (Known 0) and
         compare str.finished? true and
         compare str.position 2 and
@@ -384,15 +384,15 @@ makeTests name withUnknown =
 
 "multiplexed-2-1b-\(name)": \(
     str = filt.multiplexed
-       [syn.precalculated 2 (bl.fromList [1,2]),
-        syn.precalculated 2 (bl.fromList [3,4]),
+       [syn.precalculated 2 (vec.fromList [1,2]),
+        syn.precalculated 2 (vec.fromList [3,4]),
         withDuration 3 (syn.generated 2 (0-))];
     compare str.position 0 and
         compare str.channels 3 and
         compare str.sampleRate 2 and
         compare str.available (maybeKnown 2) and
         compare str.finished? false and
-        compare (map bl.list (mat.asRows (str.read 4))) [[1,2], [3,4], [0,-1]] and
+        compare (map vec.list (mat.asRows (str.read 4))) [[1,2], [3,4], [0,-1]] and
         compare str.available (Known 0) and
         compare str.finished? true and
         compare str.position 2 and
@@ -401,21 +401,21 @@ makeTests name withUnknown =
 
 "repeated-2-\(name)": \(
     str = filt.repeated
-       (syn.precalculated 2 (bl.fromList [1,2,3]));
+       (syn.precalculated 2 (vec.fromList [1,2,3]));
     compare str.position 0 and
         compare str.channels 1 and
         compare str.sampleRate 2 and
         compare str.available (Infinite ()) and
         compare str.finished? false and
-        compare (map bl.list (mat.asRows (str.read 1))) [[1]] and
+        compare (map vec.list (mat.asRows (str.read 1))) [[1]] and
         compare str.position 1 and
-        compare (map bl.list (mat.asRows (str.read 2))) [[2,3]] and
+        compare (map vec.list (mat.asRows (str.read 2))) [[2,3]] and
         compare str.position 3 and
-        compare (map bl.list (mat.asRows (str.read 3))) [[1,2,3]] and
+        compare (map vec.list (mat.asRows (str.read 3))) [[1,2,3]] and
         compare str.position 6 and
-        compare (map bl.list (mat.asRows (str.read 5))) [[1,2,3,1,2]] and
-        compare (map bl.list (mat.asRows (str.read 9))) [[3,1,2,3,1,2,3,1,2]] and
-        compare (map bl.list (mat.asRows (str.read 2))) [[3,1]] and
+        compare (map vec.list (mat.asRows (str.read 5))) [[1,2,3,1,2]] and
+        compare (map vec.list (mat.asRows (str.read 9))) [[3,1,2,3,1,2,3,1,2]] and
+        compare (map vec.list (mat.asRows (str.read 2))) [[3,1]] and
         compare str.available (Infinite ()) and
         compare str.finished? false and
         compare str.position 22 and

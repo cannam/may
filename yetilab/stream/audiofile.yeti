@@ -61,12 +61,12 @@ readInterleaved' { format is ~AudioFormat, aistream is ~AudioInputStream } nfram
     bytesPerSample = format#getSampleSizeInBits() / 8;
     bytes = new byte[nframes * channels * bytesPerSample];
     bytesRead = aistream#read(bytes);
-    if bytesRead <= 0 then block.zeros 0;
+    if bytesRead <= 0 then vec.zeros 0;
     else
         n = int(bytesRead / bytesPerSample);
         doubles = new double[n];
         decode { format } bytes doubles n;
-        block.block doubles;
+        vec.block doubles;
     fi;
    );
 

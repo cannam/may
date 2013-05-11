@@ -8,11 +8,11 @@ syn = load yetilab.stream.syntheticstream;
 
 { compare, compareUsing } = load yetilab.test.test;
 
-testStream n is number -> 'a  = syn.precalculated 1000 (block.fromList [1..n]);
+testStream n is number -> 'a  = syn.precalculated 1000 (vec.fromList [1..n]);
 
 compareFrames frames1 frames2 =
     all id (map2 do f1 f2: compareUsing mat.equal f1 f2 done frames1
-       (map (mat.newRowVector . block.fromList) frames2));
+       (map (mat.newRowVector . vec.fromList) frames2));
 
 [
 
