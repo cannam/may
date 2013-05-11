@@ -1,0 +1,7 @@
+
+module yetilab.block.complextype;
+
+typedef opaque cplx = ~Cplx;
+
+();
+
