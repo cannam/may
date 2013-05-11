@@ -1,8 +1,7 @@
 
 module yetilab.stream.playback;
 
-block = load yetilab.block.block;
-fr = load yetilab.stream.framer;
+vec = load yetilab.vector.vector;
 af = load yetilab.stream.audiofile;
 ch = load yetilab.stream.channels;
 
@@ -12,16 +11,15 @@ import javax.sound.sampled:
 import java.nio: ByteBuffer, ByteOrder;
 
 playBlock line b is ~SourceDataLine -> 'a -> () =
-   (len = block.length b;
-    samples = block.data b;
+   (len = vec.length b;
+    samples = vec.primitive b;
     nb = len * 2;
     bytes = new byte[nb];
     bb = ByteBuffer#wrap(bytes, 0, nb);
     bb#order(ByteOrder#LITTLE_ENDIAN);
     sb = bb#asShortBuffer();
     for [0..len-1] do i: sb#put(i, samples[i] * 32767.0); () done;
-    actual = line#write(bytes, 0, nb); 
-    ());
+    \() line#write(bytes, 0, nb));
 
 play line blocks = for blocks (playBlock line);
     

@@ -12,7 +12,7 @@ import java.io: File, IOException;
 import java.nio: ByteBuffer, ByteOrder;
 
 ch = load yetilab.stream.channels;
-block = load yetilab.block.block;
+vec = load yetilab.vector.vector;
 
 decode8u bytes doubles n is ~byte[] -> ~double[] -> number -> () =
    (for [0..n-1] do i:
@@ -61,12 +61,12 @@ readInterleaved' { format is ~AudioFormat, aistream is ~AudioInputStream } nfram
     bytesPerSample = format#getSampleSizeInBits() / 8;
     bytes = new byte[nframes * channels * bytesPerSample];
     bytesRead = aistream#read(bytes);
-    if bytesRead <= 0 then block.zeros 0;
+    if bytesRead <= 0 then vec.zeros 0;
     else
         n = int(bytesRead / bytesPerSample);
         doubles = new double[n];
         decode { format } bytes doubles n;
-        block.block doubles;
+        vec.vector doubles;
     fi;
    );
 

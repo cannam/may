@@ -4,7 +4,7 @@ v = load yetilab.vamp.vamp;
 synthetic = load yetilab.stream.syntheticstream;
 filter = load yetilab.stream.filter;
 mat = load yetilab.matrix.matrix;
-block = load yetilab.block.block;
+vec = load yetilab.vector.vector;
 
 { compare, compareUsing } = load yetilab.test.test;
 
@@ -92,7 +92,7 @@ tests =
         compareUsing mat.equal g 
            (mat.newMatrix (ColumnMajor ())
                (map do x:
-                   (block.fromList . floats) (map do y:
+                   (vec.fromList . floats) (map do y:
                         (x + y + 2) / 30
                         done [0..9])
                     done [0..19]));
@@ -106,7 +106,7 @@ tests =
         compareUsing mat.equal g 
            (mat.newMatrix (ColumnMajor ())
                (map do x:
-                   (block.fromList . floats) (map do y:
+                   (vec.fromList . floats) (map do y:
                         (x + y + 2) / 20
                         done [0..9])
                     done [0..9]));

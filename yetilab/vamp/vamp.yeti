@@ -10,7 +10,7 @@ import java.lang: UnsatisfiedLinkError;
 
 import java.util: Map, List;
 
-bl = load yetilab.block.block;
+vec = load yetilab.vector.vector;
 fr = load yetilab.stream.framer;
 af = load yetilab.stream.audiofile;
 mat = load yetilab.matrix.matrix;
@@ -24,7 +24,7 @@ realTime r is ~RealTime -> number = r#sec() + (r#nsec() / 1000000000);
 feature f is ~Feature -> 'a = {
     timestamp = if f#hasTimestamp then Time (realTime f#timestamp) else Untimed () fi,
     duration = if f#hasDuration then Time (realTime f#duration) else Untimed () fi,
-    values = bl.fromFloats f#values,
+    values = vec.fromFloats f#values,
     label = f#label,
     };
 
@@ -209,7 +209,7 @@ plugin key p is string -> ~Plugin -> 'a =
         None (): map (outputDescriptor (None ())) p#getOutputDescriptors();
         esac,
     process frame time is 'a -> ~RealTime -> 'b = 
-        featureSet p#process((map bl.floats (mat.asRows frame)) as ~float[][], 0, time),
+        featureSet p#process((map vec.floats (mat.asRows frame)) as ~float[][], 0, time),
     getRemainingFeatures () = featureSet p#getRemainingFeatures(),
     dispose () = p#dispose(),
     });
@@ -233,9 +233,9 @@ loadPlugin rate key =
         Error "Failed to load Vamp plugin with key \(key)"
     yrt;
 
-//!!! bring block typedef into scope -- this shouldn't be necessary,
+//!!! bring vector typedef into scope -- this shouldn't be necessary,
 //but see comment in processed below
-load yetilab.block.blocktype;
+load yetilab.vector.vectortype;
 
 processed { p, sampleRate, hop } frames count 
     // I don't know why this type declaration is necessary. Without
@@ -247,7 +247,7 @@ processed { p, sampleRate, hop } frames count
                   list<{ timestamp is Time number | Untimed (), 
                          duration  is Time number | Untimed (),
                          label is string,
-                         values is block
+                         values is vector
                        }>>> =
     case frames of
     frame::rest:

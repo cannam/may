@@ -1,6 +1,11 @@
-module yetilab.block.fvector;
+
+module yetilab.vector.vector;
+
+load yetilab.vector.vectortype;
 
 import java.util: Arrays;
+
+//!!! This is supposed to be 100% immutable and without copying when duplicating for read only
 
 zeros n =
     new double[n];
@@ -14,7 +19,7 @@ consts m n =
 
 ones = consts 1.0;
 
-vector l is list?<number> -> ~double[] =
+fromList l is list?<number> -> ~double[] =
    (arr = array(l);
     len = length arr;
     v = zeros len;
@@ -26,11 +31,17 @@ vector l is list?<number> -> ~double[] =
 list' a is ~double[] -> list<number> =
     list a;
 
+array' a is ~double[] -> array<number> =
+    array a;
+
 length' =
     length . list';
 
 empty?' =
     empty? . list';
+
+at' n v is number -> ~double[] -> number =
+    v[n];
 
 floats a is ~double[] -> ~float[] =
    (len = length' a;
@@ -72,14 +83,42 @@ concat vv is list?<~double[]> -> ~double[] =
     vout);
 
 {
-zeros, consts, ones,
-vector,
-length = length',
-empty? = empty?',
-list = list',
-floats, fromFloats,
-equal,
-copyOf, rangeOf, resizedTo,
-concat,
+    zeros,
+    consts,
+    ones,
+    vector v = v,
+    primitive = copyOf,
+    floats,
+    fromFloats,
+    fromList,
+    list = list',
+    array = array',
+    length = length',
+    empty? = empty?',
+    at = at',
+    equal,
+    rangeOf,
+    resizedTo,
+    concat,
+} as {
+    zeros is number -> vector,
+    consts is number -> number -> vector,
+    ones is number -> vector,
+    vector is ~double[] -> vector,
+    primitive is vector -> ~double[],
+    floats is vector -> ~float[],
+    fromFloats is ~float[] -> vector,
+    fromList is list?<number> -> vector,
+    list is vector -> list<number>,
+    array is vector -> array<number>,
+    length is vector -> number,
+    empty? is vector -> boolean,
+    at is number -> vector -> number,
+    equal is vector -> vector -> boolean,
+    rangeOf is number -> number -> vector -> vector, //!!! not well-named now vector arg is at the end
+    resizedTo is number -> vector -> vector,
+    concat is list?<vector> -> vector,
 }
+
+
 

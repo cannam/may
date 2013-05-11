@@ -1,10 +1,10 @@
 
-module yetilab.block.test.test_blockfuncs;
+module yetilab.vector.test.test_blockfuncs;
 
 stdSqrt = sqrt;
 
-{ zeros, consts, ones, fromList, list } = load yetilab.block.block;
-{ sum, mean, multiply, divideBy, sqr, sqrt, rms, fftshift, ifftshift } = load yetilab.block.blockfuncs;
+{ zeros, consts, ones, fromList, list } = load yetilab.vector.vector;
+{ sum, mean, multiply, divideBy, sqr, sqrt, rms, fftshift, ifftshift } = load yetilab.vector.blockfuncs;
 { compare } = load yetilab.test.test;
 
 [

@@ -1,17 +1,17 @@
 
 module yetilab.feature.features;
 
-block = load yetilab.block.block;
-cplx = load yetilab.block.complex;
+vec = load yetilab.vector.vector;
+cplx = load yetilab.vector.complex;
 fr = load yetilab.stream.framer;
 
 magdiff frame1 frame2 =
-    sum (map2 do a b: abs(a - b) done (block.data frame1) (block.data frame2));
+    sum (map2 do a b: abs(a - b) done (vec.list frame1) (vec.list frame2));
 
 emptyFrameFor frames =
-    block.zeros
+    vec.zeros
         if empty? frames then 0
-        else block.length (head frames)
+        else vec.length (head frames)
         fi;
 
 features featureFunc frames =

@@ -3,12 +3,13 @@ module yetilab.transform.fft;
 
 import edu.emory.mathcs.jtransforms.fft: DoubleFFT_1D;
 
-b = load yetilab.block.block;
-vec = load yetilab.block.fvector;
-complex = load yetilab.block.complex;
+vec = load yetilab.vector.vector;
+complex = load yetilab.vector.complex;
 
-packedToComplex p =
-   (n = (vec.length p) / 2;
+load yetilab.vector.complextype;
+
+packedToComplex len p is number -> ~double[] -> array<cplx> =
+   (n = len / 2;
     array
        (map do i:
             re = if i == n then p[1] else p[i*2] fi;
@@ -18,24 +19,25 @@ packedToComplex p =
 
 complexToPacked arr =
    (n = length arr;
-    v = vec.vector
-       (map do i:
-            ix = int (i/2);
+    v = new double[n*2-2];
+    for [0..(n-1)*2-1] do i:
+        ix = int (i/2);
+        v[i] :=
             if i == ix*2 then
                 complex.real arr[ix]
             else 
                 complex.imaginary arr[ix] 
             fi;
-            done [0..(n-1)*2-1]);
+    done;
     v[1] := complex.real arr[n-1];
     v);
 
 realForward n = 
    (d = new DoubleFFT_1D(n);
     do bl:
-        v = b.vector bl;
+        v = vec.primitive bl;
         d#realForward(v);
-        packedToComplex v;
+        packedToComplex (vec.length bl) v;
     done);
 
 realInverse n = 
@@ -43,7 +45,7 @@ realInverse n =
     do arr:
         v = complexToPacked arr;
         d#realInverse(v, true);
-        b.block v;
+        vec.vector v;
     done);
 
 {

@@ -2,7 +2,6 @@
 module yetilab.stream.filter;
 
 mat = load yetilab.matrix.matrix;
-bl = load yetilab.block.block;
 ch = load yetilab.stream.channels;
 
 load yetilab.stream.streamtype;
@@ -88,8 +87,8 @@ mixedTo targetChannels s =
 
 mixed streams =
    (mix m1 m2 =
-       (sz = { rows = max m1.size.rows m2.size.rows,
-               columns = min m1.size.columns m2.size.columns };
+       (sz = { rows = max (mat.height m1) (mat.height m2),
+               columns = min (mat.width m1) (mat.width m2) };
         if sz.columns == 0 then
             mat.zeroSizeMatrix ()
         else
@@ -132,9 +131,9 @@ multiplexed streams =
         get finished? () = any id (map (.finished?) streams),
         read count =
            (outs = map do s: s.read count done streams;
-            minlen = head (sort (map do m: m.size.columns done outs));
+            minlen = head (sort (map mat.width outs));
             outs = map do m:
-                mat.resizedTo { rows = m.size.rows, columns = minlen } m
+                mat.resizedTo { rows = mat.height m, columns = minlen } m
                 done outs;
             mat.concat (Vertical ()) outs
             ),
@@ -154,8 +153,8 @@ repeated s =
         var cache = mat.zeroSizeMatrix ();
         chunks = array [];
         cachedPartsFor count =
-           (start = pos % cache.size.columns;
-            avail = cache.size.columns - start;
+           (start = pos % (mat.width cache);
+            avail = (mat.width cache) - start;
             if avail >= count then
                 pos := pos + count;
                 [mat.columnSlice start count cache]
@@ -165,11 +164,11 @@ repeated s =
                     cachedPartsFor (count - avail);
             fi);
         readFromCache count =
-           (if cache.size.columns == 0 then
+           (if (mat.width cache) == 0 then
                 cache := mat.concat (Horizontal ()) (list chunks);
                 clearArray chunks;
             fi;
-            if cache.size.columns == 0 then
+            if (mat.width cache) == 0 then
                 cache
             else
                 mat.concat (Horizontal ()) (cachedPartsFor count);
@@ -184,7 +183,7 @@ repeated s =
                     readFromCache count
                 else
                     part = s.read count;
-                    len = part.size.columns;
+                    len = (mat.width part);
                     push chunks part;
                     pos := pos + len;
                     if len == count then part

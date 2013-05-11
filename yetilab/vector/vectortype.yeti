@@ -1,0 +1,7 @@
+
+module yetilab.vector.vectortype;
+
+typedef opaque vector = ~double[];
+
+();
+

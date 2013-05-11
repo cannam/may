@@ -1,7 +1,7 @@
 module yetilab.vamp.vamppost;
 
 mat = load yetilab.matrix.matrix;
-bl = load yetilab.block.block;
+vec = load yetilab.vector.vector;
 
 fillOneSamplePerStep config features =
    (fill' n pending features =
@@ -76,14 +76,14 @@ structureSeries features =
         {
             start = t0,
             step = t1 - t0,
-            values = map do f: (bl.data f.values)[0] done features;
+            values = map do f: vec.at 0 f.values done features;
         }
     fi;
 
 structureCurve features =
     map do f: {
         time = timeOf f,
-        value = (bl.data f.values)[0],
+        value = vec.at 0 f.values,
         label = f.label
     } done features;
 
@@ -96,7 +96,7 @@ structureInstants features =
 structureSegmentation features =
     map do f: {
         time = timeOf f,
-        type = (bl.data f.values)[0],
+        type = vec.at 0 f.values,
         label = f.label
     } done features;
 
@@ -104,8 +104,8 @@ structureNotes features =
     map do f: {
         time = timeOf f,
         duration = f.duration,
-        pitch = (bl.data f.values)[0], //!!! no, might be empty
-        otherValues = array (tail (bl.list f.values)), //!!! no, might be empty
+        pitch = vec.at 0 f.values, //!!! no, might be empty
+        otherValues = array (tail (vec.list f.values)), //!!! no, might be empty
         label = f.label
     } done features;
 
@@ -113,14 +113,14 @@ structureWithDuration features =
     map do f: {
         time = timeOf f,
         duration = f.duration,
-        values = array (bl.list f.values),
+        values = array (vec.list f.values),
         label = f.label
     } done features;
 
 structureWithoutDuration features =
     map do f: {
         time = timeOf f,
-        values = array (bl.list f.values),
+        values = array (vec.list f.values),
         label = f.label
     } done features;
 

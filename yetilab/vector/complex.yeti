@@ -1,9 +1,10 @@
 
-module yetilab.block.complex;
+module yetilab.vector.complex;
 
-load yetilab.block.blocktype;
+load yetilab.vector.vectortype;
+load yetilab.vector.complextype;
 
-bl = load yetilab.block.block;
+vec = load yetilab.vector.vector;
 
 import java.lang: ClassCastException;
 
@@ -41,8 +42,6 @@ class Cplx(double real, double imag)
         yrt,
 end;
 
-typedef opaque cplx = ~Cplx;
-
 real c1 is ~Cplx -> number =
     c1#getReal();
 
@@ -67,11 +66,11 @@ scale r c is number -> ~Cplx -> ~Cplx =
 zeros n is number -> array<~Cplx> =
     array (map \(complex 0 0) [1..n]);
 
-magnitudes cc is list?<~Cplx> -> block =
-    bl.fromList (map magnitude cc);
+magnitudes cc is list?<~Cplx> -> vector =
+    vec.fromList (map magnitude cc);
 
-angles cc is list?<~Cplx> -> block =
-    bl.fromList (map angle cc);
+angles cc is list?<~Cplx> -> vector =
+    vec.fromList (map angle cc);
 
 {
    real,
@@ -93,7 +92,7 @@ angles cc is list?<~Cplx> -> block =
    add is cplx -> cplx -> cplx,
    scale is number -> cplx -> cplx,
    zeros is number -> array<cplx>,
-   magnitudes is list?<cplx> -> block,
-   angles is list?<cplx> -> block,
+   magnitudes is list?<cplx> -> vector,
+   angles is list?<cplx> -> vector,
 }
 

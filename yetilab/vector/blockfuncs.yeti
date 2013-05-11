@@ -1,0 +1,73 @@
+
+module yetilab.vector.blockfuncs;
+
+vec = load yetilab.vector.vector;
+
+load yetilab.vector.vectortype;
+
+//!!! "internal" vector function to retrieve data for read-only
+// purposes without copying
+raw =
+   (raw' v is ~double[] -> ~double[] = v;
+    raw' as vector -> ~double[]);
+
+sum' v =
+   (dat = raw v;
+    tot = new double[1];
+    for [0..length dat - 1] do i:
+        tot[0] := tot[0] + dat[i]
+    done;
+    tot[0]);
+
+mean v =
+    case vec.length v of
+        0: 0;
+        len: sum' v / len
+    esac;
+
+multiply b1 b2 =
+   (v1 = raw b1;
+    v2 = raw b2;
+    len = if length v1 < length v2 then length v1 else length v2 fi;
+    out = new double[len];
+    for [0..len-1] do i:
+        out[i] := v1[i] * v2[i]
+    done;
+    vec.vector out);
+
+divideBy n v =
+    vec.fromList (map (/ n) (vec.list v));
+
+sqr v =
+    multiply v v;
+
+rms =
+    sqrt . mean . sqr;
+
+sqrt' =
+    vec.fromList . (map sqrt) . vec.list;
+
+fftshift v =
+   (len = vec.length v;
+    half = int(len/2 + 0.5); // round up for odd-length sequences
+    vec.concat [vec.rangeOf half (len-half) v, vec.rangeOf 0 half v]);
+
+ifftshift v =
+   (len = vec.length v;
+    half = int(len/2); // round down for odd-length sequences
+    vec.concat [vec.rangeOf half (len-half) v, vec.rangeOf 0 half v]);
+
+{
+sum is vector -> number = sum',
+mean is vector -> number,
+multiply is vector -> vector -> vector, 
+divideBy is number -> vector -> vector, 
+sqr is vector -> vector,
+sqrt is vector -> vector = sqrt',
+rms is vector -> number,
+fftshift is vector -> vector,
+ifftshift is vector -> vector,
+}
+
+
+        
