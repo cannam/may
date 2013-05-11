@@ -3,6 +3,15 @@ module yetilab.stream.channels;
 
 vec = load yetilab.block.vector;
 mat = load yetilab.matrix.matrix;
+
+load yetilab.block.vectortype;
+
+//!!! "internal" vector function to retrieve data for read-only
+// purposes without copying
+//!!! need to have this in some internal-use module 
+raw =
+   (raw' v is ~double[] -> ~double[] = v;
+    raw' as vector -> ~double[]);
         
 interleaved m = 
    ({ columns, rows } = (mat.size m);
@@ -24,7 +33,7 @@ deinterleaved channels b =
     else
         rows = (vec.length b) / channels;
         vv = array (map \(new double[rows]) [0..channels-1]);
-        v = vec.data b;
+        v = raw b;
         for [0..rows-1] do row:
             for [0..channels-1] do col:
                 vv[col][row] := v[channels * row + col];
@@ -47,8 +56,8 @@ mixedDownFromInterleaved channels b =
     if channels == 1 then
         b;
     else
-        v = vec.data b;
-        columns = ((vec.length v) / channels);
+        columns = ((vec.length b) / channels);
+        v = raw b;
         v' = new double[columns];
         for [0..channels-1] do row:
             for [0..columns-1] do col:
@@ -64,8 +73,8 @@ mixedFromInterleavedTo targetChannels channels b =
     elif targetChannels == 1 then
         mixedDownFromInterleaved channels b;
     else
-        v = vec.data b;
-        columns = ((vec.length v) / channels);
+        columns = ((vec.length b) / channels);
+        v = raw b;
         v' = new double[columns * targetChannels];
         for [0..targetChannels-1] do target:
             for [0..columns-1] do col:
