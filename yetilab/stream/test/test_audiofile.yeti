@@ -26,12 +26,12 @@ readAll stream =
 
 bitdepthComparator depth =
    (mult = fold do a _: a*2 done 1 [1..depth];
-    // We compare at depth-1 rather than depth to avoid rounding problems
     mult = mult / 2;
+    roundedBy f x = round (x * f);
     do a b:
-        a' = int (a * mult);
-        b' = int (b * mult);
-        if a' == b' then true
+        a' = roundedBy mult a;
+        b' = roundedBy mult b;
+        if abs(a' - b') <= 1 then true
         else 
             eprintln "bitdepthComparator: \(a) != \(b) at bitdepth \(depth) [\(a') != \(b')]";
             false;
@@ -48,6 +48,15 @@ testReferenceFile rate channels bitdepth =
         true
     else
         println "** peak difference: \(maxOf (mat.difference ref test))";
+        for [0..mat.height test - 1] do ch:
+            if mat.equalUnder (bitdepthComparator bitdepth)
+               (mat.newRowVector (mat.getRow ch test))
+               (mat.newRowVector (mat.getRow ch ref)) then
+                println "   channel \(ch): ok";
+            else
+                println "   channel \(ch): not ok";
+            fi;
+        done;
         false
     fi);
 
