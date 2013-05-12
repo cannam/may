@@ -122,18 +122,23 @@ toRowMajor m =
 toColumnMajor m =
     if not isRowMajor? m then m else flipped m fi;
 
-// Matrices with different storage order but the same contents are
-// equal (but comparing them is slow)
-equal m1 m2 =
-    if size m1 != size m2 then false
-    elif isRowMajor? m1 != isRowMajor? m2 then equal (flipped m1) m2;
+// Compare matrices using the given comparator for individual cells.
+// Note that matrices with different storage order but the same
+// contents are equal, although comparing them is slow.
+equalUnder comparator m1 m2 =
+    if size m1 != size m2 then 
+        false
+    elif isRowMajor? m1 != isRowMajor? m2 then
+        equalUnder comparator (flipped m1) m2;
     else
-        compare d1 d2 = all id (map2 vec.equal d1 d2);
+        compare d1 d2 = all id (map2 (vec.equalUnder comparator) d1 d2);
         case m1 of
         RowM d1: case m2 of RowM d2: compare d1 d2; _: false; esac;
         ColM d1: case m2 of ColM d2: compare d1 d2; _: false; esac;
         esac
     fi;
+
+equal = equalUnder (==);
 
 /*!!! not needed now it's immutable?
 copyOf m =
@@ -287,6 +292,7 @@ resizedTo newsize m =
     identityMatrix,
     zeroSizeMatrix,
     equal,
+    equalUnder,
 //    copyOf,
     transposed,
     flipped,
@@ -324,6 +330,7 @@ as
     identityMatrix is { .rows is number, .columns is number } -> matrix, 
     zeroSizeMatrix is () -> matrix,
     equal is matrix -> matrix -> boolean,
+    equalUnder is (number -> number -> boolean) -> matrix -> matrix -> boolean,
 //    copyOf is matrix -> matrix,
     transposed is matrix -> matrix,
     flipped is matrix -> matrix, 

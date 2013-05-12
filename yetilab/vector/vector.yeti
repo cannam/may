@@ -62,6 +62,10 @@ fromFloats ff is ~float[] -> ~double[] =
 equal v1 v2 =
     list' v1 == list' v2;
 
+equalUnder comparator v1 v2 =
+    length' v1 == length' v2 and
+        all id (map2 comparator (list' v1) (list' v2));
+
 copyOf v is ~double[] -> ~double[] =
     Arrays#copyOf(v, list' v |> length);
 
@@ -97,6 +101,7 @@ concat vv is list?<~double[]> -> ~double[] =
     empty? = empty?',
     at = at',
     equal,
+    equalUnder,
     rangeOf,
     resizedTo,
     concat,
@@ -115,6 +120,7 @@ concat vv is list?<~double[]> -> ~double[] =
     empty? is vector -> boolean,
     at is number -> vector -> number,
     equal is vector -> vector -> boolean,
+    equalUnder is (number -> number -> boolean) -> vector -> vector -> boolean,
     rangeOf is number -> number -> vector -> vector, //!!! not well-named now vector arg is at the end
     resizedTo is number -> vector -> vector,
     concat is list?<vector> -> vector,
