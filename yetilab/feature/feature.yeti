@@ -1,9 +1,10 @@
 
-module yetilab.feature.features;
+module yetilab.feature.feature;
 
 vec = load yetilab.vector.vector;
-cplx = load yetilab.vector.complex;
 fr = load yetilab.stream.framer;
+
+// Utility functions for feature extractors
 
 magdiff frame1 frame2 =
     sum (map2 do a b: abs(a - b) done (vec.list frame1) (vec.list frame2));
@@ -22,14 +23,7 @@ features featureFunc frames =
         esac;
     featuresOf (emptyFrameFor frames) frames);
 
-specdiff frames = 
-    features magdiff (map cplx.magnitudes frames);
+{ magdiff, emptyFrameFor, features };
 
-specdiffOfFile parameters filename =
-    specdiff (fr.frequencyDomainFramesOfFile parameters filename);
 
-{
-    specdiff,
-    specdiffOfFile,
-}
 

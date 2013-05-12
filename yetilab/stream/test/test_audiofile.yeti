@@ -5,7 +5,9 @@ af = load yetilab.stream.audiofile;
 vec = load yetilab.vector.vector;
 mat = load yetilab.matrix.matrix;
 
-{ compare } = load yetilab.test.test;
+ref = load yetilab.stream.test.audiofile_reference;
+
+{ compare, compareUsing } = load yetilab.test.test;
 
 testfile name = "yetilab/test/data/\(name).wav";
 
@@ -14,6 +16,17 @@ float n is number -> number =
    (arr = new float[1];
     arr[0] := n;
     arr[0]);
+
+readAll stream =
+    case stream.available of
+    Known n: stream.read n;
+    _: failWith "Known-duration stream required";
+    esac;
+
+testReferenceFile rate channels bitdepth =
+   (test = readAll (af.open (testfile "\(rate)-\(channels)-\(bitdepth)"));
+    ref = readAll (ref.afReference rate channels);
+    compareUsing mat.equal test ref);
 
 [ 
 
@@ -39,6 +52,14 @@ float n is number -> number =
             compare (vec.list (mat.getRow 0 last5)) [ 0,0,0,0,-1 ] and
             ( f.close () ; true )
         done [ af.open, af.openMono ]);
+),
+
+"8000-1-8": \(
+    testReferenceFile 8000 1 8;
+),
+
+"44100-2-16": \(
+    testReferenceFile 44100 2 16;
 ),
 
 ] is hash<string, () -> boolean>

@@ -1,0 +1,20 @@
+
+module yetilab.feature.specdiff;
+
+vec = load yetilab.vector.vector;
+fr = load yetilab.stream.framer;
+cplx = load yetilab.vector.complex;
+
+load yetilab.feature.feature;
+
+specdiff frames = 
+    features magdiff (map cplx.magnitudes frames);
+
+specdiffOfFile parameters filename =
+    specdiff (fr.frequencyDomainFramesOfFile parameters filename);
+
+{
+    specdiff,
+    specdiffOfFile,
+}
+

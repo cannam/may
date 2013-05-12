@@ -5,6 +5,8 @@ syn = load yetilab.stream.syntheticstream;
 filt = load yetilab.stream.filter;
 vec = load yetilab.vector.vector;
 
+//!!! docs from turbot
+
 pulseChannel rate =
    (pulseFreq = 2;
     pulseWidth = 0.01 * rate;
@@ -24,7 +26,8 @@ referenceChannels rate =
     syn.sinusoid rate 600 :: pulseChannel rate :: leftovers rate 2);
 
 afReference rate channels =
-    filt.multiplexed (take channels (referenceChannels rate));
+    filt.withDuration (2 * rate)
+       (filt.multiplexed (take channels (referenceChannels rate)));
     
 {
     afReference
