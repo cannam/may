@@ -23,10 +23,24 @@ readAll stream =
     _: failWith "Known-duration stream required";
     esac;
 
+bitdepthComparator depth =
+   (mult = fold do a _: a*2 done 1 [1..depth];
+    // We compare at depth-1 rather than depth to avoid rounding problems
+    mult = mult / 2;
+    do a b:
+        a' = int (a * mult);
+        b' = int (b * mult);
+        if a' == b' then true
+        else 
+            eprintln "bitdepthComparator: \(a) != \(b) at bitdepth \(depth) [\(a') != \(b')]";
+            false;
+        fi;
+    done);
+
 testReferenceFile rate channels bitdepth =
    (test = readAll (af.open (testfile "\(rate)-\(channels)-\(bitdepth)"));
     ref = readAll (ref.afReference rate channels);
-    compareUsing mat.equal test ref);
+    compareUsing (mat.equalUnder (bitdepthComparator bitdepth)) test ref);
 
 [ 
 
