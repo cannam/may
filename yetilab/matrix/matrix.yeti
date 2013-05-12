@@ -122,23 +122,27 @@ toRowMajor m =
 toColumnMajor m =
     if not isRowMajor? m then m else flipped m fi;
 
-// Compare matrices using the given comparator for individual cells.
-// Note that matrices with different storage order but the same
-// contents are equal, although comparing them is slow.
-equalUnder comparator m1 m2 =
+equal' vecComparator m1 m2 =
     if size m1 != size m2 then 
         false
     elif isRowMajor? m1 != isRowMajor? m2 then
-        equalUnder comparator (flipped m1) m2;
+        equal' vecComparator (flipped m1) m2;
     else
-        compare d1 d2 = all id (map2 (vec.equalUnder comparator) d1 d2);
+        compare d1 d2 = all id (map2 vecComparator d1 d2);
         case m1 of
         RowM d1: case m2 of RowM d2: compare d1 d2; _: false; esac;
         ColM d1: case m2 of ColM d2: compare d1 d2; _: false; esac;
         esac
     fi;
 
-equal = equalUnder (==);
+// Compare matrices using the given comparator for individual cells.
+// Note that matrices with different storage order but the same
+// contents are equal, although comparing them is slow.
+equalUnder comparator =
+    equal' (vec.equalUnder comparator);
+
+equal =
+    equal' vec.equal;
 
 /*!!! not needed now it's immutable?
 copyOf m =
