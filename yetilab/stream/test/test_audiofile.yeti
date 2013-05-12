@@ -4,6 +4,7 @@ module yetilab.stream.test.test_audiofile;
 af = load yetilab.stream.audiofile;
 vec = load yetilab.vector.vector;
 mat = load yetilab.matrix.matrix;
+bf = load yetilab.vector.blockfuncs;
 
 ref = load yetilab.stream.test.audiofile_reference;
 
@@ -37,10 +38,18 @@ bitdepthComparator depth =
         fi;
     done);
 
+maxOf m =
+    bf.max (vec.fromList (map bf.max (mat.asRows m)));
+
 testReferenceFile rate channels bitdepth =
    (test = readAll (af.open (testfile "\(rate)-\(channels)-\(bitdepth)"));
     ref = readAll (ref.afReference rate channels);
-    compareUsing (mat.equalUnder (bitdepthComparator bitdepth)) test ref);
+    if mat.equalUnder (bitdepthComparator bitdepth) test ref then
+        true
+    else
+        println "** peak difference: \(maxOf (mat.difference ref test))";
+        false
+    fi);
 
 [ 
 

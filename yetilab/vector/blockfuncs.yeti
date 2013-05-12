@@ -19,6 +19,26 @@ sum' v =
     done;
     tot[0]);
 
+max' v = 
+   (dat = raw v;
+    var mx = 0;
+    for [0..length dat - 1] do i:
+        if i == 0 or dat[i] > mx then
+            mx := dat[i];
+        fi
+    done;
+    mx);
+
+min' v = 
+   (dat = raw v;
+    var mn = 0;
+    for [0..length dat - 1] do i:
+        if i == 0 or dat[i] < mn then
+            mn := dat[i];
+        fi
+    done;
+    mn);
+
 mean v =
     case vec.length v of
         0: 0;
@@ -65,6 +85,8 @@ divideBy is number -> vector -> vector,
 sqr is vector -> vector,
 sqrt is vector -> vector = sqrt',
 rms is vector -> number,
+max is vector -> number = max',
+min is vector -> number = min',
 fftshift is vector -> vector,
 ifftshift is vector -> vector,
 }

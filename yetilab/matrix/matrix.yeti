@@ -176,6 +176,16 @@ sum' m1 m2 =
         generate do row col: getAt row col m1 + getAt row col m2 done (size m1);
     fi;
 
+difference m1 m2 = //!!! doc: m1 - m2, not m2 - m1
+    if (size m1) != (size m2)
+    then failWith "Matrices are not the same size: \(size m1), \(size m2)";
+    else
+        generate do row col: getAt row col m1 - getAt row col m2 done (size m1);
+    fi;
+
+abs' m =
+    generate do row col: abs (getAt row col m) done (size m);
+
 product m1 m2 =
     if (size m1).columns != (size m2).rows
     then failWith "Matrix dimensions incompatible: \(size m1), \(size m2) (\((size m1).columns != (size m2).rows)";
@@ -307,6 +317,8 @@ resizedTo newsize m =
     asRows,
     asColumns,
     sum = sum',
+    difference,
+    abs = abs',
     product,
     concat,
     rowSlice,
@@ -345,6 +357,8 @@ as
     asRows is matrix -> list<vector>, 
     asColumns is matrix -> list<vector>,
     sum is matrix -> matrix -> matrix,
+    difference is matrix -> matrix -> matrix,
+    abs is matrix -> matrix,
     product is matrix -> matrix -> matrix,
     concat is (Horizontal () | Vertical ()) -> list<matrix> -> matrix,
     rowSlice is number -> number -> matrix -> matrix, 
