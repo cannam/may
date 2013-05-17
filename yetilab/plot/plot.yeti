@@ -49,11 +49,11 @@ plotMatrix chart matrix is ~Chart -> 'a -> () =
     chart#getScene()#getGraph()#add(surface);
     ());
 
-plotCurve chart curve is ~Chart -> 'a -> () =
+plotCurve chart depth curve is ~Chart -> number -> 'a -> () =
    (scene = chart#getScene();
     xx = map (.time) curve;
     yy = map (.value) curve;
-    line = new FlatLine2d(xx as ~float[], yy as ~float[], 1);
+    line = new FlatLine2d(xx as ~float[], yy as ~float[], depth);
     line#setWireframeDisplayed(true);
     line#setWireframeColor(Color#BLACK);
     line#setWireframeWidth(2);
@@ -70,11 +70,11 @@ plotCurve chart curve is ~Chart -> 'a -> () =
 */
     ());
 
-plotSeries chart { start, step, values } is ~Chart -> 'a -> () =
+plotSeries chart depth { start, step, values } is ~Chart -> number -> 'a -> () =
    (scene = chart#getScene();
     xx = map do i: start + step * i done [0..length values - 1];
     yy = list values;
-    line = new FlatLine2d(xx as ~float[], yy as ~float[], 0);
+    line = new FlatLine2d(xx as ~float[], yy as ~float[], depth);
     line#setWireframeDisplayed(true);
     line#setWireframeColor(Color#BLACK);
     line#setWireframeWidth(2);
@@ -93,17 +93,20 @@ plotSeries chart { start, step, values } is ~Chart -> 'a -> () =
 
 plot structures =
    (chart = new Chart(Quality#Nicest);
-    for structures
-       \case of
+    var depth = 0;
+    for structures do s:
+        case s of
         Grid matrix:
             plotMatrix chart matrix;
         Curve curve:
-            plotCurve chart curve;
+            plotCurve chart depth curve;
         Series series:
-            plotSeries chart series;
+            plotSeries chart depth series;
         other:
             failWith "Unable to plot \(other)";
         esac;
+        depth := depth + 1;
+    done;
     ChartLauncher#openChart(chart);
     chart);
 

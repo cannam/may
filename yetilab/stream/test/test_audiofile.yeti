@@ -5,6 +5,7 @@ af = load yetilab.stream.audiofile;
 vec = load yetilab.vector.vector;
 mat = load yetilab.matrix.matrix;
 bf = load yetilab.vector.blockfuncs;
+pl = load yetilab.plot.plot;
 
 ref = load yetilab.stream.test.audiofile_reference;
 
@@ -55,6 +56,14 @@ testReferenceFile rate channels bitdepth =
                 println "   channel \(ch): ok";
             else
                 println "   channel \(ch): not ok";
+// This isn't really simple enough!
+                seriesFor m =
+                    Series {
+                        start = 0, 
+                        step = 1, 
+                        values = take 1000 (vec.list (mat.getRow ch m))
+                        };
+                \() (pl.plot (map seriesFor [ test, ref, mat.scaled 10000 (mat.difference test ref) ]));
             fi;
         done;
         false
