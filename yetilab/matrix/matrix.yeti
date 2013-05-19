@@ -109,6 +109,33 @@ generate f { rows, columns } =
         DenseCols (array (map vec.vector m))
     fi;
 
+enumerateSparse m =
+   (enumerate vv ix ptr jn n =
+        case vv of
+        v::rest:
+            { v, i = ix[n], j = jn } :.
+                if n + 1 >= head ptr
+                then \(enumerate rest ix (tail ptr) (jn + 1) (n + 1))
+                else \(enumerate rest ix ptr jn (n + 1))
+                fi;
+         _: [];
+        esac;
+    case m of
+    SparseCSC { values, rowi, colp, rows }: 
+        enumerate (list values) rowi (list colp) 0 0;
+    SparseCSR { values, coli, rowp, rows }:
+        map do { i, j, v }: { i = j, j = i, v } done 
+           (enumerate (list values) coli (list rowp) 0 0);
+    esac);
+
+makeSparse type data =
+    case type of
+    RowMajor (): 
+        SparseCSR { values = vec.zeros 0, coli = array [], rowp = array [] };
+    ColMajor (): 
+        SparseCSC { values = vec.zeros 0, rowi = array [], colp = array [] };
+    esac;
+
 constMatrix n = generate do row col: n done;
 randomMatrix = generate do row col: Math#random() done;
 identityMatrix = constMatrix 1;
@@ -124,12 +151,20 @@ transposed m =
     esac;
 
 flipped m =
-    if isRowMajor? m then
-        generate do row col: getAt row col m done (size m);
+    if isSparse? m then
+        if isRowMajor? m then
+            makeSparse (ColMajor ()) (enumerateSparse m)
+        else
+            makeSparse (RowMajor ()) (enumerateSparse m)
+        fi
     else
-        transposed
-           (generate do row col: getAt col row m done
-            { rows = (width m), columns = (height m) });
+        if isRowMajor? m then
+            generate do row col: getAt row col m done (size m);
+        else
+            transposed
+               (generate do row col: getAt col row m done
+                { rows = (width m), columns = (height m) });
+        fi
     fi;
 
 toRowMajor m =
@@ -159,15 +194,6 @@ equalUnder comparator =
 
 equal =
     equal' vec.equal;
-
-/*!!! not needed now it's immutable?
-copyOf m =
-   (copyOfData d = (array (map vec.copyOf d));
-    case m of
-    DenseRows d: DenseRows (copyOfData d);
-    DenseCols d: DenseCols (copyOfData d);
-    esac);
-*/
 
 newMatrix type data = //!!! NB does not copy data
    (tagger = case type of RowMajor (): RowM; ColumnMajor (): DenseCols esac;
