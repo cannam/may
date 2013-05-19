@@ -31,37 +31,67 @@ size m =
             rows = if major > 0 then vec.length c[0] else 0 fi,
             columns = major, 
         };
-    SparseCSR { values, coli, rowp, cols }:
+    SparseCSR { values, indices, pointers, cols }:
         {
-            rows = (length rowp) - 1,
+            rows = (length pointers) - 1,
             columns = cols
         };
-    SparseCSC { values, rowi, colp, rows }:
+    SparseCSC { values, indices, pointers, rows }:
         {
             rows,
-            columns = (length colp) - 1
+            columns = (length pointers) - 1
         };
     esac;
 
 width m = (size m).columns;
 height m = (size m).rows;
 
+sparseSlice n d =
+   (start = d.pointers[n];
+    end = d.pointers[n+1];
+    { 
+        values = vec.slice d.values start end,
+        indices = slice d.indices start d.pointers[n+1],
+    });
+
+fromSlice n m d =
+   (slice = sparseSlice n d;
+    var v = 0;
+    for [0..length slice.indices - 1] do i:
+        if slice.indices[i] == m then
+            v := vec.at i slice.values;
+        fi
+    done;
+    v);
+
+filledSlice n d =
+   (slice = sparseSlice n d;
+    dslice = new double[d.extent];
+    \() (map2 do v i:
+             dslice[i] := v
+         done (vec.list slice.values) (list slice.indices));
+    vec.vector dslice);
+
 getAt row col m =
     case m of
     DenseRows rows: r = rows[row]; vec.at col r;
     DenseCols cols: c = cols[col]; vec.at row c;
+    SparseCSR data: fromSlice row col data;
+    SparseCSC data: fromSlice col row data;
     esac;
 
 getColumn j m =
     case m of
-    DenseRows rows: vec.fromList (map do i: getAt i j m done [0..length rows-1]);
     DenseCols cols: cols[j];
+    SparseCSC data: filledSlice j data;
+    _: vec.fromList (map do i: getAt i j m done [0..height m - 1]);
     esac;
 
 getRow i m =
     case m of
     DenseRows rows: rows[i];
-    DenseCols cols: vec.fromList (map do j: getAt i j m done [0..length cols-1]);
+    SparseCSR data: filledSlice i data; 
+    _: vec.fromList (map do j: getAt i j m done [0..width m - 1]);
     esac;
 
 isRowMajor? m =
@@ -121,19 +151,19 @@ enumerateSparse m =
          _: [];
         esac;
     case m of
-    SparseCSC { values, rowi, colp, rows }: 
-        enumerate (list values) rowi (list colp) 0 0;
-    SparseCSR { values, coli, rowp, rows }:
+    SparseCSC { values, indices, pointers, rows }: 
+        enumerate (vec.list values) indices (list pointers) 0 0;
+    SparseCSR { values, indices, pointers, rows }:
         map do { i, j, v }: { i = j, j = i, v } done 
-           (enumerate (list values) coli (list rowp) 0 0);
+           (enumerate (vec.list values) indices (list pointers) 0 0);
     esac);
 
 makeSparse type data =
     case type of
     RowMajor (): 
-        SparseCSR { values = vec.zeros 0, coli = array [], rowp = array [] };
+        SparseCSR { values = vec.zeros 0, indices = array [], pointers = array [] };
     ColMajor (): 
-        SparseCSC { values = vec.zeros 0, rowi = array [], colp = array [] };
+        SparseCSC { values = vec.zeros 0, indices = array [], pointers = array [] };
     esac;
 
 constMatrix n = generate do row col: n done;
@@ -144,10 +174,8 @@ transposed m =
     case m of
     DenseRows d: DenseCols d;
     DenseCols d: DenseRows d;
-    SparseCSR { values, coli, rowp, cols }:
-        SparseCSC { values, rowi = coli, colp = rowp, rows = cols };
-    SparseCSC { values, rowi, colp, rows }:
-        SparseCSR { values, coli = rowi, rowp = colp, cols = rows };
+    SparseCSR d: SparseCSC d;
+    SparseCSC d: SparseCSR d;
     esac;
 
 flipped m =

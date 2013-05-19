@@ -72,6 +72,9 @@ copyOf v is ~double[] -> ~double[] =
 rangeOf start len v is number -> number -> ~double[] -> ~double[] =
     Arrays#copyOfRange(v, start, start + len);
 
+slice v start end is ~double[] -> number -> number -> ~double[] =
+    rangeOf start (end - start) v;
+
 resizedTo n v is number -> ~double[] -> ~double[] =
     Arrays#copyOf(v, n);
 
@@ -103,6 +106,7 @@ concat vv is list?<~double[]> -> ~double[] =
     equal,
     equalUnder,
     rangeOf,
+    slice,
     resizedTo,
     concat,
 } as {
@@ -122,6 +126,7 @@ concat vv is list?<~double[]> -> ~double[] =
     equal is vector -> vector -> boolean,
     equalUnder is (number -> number -> boolean) -> vector -> vector -> boolean,
     rangeOf is number -> number -> vector -> vector, //!!! not well-named now vector arg is at the end
+    slice is vector -> number -> number -> vector, //!!! duplication with rangeOf (std module function on arrays is called slice though)
     resizedTo is number -> vector -> vector,
     concat is list?<vector> -> vector,
 }
