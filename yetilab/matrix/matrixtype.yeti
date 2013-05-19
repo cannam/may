@@ -3,7 +3,21 @@ module yetilab.matrix.matrixtype;
 
 load yetilab.vector.vectortype;
 
-typedef opaque matrix = RowM. array<vector> | ColM. array<vector>;
+typedef opaque matrix =
+    DenseRows. array<vector> | 
+    DenseCols. array<vector> |
+    SparseCSR. {
+        .values is vector,
+        .coli is array<number>,
+        .rowp is array<number>,
+        .cols is number
+        } |
+    SparseCSC. {
+        .values is vector,
+        .rowi is array<number>,
+        .colp is array<number>,
+        .rows is number
+        };
 
 ();
 
