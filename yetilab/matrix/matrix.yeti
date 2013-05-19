@@ -31,14 +31,14 @@ size m =
             rows = if major > 0 then vec.length c[0] else 0 fi,
             columns = major, 
         };
-    SparseCSR { values, indices, pointers, cols }:
+    SparseCSR { values, indices, pointers, extent }:
         {
             rows = (length pointers) - 1,
-            columns = cols
+            columns = extent
         };
-    SparseCSC { values, indices, pointers, rows }:
+    SparseCSC { values, indices, pointers, extent }:
         {
-            rows,
+            rows = extent,
             columns = (length pointers) - 1
         };
     esac;
@@ -151,19 +151,21 @@ enumerateSparse m =
          _: [];
         esac;
     case m of
-    SparseCSC { values, indices, pointers, rows }: 
+    SparseCSC { values, indices, pointers, extent }: 
         enumerate (vec.list values) indices (list pointers) 0 0;
-    SparseCSR { values, indices, pointers, rows }:
+    SparseCSR { values, indices, pointers, extent }:
         map do { i, j, v }: { i = j, j = i, v } done 
            (enumerate (vec.list values) indices (list pointers) 0 0);
+     _: [];
     esac);
 
 makeSparse type data =
+//!!! not implemented
     case type of
     RowMajor (): 
-        SparseCSR { values = vec.zeros 0, indices = array [], pointers = array [] };
+        SparseCSR { values = vec.zeros 0, indices = array [], pointers = array [], extent = 0 };
     ColMajor (): 
-        SparseCSC { values = vec.zeros 0, indices = array [], pointers = array [] };
+        SparseCSC { values = vec.zeros 0, indices = array [], pointers = array [], extent = 0 };
     esac;
 
 constMatrix n = generate do row col: n done;
