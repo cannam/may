@@ -26,15 +26,27 @@ readAll stream =
     esac;
 
 bitdepthComparator depth =
-   (mult = fold do a _: a*2 done 1 [1..depth];
-    mult = mult / 2;
-    roundedBy f x = round (x * f);
-    do a b:
-        a' = roundedBy mult a;
-        b' = roundedBy mult b;
-        if abs(a' - b') <= 1 then true
+   (range = fold do a _: a*2 done 1 [1..depth]; // 2^depth
+    unsigned = (range == 8);
+    // Although for float->int conversion on writing we multiply by
+    // max-1 (e.g. by 32767 in 16-bit signed export), when reading we
+    // divide by 32768 -- in both cases trying to avoid overflow.  For
+    // this comparison we get a test sample (read from a file) and a
+    // reference sample (synthesised locally) and we need to simulate
+    // the export process for the synthetic one while inverting the
+    // import process for the test sample.
+    do test ref:
+        test' = round
+            if unsigned then (test + 1) * range
+            else test * (range/2)
+            fi;
+        ref' = round
+            if unsigned then (ref * (range-1)) - (range/2)
+            else ref * (range/2 - 1)
+            fi;
+        if abs(test' - ref') <= 1 then true
         else 
-            eprintln "bitdepthComparator: \(a) != \(b) at bitdepth \(depth) [\(a') != \(b')]";
+            eprintln "bitdepthComparator: \(test) != \(ref) at bitdepth \(depth) [\(test') != \(ref')]";
             false;
         fi;
     done);
@@ -57,6 +69,7 @@ testReferenceFile rate channels bitdepth =
             else
                 println "   channel \(ch): not ok";
 // This isn't really simple enough!
+/*!!!
                 seriesFor m =
                     Series {
                         start = 0, 
@@ -64,6 +77,7 @@ testReferenceFile rate channels bitdepth =
                         values = take 1000 (vec.list (mat.getRow ch m))
                         };
                 \() (pl.plot (map seriesFor [ test, ref, mat.scaled 10000 (mat.difference test ref) ]));
+*/
             fi;
         done;
         false
