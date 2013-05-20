@@ -377,10 +377,10 @@ colhash = makeTests "column-dense" id;
 rowhash = makeTests "row-dense" mat.flipped;
 sparsecolhash = makeTests "column-sparse" (mat.toSparse 0);
 sparserowhash = makeTests "row-sparse" ((mat.toSparse 0) . (mat.flipped));
-//sparserowhash2 = makeTests "row-sparse2" ((mat.flipped) . (mat.toSparse 0));
+sparserowhash2 = makeTests "row-sparse2" ((mat.flipped) . (mat.toSparse 0));
 
 all = [:];
-for [ colhash, rowhash, sparsecolhash, sparserowhash /*, sparserowhash2 */ ] do h:
+for [ colhash, rowhash, sparsecolhash, sparserowhash, sparserowhash2 ] do h:
     for (keys h) do k: all[k] := h[k] done;
 done;
 

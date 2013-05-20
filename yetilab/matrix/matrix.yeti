@@ -140,22 +140,20 @@ generate f { rows, columns } =
     fi;
 
 enumerateSparse m =
-   (enumerate vv ix ptr jn n =
-        case vv of
-        v::rest:
-            { v, i = ix[n], j = jn } :.
-                if n + 1 >= head ptr
-                then \(enumerate rest ix (tail ptr) (jn + 1) (n + 1))
-                else \(enumerate rest ix ptr jn (n + 1))
-                fi;
-         _: [];
-        esac;
+   (enumerate { values, indices, pointers } =
+        concat
+           (map do i:
+                start = pointers[i];
+                end = pointers[i+1];
+                map2 do j v: { i, j, v } done 
+                    (slice indices start end)
+                    (vec.list (vec.slice values start end))
+                done [0..length pointers - 2]);
     case m of
-    SparseCSC { values, indices, pointers, extent }: 
-        enumerate (vec.list values) indices (list pointers) 0 0;
-    SparseCSR { values, indices, pointers, extent }:
-        map do { i, j, v }: { i = j, j = i, v } done 
-           (enumerate (vec.list values) indices (list pointers) 0 0);
+    SparseCSC d: 
+        map do { i, j, v }: { i = j, j = i, v } done (enumerate d);
+    SparseCSR d:
+        enumerate d;
      _: [];
     esac);
 
@@ -398,6 +396,7 @@ concat direction mm = //!!! doc: storage order is taken from first matrix in seq
     _: zeroSizeMatrix ();
     esac;
 
+//!!! inconsistent with std.slice which has start..end not start+count (see also vec.slice/rangeOf)
 rowSlice start count m = //!!! doc: storage order same as input
     if isRowMajor? m then
         DenseRows (array (map ((flip getRow) m) [start .. start + count - 1]))
