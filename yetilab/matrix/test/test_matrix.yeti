@@ -354,16 +354,37 @@ makeTests name flipper =
         compare (mat.sparsity (newMatrix (ColumnMajor ()) [[0,0,0],[0,0,0]])) 0
 ),
 
+"toSparse-\(name)": \(
+    m = newMatrix (ColumnMajor ()) [[1,2,0],[-1,-4,6],[0,0,3]];
+    compareMatrices (mat.toSparse m) m and
+        compareMatrices (mat.toDense (mat.toSparse m)) m and
+        compare (mat.sparsity (mat.toSparse m)) (6/9)
+),
+
+"toDense-\(name)": \(
+    m = newMatrix (ColumnMajor ()) [[1,2,0],[-1,-4,6],[0,0,3]];
+    compareMatrices (mat.toDense m) m and
+        compareMatrices (mat.toSparse (mat.toDense m)) m
+),
+
+"thresholded-\(name)": \(
+    m = newMatrix (ColumnMajor ()) [[1,2,0],[-1,-4,6],[0,0,3]];
+    compareMatrices
+       (mat.thresholded 2 m)
+       (newMatrix (ColumnMajor ()) [[0,0,0],[0,-4,6],[0,0,3]]) and
+        compare (mat.sparsity (mat.thresholded 2 m)) (3/9)
+),
+
 ]);
 
 colhash = makeTests "column-dense" id;
 rowhash = makeTests "row-dense" mat.flipped;
-sparsecolhash = makeTests "column-sparse" (mat.toSparse 0);
+sparsecolhash = makeTests "column-sparse" mat.toSparse;
 
 // there are two possible orders for constructing a sparse row-major
 // matrix from a dense col-major one, so test them both:
-sparserowhash1 = makeTests "row-sparse-a" ((mat.toSparse 0) . (mat.flipped));
-sparserowhash2 = makeTests "row-sparse-b" ((mat.flipped) . (mat.toSparse 0));
+sparserowhash1 = makeTests "row-sparse-a" (mat.toSparse . mat.flipped);
+sparserowhash2 = makeTests "row-sparse-b" (mat.flipped . mat.toSparse);
 
 all = [:];
 for [ colhash, rowhash, sparsecolhash, sparserowhash1, sparserowhash2 ] do h:

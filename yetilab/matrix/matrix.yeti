@@ -206,28 +206,27 @@ makeSparse type size data =
         extent = minorSize,
     });
 
-toSparse threshold m =
+toSparse m =
     if isSparse? m then m
     else
         { rows, columns } = size m;
-        enumerate threshold m ii jj =
+        enumerate m ii jj =
             case ii of
             i::irest:
                 case jj of
                 j::rest:
                     v = getAt i j m;
-                    if abs v > threshold then
-                        { i, j, v } :. \(enumerate threshold m ii rest)
-                    else enumerate threshold m ii rest
+                    if v != 0 then { i, j, v } :. \(enumerate m ii rest)
+                    else enumerate m ii rest
                     fi;
-                 _: enumerate threshold m irest [0..columns-1];
+                 _: enumerate m irest [0..columns-1];
                 esac;
              _: [];
             esac;
         makeSparse 
             if isRowMajor? m then RowMajor () else ColMajor () fi
                (size m)
-               (enumerate threshold m [0..rows-1] [0..columns-1]);
+               (enumerate m [0..rows-1] [0..columns-1]);
     fi;
 
 toDense m =
@@ -299,9 +298,9 @@ equal' comparator vecComparator m1 m2 =
         equal' comparator vecComparator (flipped m1) m2;
     elif isSparse? m1 != isSparse? m2 then
         if isSparse? m1 then
-            equal' comparator vecComparator m1 (toSparse 0 m2)
+            equal' comparator vecComparator m1 (toSparse m2)
         else
-            equal' comparator vecComparator (toSparse 0 m1) m2
+            equal' comparator vecComparator (toSparse m1) m2
         fi
     else
         equal'' comparator vecComparator m1 m2
@@ -331,6 +330,11 @@ newColumnVector data = //!!! NB does not copy data
 
 scaled factor m = //!!! v inefficient
     generate do row col: factor * (getAt row col m) done (size m);
+
+thresholded threshold m = //!!! v inefficient; and should take a threshold function?
+    generate do row col:
+        v = getAt row col m; if (abs v) > threshold then v else 0 fi
+    done (size m);
 
 sum' m1 m2 =
     if (size m1) != (size m2)
@@ -480,6 +484,7 @@ resizedTo newsize m =
     toSparse,
     toDense,
     scaled,
+    thresholded,
     resizedTo,
     asRows,
     asColumns,
@@ -519,9 +524,10 @@ as
     flipped is matrix -> matrix, 
     toRowMajor is matrix -> matrix, 
     toColumnMajor is matrix -> matrix,
-    toSparse is number -> matrix -> matrix,
+    toSparse is matrix -> matrix,
     toDense is matrix -> matrix,
     scaled is number -> matrix -> matrix,
+    thresholded is number -> matrix -> matrix,
     resizedTo is { .rows is number, .columns is number } -> matrix -> matrix,
     asRows is matrix -> list<vector>, 
     asColumns is matrix -> list<vector>,
