@@ -354,6 +354,12 @@ makeTests name flipper =
         compare (mat.density (newMatrix (ColumnMajor ()) [[0,0,0],[0,0,0]])) 0
 ),
 
+"nonZeroValues-\(name)": \(
+    compare (mat.nonZeroValues (newMatrix (ColumnMajor ()) [[1,2,0],[0,5,0]])) 3 and
+        compare (mat.nonZeroValues (newMatrix (ColumnMajor ()) [[1,2,3],[4,5,6]])) 6 and
+        compare (mat.nonZeroValues (newMatrix (ColumnMajor ()) [[0,0,0],[0,0,0]])) 0
+),
+
 "toSparse-\(name)": \(
     m = newMatrix (ColumnMajor ()) [[1,2,0],[-1,-4,6],[0,0,3]];
     compareMatrices (mat.toSparse m) m and
