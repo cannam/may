@@ -51,7 +51,7 @@ sparseSlice n d =
     end = d.pointers[n+1];
     { 
         values = vec.slice d.values start end,
-        indices = slice d.indices start d.pointers[n+1],
+        indices = slice d.indices start end,
     });
 
 fromSlice n m d =
@@ -67,9 +67,9 @@ fromSlice n m d =
 filledSlice n d =
    (slice = sparseSlice n d;
     dslice = new double[d.extent];
-    \() (map2 do v i:
-             dslice[i] := v
-         done (vec.list slice.values) (list slice.indices));
+    for [0..length slice.indices - 1] do i:
+        dslice[slice.indices[i]] := vec.at i slice.values;
+    done;
     vec.vector dslice);
 
 getAt row col m =
@@ -189,7 +189,7 @@ makeSparse type size data =
     tagger {
         values = vec.fromList (map (.v) ordered),
         indices = array (map (.min) ordered),
-        pointers = array (majorPointers [] majorSize 0 0 (map (.maj) ordered)),
+        pointers = array (majorPointers [0] majorSize 0 0 (map (.maj) ordered)),
         extent = minorSize,
     });
 
@@ -460,6 +460,7 @@ resizedTo newsize m =
     equalUnder,
     transposed,
     flipped,
+    enumerateSparse,
     toRowMajor,
     toColumnMajor,
     toSparse,
@@ -501,6 +502,7 @@ as
     equalUnder is (number -> number -> boolean) -> matrix -> matrix -> boolean,
     transposed is matrix -> matrix,
     flipped is matrix -> matrix, 
+    enumerateSparse is matrix -> list<{ i is number, j is number, v is number }>,
     toRowMajor is matrix -> matrix, 
     toColumnMajor is matrix -> matrix,
     toSparse is number -> matrix -> matrix,
