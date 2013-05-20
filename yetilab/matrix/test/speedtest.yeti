@@ -1,0 +1,142 @@
+
+program yetilab.matrix.test.speedtest;
+
+mat = load yetilab.matrix.matrix;
+vec = load yetilab.vector.vector;
+
+{ compare, compareUsing } = load yetilab.test.test;
+
+compareMatrices = compareUsing mat.equal;
+
+time f =
+   (start = System#currentTimeMillis();
+    result = f ();
+    end = System#currentTimeMillis();
+    println " \(end-start)ms";
+    result);
+
+makeMatrices sz sparsity =
+   (print "Making \(sz) * \(sz) random matrix...";
+    m = time \(mat.randomMatrix { rows = sz, columns = sz });
+    makeSparse () = 
+       (print "Making \(sparsity * 100)% sparse version (as dense matrix)...";
+        t = time \(mat.thresholded sparsity m);
+        println "Reported density: \(mat.density t) (non-zero values: \(mat.nonZeroValues t))";
+        print "Converting to sparse matrix...";
+        s = time \(mat.toSparse t);
+        println "Reported density: \(mat.density s) (non-zero values: \(mat.nonZeroValues s))";
+        s);
+    s = makeSparse ();
+    println "Making types:";
+    print "Col-major dense...";
+    cmd = time \(mat.toColumnMajor m);
+    print "Row-major dense...";
+    rmd = time \(mat.toRowMajor m);
+    print "Col-major sparse...";
+    cms = time \(mat.toColumnMajor s);
+    print "Row-major sparse...";
+    rms = time \(mat.toRowMajor s);
+    println "";
+    { cmd, rmd, cms, rms });
+
+println "\nR * M multiplies:\n";
+
+sz = 2000;
+sparsity = 0.98;
+
+{ cmd, rmd, cms, rms } = makeMatrices sz sparsity;
+
+row = mat.newRowVector (vec.fromList (map \(Math#random()) [1..sz]));
+col = mat.newColumnVector (vec.fromList (map \(Math#random()) [1..sz]));
+
+print "R * CMD... ";
+a = (time \(mat.product row cmd));
+
+print "R * RMD... ";
+b = (time \(mat.product row rmd));
+
+print "R * CMS... ";
+c = (time \(mat.product row cms));
+
+print "R * RMS... ";
+d = (time \(mat.product row rms));
+
+println "\nChecking results: \(compareMatrices a b) \(compareMatrices c d)";
+
+println "\nM * C multiplies:\n";
+
+print "CMD * C... ";
+a = (time \(mat.product cmd col));
+
+print "RMD * C... ";
+b = (time \(mat.product rmd col));
+
+print "CMS * C... ";
+c = (time \(mat.product cms col));
+
+print "RMS * C... ";
+d = (time \(mat.product rms col));
+
+println "\nChecking results: \(compareMatrices a b) \(compareMatrices c d)";
+
+println "\nM * M multiplies:\n";
+
+sz = 500;
+
+{ cmd, rmd, cms, rms } = makeMatrices sz sparsity;
+
+print "CMS * CMD... ";
+\() (time \(mat.product cms cmd));
+
+print "CMS * RMD... ";
+\() (time \(mat.product cms rmd));
+
+print "RMS * CMD... ";
+\() (time \(mat.product rms cmd));
+
+print "RMS * RMD... ";
+\() (time \(mat.product rms rmd));
+
+println "";
+
+print "CMD * CMS... ";
+\() (time \(mat.product cmd cms));
+
+print "CMD * RMS... ";
+\() (time \(mat.product cmd rms));
+
+print "RMD * CMS... ";
+\() (time \(mat.product rmd cms));
+
+print "RMD * RMS... ";
+\() (time \(mat.product rmd rms));
+
+println "";
+
+print "CMS * CMS... ";
+\() (time \(mat.product cms cms));
+
+print "CMS * RMS... ";
+\() (time \(mat.product cms rms));
+
+print "RMS * CMS... ";
+\() (time \(mat.product rms cms));
+
+print "RMS * RMS... ";
+\() (time \(mat.product rms rms));
+
+println "";
+
+print "CMD * CMD... ";
+\() (time \(mat.product cmd cmd));
+
+print "CMD * RMD... ";
+\() (time \(mat.product cmd rmd));
+
+print "RMD * CMD... ";
+\() (time \(mat.product rmd cmd));
+
+print "RMD * RMD... ";
+\() (time \(mat.product rmd rmd));
+
+();

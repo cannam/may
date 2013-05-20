@@ -90,11 +90,11 @@ makeTests name flipper =
 ),
 
 "equal-\(name)": \(
-    m = newMatrix (ColumnMajor ()) [[1,4],[2,5],[3,6]];
+    m = newMatrix (ColumnMajor ()) [[1,4],[0,5],[3,6]];
     n = m;
-    p = newMatrix (RowMajor ()) [[1,2,3],[4,5,6]];
-    q = newMatrix (ColumnMajor ()) [[1,2,3],[4,5,6]];
-    r = newMatrix (ColumnMajor ()) [[1,4],[2,5]];
+    p = newMatrix (RowMajor ()) [[1,0,3],[4,5,6]];
+    q = newMatrix (ColumnMajor ()) [[1,0,3],[4,5,6]];
+    r = newMatrix (ColumnMajor ()) [[1,4],[0,5]];
     compareMatrices m n and
         compareMatrices m p and
         compareMatrices n p and
@@ -106,8 +106,8 @@ makeTests name flipper =
     p = newMatrix (ColumnMajor ()) [[1,2,3],[4,5,6]];
     q = newMatrix (ColumnMajor ()) [[1,2,3],[4,5,6]];
     r = newMatrix (ColumnMajor ()) [[4,3,1],[3,1,2]];
-    s = newMatrix (ColumnMajor ()) [[1,2,5],[6,7,8]];
-    t = newMatrix (ColumnMajor ()) [[1,2,5],[6,7,9]];
+    s = newMatrix (ColumnMajor ()) [[1,4,5],[6,7,8]];
+    t = newMatrix (ColumnMajor ()) [[1,4,5],[6,7,9]];
     mat.equalUnder (==) p p and
         mat.equalUnder (==) p q and
         mat.equalUnder (!=) p r and
@@ -123,30 +123,7 @@ makeTests name flipper =
            (map do col: mat.getAt row col m == generator row col done [0..2])
             done [0..1])
 ),
-/*!!!
-"setAt-\(name)": \(
-    generator row col = row * 10 + col;
-    m = generate generator { rows = 2, columns = 3 };
-    mat.setAt 1 2 16 m;
-    compare (mat.getAt 1 2 m) 16 and
-        compare (mat.getAt 1 1 m) 11 and
-        compare (mat.getAt 0 2 m) 2
-),
 
-"copyOfEqual-\(name)": \(
-    m = constMatrix 2 { rows = 3, columns = 4 };
-    m'' = mat.copyOf m;
-    compareMatrices m'' m
-),
-
-"copyOfAlias-\(name)": \(
-    m = constMatrix 2 { rows = 3, columns = 4 };
-    m' = m;
-    m'' = mat.copyOf m;
-    mat.setAt 0 0 6 m;
-    compareMatrices m' m and not mat.equal m m'';
-),
-*/
 "transposedEmpty-\(name)": \(
     compare (mat.size (mat.transposed (constMatrix 2 { rows = 0, columns = 0 }))) { columns = 0, rows = 0 } and
         compare (mat.size (mat.transposed (constMatrix 2 { rows = 0, columns = 4 }))) { columns = 0, rows = 0 } and
@@ -175,14 +152,14 @@ makeTests name flipper =
 ),
 
 "flipped-\(name)": \(
-    m = newMatrix (ColumnMajor ()) [[1,4],[2,5],[3,6]];
+    m = newMatrix (ColumnMajor ()) [[1,4],[0,5],[3,6]];
     m' = mat.flipped m;
-    m'' = newMatrix (RowMajor ()) [[1,2,3],[4,5,6]];
+    m'' = newMatrix (RowMajor ()) [[1,0,3],[4,5,6]];
     compareMatrices m m' and compareMatrices m m'' and compareMatrices m' m'';
 ),
 
 "flipped-back-\(name)": \(
-    m = newMatrix (ColumnMajor ()) [[1,4],[2,5],[3,6]];
+    m = newMatrix (ColumnMajor ()) [[1,4],[0,5],[3,6]];
     compareMatrices m (mat.flipped (mat.flipped m));
 ),
 
@@ -192,18 +169,18 @@ makeTests name flipper =
 ),
 
 "toRowMajor-\(name)": \(
-    m = newMatrix (ColumnMajor ()) [[1,4],[2,5],[3,6]];
+    m = newMatrix (ColumnMajor ()) [[1,4],[0,5],[3,6]];
     m' = mat.toRowMajor m;
-    m'' = newMatrix (RowMajor ()) [[1,2,3],[4,5,6]];
+    m'' = newMatrix (RowMajor ()) [[1,0,3],[4,5,6]];
     m''' = mat.toRowMajor m'';
     compareMatrices m m' and compareMatrices m m'' and compareMatrices m' m''
         and compareMatrices m m''';
 ),
 
 "toColumnMajor-\(name)": \(
-    m = newMatrix (RowMajor ()) [[1,4],[2,5],[3,6]];
+    m = newMatrix (RowMajor ()) [[1,4],[0,5],[3,6]];
     m' = mat.toColumnMajor m;
-    m'' = newMatrix (ColumnMajor ()) [[1,2,3],[4,5,6]];
+    m'' = newMatrix (ColumnMajor ()) [[1,0,3],[4,5,6]];
     m''' = mat.toColumnMajor m'';
     compareMatrices m m' and compareMatrices m m'' and compareMatrices m' m''
         and compareMatrices m m''';
@@ -310,29 +287,29 @@ makeTests name flipper =
 "asRows-\(name)": \(
     compare
        (map vec.list
-           (mat.asRows (newMatrix (ColumnMajor ()) [[1,4],[2,5],[3,6]])))
-        [[1,2,3],[4,5,6]];
+           (mat.asRows (newMatrix (ColumnMajor ()) [[1,4],[0,5],[3,6]])))
+        [[1,0,3],[4,5,6]];
 ),
 
 "asColumns-\(name)": \(
     compare
        (map vec.list
-           (mat.asColumns (newMatrix (ColumnMajor ()) [[1,4],[2,5],[3,6]])))
-        [[1,4],[2,5],[3,6]];
+           (mat.asColumns (newMatrix (ColumnMajor ()) [[1,4],[0,5],[3,6]])))
+        [[1,4],[0,5],[3,6]];
 ),
 
 "concat-horiz-\(name)": \(
     compareMatrices
        (mat.concat (Horizontal ()) 
-          [(newMatrix (ColumnMajor ()) [[1,4],[2,5]]),
+          [(newMatrix (ColumnMajor ()) [[1,4],[0,5]]),
            (newMatrix (RowMajor ()) [[3],[6]])])
-       (newMatrix (ColumnMajor ()) [[1,4],[2,5],[3,6]])
+       (newMatrix (ColumnMajor ()) [[1,4],[0,5],[3,6]])
 ),
 
 "concatFail-horiz-\(name)": \(
     try
         \() (mat.concat (Horizontal ()) 
-          [(newMatrix (ColumnMajor ()) [[1,4],[2,5]]),
+          [(newMatrix (ColumnMajor ()) [[1,4],[0,5]]),
            (newMatrix (ColumnMajor ()) [[3],[6]])]);
         false
     catch FailureException e:
@@ -343,15 +320,15 @@ makeTests name flipper =
 "concat-vert-\(name)": \(
     compareMatrices
        (mat.concat (Vertical ()) 
-          [(newMatrix (ColumnMajor ()) [[1,4],[2,5]]),
+          [(newMatrix (ColumnMajor ()) [[1,4],[0,5]]),
            (newMatrix (RowMajor ()) [[3,6]])])
-       (newMatrix (ColumnMajor ()) [[1,4,3],[2,5,6]])
+       (newMatrix (ColumnMajor ()) [[1,4,3],[0,5,6]])
 ),
 
 "concatFail-vert-\(name)": \(
     try
         \() (mat.concat (Vertical ()) 
-          [(newMatrix (ColumnMajor ()) [[1,4],[2,5]]),
+          [(newMatrix (ColumnMajor ()) [[1,4],[0,5]]),
            (newMatrix (RowMajor ()) [[3],[6]])]);
         false
     catch FailureException e:
@@ -361,24 +338,64 @@ makeTests name flipper =
 
 "rowSlice-\(name)": \(
     compareMatrices
-       (mat.rowSlice 1 2 (newMatrix (RowMajor ()) [[1,2],[3,4],[5,6],[7,8]]))
-       (newMatrix (RowMajor ()) [[3,4],[5,6]])
+       (mat.rowSlice 1 2 (newMatrix (RowMajor ()) [[1,0],[3,4],[0,6],[7,8]]))
+       (newMatrix (RowMajor ()) [[3,4],[0,6]])
 ),
 
 "columnSlice-\(name)": \(
     compareMatrices
-       (mat.columnSlice 1 2 (newMatrix (RowMajor ()) [[1,2,3,4],[5,6,7,8]]))
-       (newMatrix (RowMajor ()) [[2,3],[6,7]])
+       (mat.columnSlice 1 2 (newMatrix (RowMajor ()) [[1,0,3,4],[0,6,7,8]]))
+       (newMatrix (RowMajor ()) [[0,3],[6,7]])
+),
+
+"density-\(name)": \(
+    compare (mat.density (newMatrix (ColumnMajor ()) [[1,2,0],[0,5,0]])) (3/6) and
+        compare (mat.density (newMatrix (ColumnMajor ()) [[1,2,3],[4,5,6]])) (6/6) and
+        compare (mat.density (newMatrix (ColumnMajor ()) [[0,0,0],[0,0,0]])) 0
+),
+
+"nonZeroValues-\(name)": \(
+    compare (mat.nonZeroValues (newMatrix (ColumnMajor ()) [[1,2,0],[0,5,0]])) 3 and
+        compare (mat.nonZeroValues (newMatrix (ColumnMajor ()) [[1,2,3],[4,5,6]])) 6 and
+        compare (mat.nonZeroValues (newMatrix (ColumnMajor ()) [[0,0,0],[0,0,0]])) 0
+),
+
+"toSparse-\(name)": \(
+    m = newMatrix (ColumnMajor ()) [[1,2,0],[-1,-4,6],[0,0,3]];
+    compareMatrices (mat.toSparse m) m and
+        compareMatrices (mat.toDense (mat.toSparse m)) m and
+        compare (mat.density (mat.toSparse m)) (6/9)
+),
+
+"toDense-\(name)": \(
+    m = newMatrix (ColumnMajor ()) [[1,2,0],[-1,-4,6],[0,0,3]];
+    compareMatrices (mat.toDense m) m and
+        compareMatrices (mat.toSparse (mat.toDense m)) m
+),
+
+"thresholded-\(name)": \(
+    m = newMatrix (ColumnMajor ()) [[1,2,0],[-1,-4,6],[0,0,3]];
+    compareMatrices
+       (mat.thresholded 2 m)
+       (newMatrix (ColumnMajor ()) [[0,0,0],[0,-4,6],[0,0,3]]) and
+        compare (mat.density (mat.thresholded 2 m)) (3/9)
 ),
 
 ]);
 
-colhash = makeTests "column-major" id;
-rowhash = makeTests "row-major" mat.flipped;
+colhash = makeTests "column-dense" id;
+rowhash = makeTests "row-dense" mat.flipped;
+sparsecolhash = makeTests "column-sparse" mat.toSparse;
+
+// there are two possible orders for constructing a sparse row-major
+// matrix from a dense col-major one, so test them both:
+sparserowhash1 = makeTests "row-sparse-a" (mat.toSparse . mat.flipped);
+sparserowhash2 = makeTests "row-sparse-b" (mat.flipped . mat.toSparse);
 
 all = [:];
-for (keys colhash) do k: all[k] := colhash[k] done;
-for (keys rowhash) do k: all[k] := rowhash[k] done;
+for [ colhash, rowhash, sparsecolhash, sparserowhash1, sparserowhash2 ] do h:
+    for (keys h) do k: all[k] := h[k] done;
+done;
 
 all is hash<string, () -> boolean>;
 
