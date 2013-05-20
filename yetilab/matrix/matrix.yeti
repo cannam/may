@@ -46,7 +46,7 @@ size m =
 width m = (size m).columns;
 height m = (size m).rows;
 
-sparsity m =
+density m =
    ({ rows, columns } = size m;
     cells = rows * columns;
     nonZeroCells d =
@@ -356,7 +356,7 @@ abs' m =
 //!!! todo: proper sparse multiply
 product m1 m2 =
     if (size m1).columns != (size m2).rows
-    then failWith "Matrix dimensions incompatible: \(size m1), \(size m2) (\((size m1).columns != (size m2).rows)";
+    then failWith "Matrix dimensions incompatible: \(size m1), \(size m2) (\((size m1).columns) != \((size m2).rows))";
     else
         generate do row col:
             bf.sum (bf.multiply (getRow row m1) (getColumn col m2))
@@ -463,7 +463,7 @@ resizedTo newsize m =
     size,
     width,
     height,
-    sparsity,
+    density,
     getAt,
     getColumn,
     getRow,
@@ -507,7 +507,7 @@ as
     size is matrix -> { .rows is number, .columns is number },
     width is matrix -> number,
     height is matrix -> number,
-    sparsity is matrix -> number,
+    density is matrix -> number,
     getAt is number -> number -> matrix -> number,
     getColumn is number -> matrix -> vector,
     getRow is number -> matrix -> vector,
