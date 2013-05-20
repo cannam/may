@@ -125,19 +125,19 @@ isSparse? m =
     SparseCSC _: true;
     esac;
 
-newColMajorStorage { rows, columns } = 
+newColumnMajorStorage { rows, columns } = 
     if rows < 1 then array []
     else array (map \(vec.zeros rows) [1..columns])
     fi;
 
 zeroMatrix { rows, columns } = 
-    DenseCols (newColMajorStorage { rows, columns });
+    DenseCols (newColumnMajorStorage { rows, columns });
 
 zeroMatrixWithTypeOf m { rows, columns } = 
     if isRowMajor? m then
-        DenseRows (newColMajorStorage { rows = columns, columns = rows });
+        DenseRows (newColumnMajorStorage { rows = columns, columns = rows });
     else
-        DenseCols (newColMajorStorage { rows, columns });
+        DenseCols (newColumnMajorStorage { rows, columns });
     fi;
 
 zeroSizeMatrix () = zeroMatrix { rows = 0, columns = 0 };
@@ -173,7 +173,7 @@ enumerateSparse m =
     esac);
 
 makeSparse type size data =
-   (isRow = case type of RowMajor (): true; ColMajor (): false esac;
+   (isRow = case type of RowMajor (): true; ColumnMajor (): false esac;
     ordered = 
         sortBy do a b:
             if a.maj == b.maj then a.min < b.min else a.maj < b.maj fi
@@ -224,7 +224,7 @@ toSparse m =
              _: [];
             esac;
         makeSparse 
-            if isRowMajor? m then RowMajor () else ColMajor () fi
+            if isRowMajor? m then RowMajor () else ColumnMajor () fi
                (size m)
                (enumerate m [0..rows-1] [0..columns-1]);
     fi;
@@ -252,7 +252,7 @@ transposed m =
 flipped m =
     if isSparse? m then
         if isRowMajor? m then
-            makeSparse (ColMajor ()) (size m) (enumerateSparse m)
+            makeSparse (ColumnMajor ()) (size m) (enumerateSparse m)
         else
             makeSparse (RowMajor ()) (size m) (enumerateSparse m)
         fi
