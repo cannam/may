@@ -46,6 +46,21 @@ size m =
 width m = (size m).columns;
 height m = (size m).rows;
 
+sparsity m =
+   ({ rows, columns } = size m;
+    cells = rows * columns;
+    nonZeroCells d =
+        sum
+           (map do v:
+                sum (map do n: if n == 0 then 0 else 1 fi done (vec.list v))
+                done d);
+    case m of 
+    DenseRows d: (nonZeroCells d) / cells;
+    DenseCols d: (nonZeroCells d) / cells;
+    SparseCSR d: (vec.length d.values) / cells;
+    SparseCSC d: (vec.length d.values) / cells;
+    esac);
+
 sparseSlice n d =
    (start = d.pointers[n];
     end = d.pointers[n+1];
@@ -444,6 +459,7 @@ resizedTo newsize m =
     size,
     width,
     height,
+    sparsity,
     getAt,
     getColumn,
     getRow,
@@ -485,6 +501,7 @@ as
     size is matrix -> { .rows is number, .columns is number },
     width is matrix -> number,
     height is matrix -> number,
+    sparsity is matrix -> number,
     getAt is number -> number -> matrix -> number,
     getColumn is number -> matrix -> vector,
     getRow is number -> matrix -> vector,

@@ -348,6 +348,12 @@ makeTests name flipper =
        (newMatrix (RowMajor ()) [[0,3],[6,7]])
 ),
 
+"sparsity-\(name)": \(
+    compare (mat.sparsity (newMatrix (ColumnMajor ()) [[1,2,0],[0,5,0]])) (3/6) and
+        compare (mat.sparsity (newMatrix (ColumnMajor ()) [[1,2,3],[4,5,6]])) (6/6) and
+        compare (mat.sparsity (newMatrix (ColumnMajor ()) [[0,0,0],[0,0,0]])) 0
+),
+
 ]);
 
 colhash = makeTests "column-dense" id;
