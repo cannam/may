@@ -373,12 +373,16 @@ makeTests name flipper =
 
 ]);
 
-colhash = makeTests "column-major" id;
-rowhash = makeTests "row-major" mat.flipped;
+colhash = makeTests "column-dense" id;
+rowhash = makeTests "row-dense" mat.flipped;
+sparsecolhash = makeTests "column-sparse" (mat.toSparse 0);
+sparserowhash = makeTests "row-sparse" ((mat.toSparse 0) . (mat.flipped));
+//sparserowhash2 = makeTests "row-sparse2" ((mat.flipped) . (mat.toSparse 0));
 
 all = [:];
-for (keys colhash) do k: all[k] := colhash[k] done;
-for (keys rowhash) do k: all[k] := rowhash[k] done;
+for [ colhash, rowhash, sparsecolhash, sparserowhash /*, sparserowhash2 */ ] do h:
+    for (keys h) do k: all[k] := h[k] done;
+done;
 
 all is hash<string, () -> boolean>;
 
