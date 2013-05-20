@@ -348,17 +348,17 @@ makeTests name flipper =
        (newMatrix (RowMajor ()) [[0,3],[6,7]])
 ),
 
-"sparsity-\(name)": \(
-    compare (mat.sparsity (newMatrix (ColumnMajor ()) [[1,2,0],[0,5,0]])) (3/6) and
-        compare (mat.sparsity (newMatrix (ColumnMajor ()) [[1,2,3],[4,5,6]])) (6/6) and
-        compare (mat.sparsity (newMatrix (ColumnMajor ()) [[0,0,0],[0,0,0]])) 0
+"density-\(name)": \(
+    compare (mat.density (newMatrix (ColumnMajor ()) [[1,2,0],[0,5,0]])) (3/6) and
+        compare (mat.density (newMatrix (ColumnMajor ()) [[1,2,3],[4,5,6]])) (6/6) and
+        compare (mat.density (newMatrix (ColumnMajor ()) [[0,0,0],[0,0,0]])) 0
 ),
 
 "toSparse-\(name)": \(
     m = newMatrix (ColumnMajor ()) [[1,2,0],[-1,-4,6],[0,0,3]];
     compareMatrices (mat.toSparse m) m and
         compareMatrices (mat.toDense (mat.toSparse m)) m and
-        compare (mat.sparsity (mat.toSparse m)) (6/9)
+        compare (mat.density (mat.toSparse m)) (6/9)
 ),
 
 "toDense-\(name)": \(
@@ -372,7 +372,7 @@ makeTests name flipper =
     compareMatrices
        (mat.thresholded 2 m)
        (newMatrix (ColumnMajor ()) [[0,0,0],[0,-4,6],[0,0,3]]) and
-        compare (mat.sparsity (mat.thresholded 2 m)) (3/9)
+        compare (mat.density (mat.thresholded 2 m)) (3/9)
 ),
 
 ]);
