@@ -498,6 +498,7 @@ resizedTo newsize m =
     newMatrix,
     newRowVector,
     newColumnVector,
+    newSparseMatrix = makeSparse
 }
 as
 {
@@ -541,5 +542,6 @@ as
     newMatrix is (ColumnMajor () | RowMajor ()) -> list<vector> -> matrix, 
     newRowVector is vector -> matrix, 
     newColumnVector is vector -> matrix,
+    newSparseMatrix is (ColumnMajor () | RowMajor ()) -> { .rows is number, .columns is number } -> list<{ .i is number, .j is number, .v is number }> -> matrix
 }
 
