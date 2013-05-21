@@ -249,6 +249,30 @@ makeTests name flipper =
            (newMatrix (ColumnMajor ()) [[58,139],[64,154]])
 ),
 
+"sparseProduct-\(name)": \(
+    s = mat.newSparseMatrix (ColumnMajor ()) { rows = 2, columns = 3 } [
+        { i = 0, j = 0, v = 1 },
+        { i = 0, j = 2, v = 2 },
+        { i = 1, j = 1, v = 4 },
+    ];
+    t = mat.newSparseMatrix (ColumnMajor ()) { rows = 3, columns = 2 } [
+        { i = 0, j = 1, v = 7 },
+        { i = 1, j = 0, v = 5 },
+        { i = 2, j = 0, v = 6 },
+    ];
+    prod = mat.product s t;
+    mat.isSparse? prod and
+        compareMatrices prod (mat.product (mat.toDense s) t) and
+        compareMatrices prod (mat.product (mat.toDense s) (mat.toDense t)) and
+        compareMatrices prod (mat.product s (mat.toDense t)) and
+        compareMatrices prod 
+           (mat.newSparseMatrix (RowMajor ()) { rows = 2, columns = 2 } [
+               { i = 0, j = 0, v = 12 },
+               { i = 0, j = 1, v = 7 },
+               { i = 1, j = 0, v = 20 },
+            ])
+),
+
 "productFail-\(name)": \(
     try
       \() (mat.product (constMatrix 2 { rows = 4, columns = 2 })

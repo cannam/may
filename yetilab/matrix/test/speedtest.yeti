@@ -79,6 +79,10 @@ d = (time \(mat.product rms col));
 
 println "\nChecking results: \(compareMatrices a b) \(compareMatrices c d)";
 
+reportOn m = 
+   (print "                                 ";
+    println "isSparse: \(mat.isSparse? m), density \(mat.density m)");
+
 println "\nM * M multiplies:\n";
 
 sz = 500;
@@ -86,57 +90,93 @@ sz = 500;
 { cmd, rmd, cms, rms } = makeMatrices sz sparsity;
 
 print "CMS * CMD... ";
-\() (time \(mat.product cms cmd));
+reportOn (time \(mat.product cms cmd));
 
 print "CMS * RMD... ";
-\() (time \(mat.product cms rmd));
+reportOn (time \(mat.product cms rmd));
 
 print "RMS * CMD... ";
-\() (time \(mat.product rms cmd));
+reportOn (time \(mat.product rms cmd));
 
 print "RMS * RMD... ";
-\() (time \(mat.product rms rmd));
+reportOn (time \(mat.product rms rmd));
 
 println "";
 
 print "CMD * CMS... ";
-\() (time \(mat.product cmd cms));
+reportOn (time \(mat.product cmd cms));
 
 print "CMD * RMS... ";
-\() (time \(mat.product cmd rms));
+reportOn (time \(mat.product cmd rms));
 
 print "RMD * CMS... ";
-\() (time \(mat.product rmd cms));
+reportOn (time \(mat.product rmd cms));
 
 print "RMD * RMS... ";
-\() (time \(mat.product rmd rms));
+reportOn (time \(mat.product rmd rms));
 
 println "";
 
 print "CMS * CMS... ";
-\() (time \(mat.product cms cms));
+reportOn (time \(mat.product cms cms));
 
 print "CMS * RMS... ";
-\() (time \(mat.product cms rms));
+reportOn (time \(mat.product cms rms));
 
 print "RMS * CMS... ";
-\() (time \(mat.product rms cms));
+reportOn (time \(mat.product rms cms));
 
 print "RMS * RMS... ";
-\() (time \(mat.product rms rms));
+reportOn (time \(mat.product rms rms));
 
 println "";
 
 print "CMD * CMD... ";
-\() (time \(mat.product cmd cmd));
+reportOn (time \(mat.product cmd cmd));
 
 print "CMD * RMD... ";
-\() (time \(mat.product cmd rmd));
+reportOn (time \(mat.product cmd rmd));
 
 print "RMD * CMD... ";
-\() (time \(mat.product rmd cmd));
+reportOn (time \(mat.product rmd cmd));
 
 print "RMD * RMD... ";
-\() (time \(mat.product rmd rmd));
+reportOn (time \(mat.product rmd rmd));
+
+println "\nLarge sparse M * M multiplies:\n";
+
+sz = 5000000;
+nnz = 10000;
+
+print "Calculating \(nnz) non-zero entry records...";
+entries = time \(e = map \({ i = int (Math#random() * sz), 
+                             j = int (Math#random() * sz),
+                             v = Math#random() }) [1..nnz];
+                 \() (length e); // make sure list non-lazy for timing purposes
+                 e);
+
+print "Making \(sz) * \(sz) random matrix with \(nnz) entries...";
+rms = time \(mat.newSparseMatrix (RowMajor ()) { rows = sz, columns = sz }
+             entries);
+println "Reported density: \(mat.density rms) (non-zero values: \(mat.nonZeroValues rms))";
+
+print "Making col-major copy...";
+cms = time \(mat.toColumnMajor rms);
+println "Reported density: \(mat.density cms) (non-zero values: \(mat.nonZeroValues cms))";
+
+println "";
+
+print "CMS * CMS... ";
+reportOn (time \(mat.product cms cms));
+
+print "CMS * RMS... ";
+reportOn (time \(mat.product cms rms));
+
+print "RMS * CMS... ";
+reportOn (time \(mat.product rms cms));
+
+print "RMS * RMS... ";
+reportOn (time \(mat.product rms rms));
+
 
 ();
