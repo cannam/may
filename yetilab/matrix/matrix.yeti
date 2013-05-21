@@ -191,21 +191,23 @@ makeSparse type size data =
     tagger = if isRow then SparseCSR else SparseCSC fi;
     majorSize = if isRow then size.rows else size.columns fi;
     minorSize = if isRow then size.columns else size.rows fi;
-    majorPointers acc nn n i data =
-        if n < nn then 
-            case data of 
+    pointers = array [0];
+    setArrayCapacity pointers (size.rows + 1);
+    fillPointers n i data =
+        if n < majorSize then
+            case data of
             d::rest:
-                majorPointers (acc ++ (map \(i) [n..d-1])) nn d (i+1) rest;
-             _: 
-                majorPointers (acc ++ [i]) nn (n+1) i [];
+               (for [n..d-1] \(push pointers i);
+                fillPointers d (i+1) rest);
+             _:
+                for [n..majorSize-1] \(push pointers i);
             esac;
-        else
-            acc
         fi;
+    fillPointers 0 0 (map (.maj) ordered);
     tagger {
         values = vec.fromList (map (.v) ordered),
         indices = array (map (.min) ordered),
-        pointers = array (majorPointers [0] majorSize 0 0 (map (.maj) ordered)),
+        pointers,
         extent = minorSize,
     });
 
@@ -380,6 +382,36 @@ sparseProductRight size m1 m2 =
     done;
     DenseRows (array (map vec.vector (list data))));
 
+sparseProduct size m1 m2 =
+    case m2 of
+    SparseCSC d:
+       (e = enumerateSparse m1;
+        entries =
+           (map do j':
+                cs = sparseSlice j' d;
+                if empty? cs.indices then
+                    []
+                else
+                    hin = mapIntoHash
+                       (at cs.indices) ((flip vec.at) cs.values)
+                       [0..length cs.indices - 1];
+                    hout = [:];
+                    for e do { v, i, j }:
+                        if j in hin then
+                            p = v * hin[j];
+                            hout[i] := p + (if i in hout then hout[i] else 0 fi);                         fi
+                    done;
+                    map do i:
+                        { i, j = j', v = hout[i] }
+                    done (keys hout);
+                fi
+            done [0..size.columns - 1]);
+        makeSparse (ColumnMajor ()) size (concat entries));
+    SparseCSR _:
+        sparseProduct size m1 (flipped m2);
+     _: failWith "sparseProduct called for non-sparse matrices";
+    esac;
+
 denseProduct size m1 m2 =
    (data = array (map \(new double[size.rows]) [1..size.columns]);
     for [0..size.rows - 1] do i:
@@ -396,7 +428,11 @@ product m1 m2 =
     else 
         size = { rows = (size m1).rows, columns = (size m2).columns };
         if isSparse? m1 then
-            sparseProductLeft size m1 m2
+            if isSparse? m2 then
+                sparseProduct size m1 m2
+            else
+                sparseProductLeft size m1 m2
+            fi
         elif isSparse? m2 then
             sparseProductRight size m1 m2
         else

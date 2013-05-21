@@ -40,6 +40,7 @@ length' =
 empty?' =
     empty? . list';
 
+//!!! this is reversed from std.at, fix
 at' n v is number -> ~double[] -> number =
     v[n];
 
