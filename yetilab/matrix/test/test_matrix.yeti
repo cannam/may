@@ -405,6 +405,48 @@ makeTests name flipper =
         compare (mat.density (mat.thresholded 2 m)) (3/9)
 ),
 
+"newSparseMatrix-\(name)": \(
+    s = mat.newSparseMatrix (ColumnMajor ()) { rows = 2, columns = 3 } [
+        { i = 0, j = 0, v = 1 },
+        { i = 0, j = 2, v = 2 },
+        { i = 1, j = 1, v = 4 },
+    ];
+    // If there are zeros in the entries list, they should not end up
+    // in the sparse data
+    t = mat.newSparseMatrix (ColumnMajor ()) { rows = 2, columns = 3 } [
+        { i = 0, j = 0, v = 1 },
+        { i = 0, j = 2, v = 0 },
+        { i = 1, j = 1, v = 4 },
+    ];
+    compare (mat.density s) (3/6) and
+        compare (mat.density t) (2/6) and
+        compareMatrices s (newMatrix (RowMajor ()) [[1,0,2],[0,4,0]]) and
+        compareMatrices t (newMatrix (RowMajor ()) [[1,0,0],[0,4,0]])
+),
+
+"enumerate-\(name)": \(
+    m = newMatrix (ColumnMajor ()) [[1,2,0],[-1,-4,6],[0,0,3]];
+    all = [
+        { i = 0, j = 0, v = 1 },
+        { i = 1, j = 0, v = 2 },
+        { i = 2, j = 0, v = 0 },
+        { i = 0, j = 1, v = -1 },
+        { i = 1, j = 1, v = -4 },
+        { i = 2, j = 1, v = 6 },
+        { i = 0, j = 2, v = 0 },
+        { i = 1, j = 2, v = 0 },
+        { i = 2, j = 2, v = 3 },
+    ];
+    sortEntries = 
+        sortBy do a b:
+            if a.i == b.i then a.j < b.j else a.i < b.i fi
+        done;
+    compare
+       (sortEntries (mat.enumerate m))
+       (sortEntries 
+           (if mat.isSparse? m then filter do d: d.v != 0 done all else all fi));
+),
+
 ]);
 
 colhash = makeTests "column-dense" id;

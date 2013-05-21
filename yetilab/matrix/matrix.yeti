@@ -166,6 +166,9 @@ generate f { rows, columns } =
         DenseCols (array (map vec.vector m))
     fi;
 
+swapij =
+    map do { i, j, v }: { i = j, j = i, v } done;
+
 enumerateSparse m =
    (enumerate { values, indices, pointers } =
         concat
@@ -177,12 +180,28 @@ enumerateSparse m =
                     (vec.list (vec.slice values start end))
                 done [0..length pointers - 2]);
     case m of
-    SparseCSC d: 
-        map do { i, j, v }: { i = j, j = i, v } done (enumerate d);
-    SparseCSR d:
-        enumerate d;
+    SparseCSC d: swapij (enumerate d);
+    SparseCSR d: enumerate d;
      _: [];
     esac);
+
+enumerateDense m =
+   (enumerate d =
+        concat
+           (map do i:
+                vv = d[i];
+                map2 do j v: { i, j, v } done
+                    [0..vec.length vv - 1]
+                    (vec.list vv);
+                done [0..length d - 1]);
+    case m of
+    DenseCols c: swapij (enumerate c);
+    DenseRows r: enumerate r;
+     _: [];
+    esac);
+
+enumerate m =
+    if isSparse? m then enumerateSparse m else enumerateDense m fi;
 
 makeSparse type size data =
    (isRow = case type of RowMajor (): true; ColumnMajor (): false esac;
@@ -196,7 +215,7 @@ makeSparse type size data =
                 else
                     do { i, j, v }: { maj = j, min = i, v } done;
                 fi
-                data);
+               (filter do d: d.v != 0 done data));
     tagger = if isRow then SparseCSR else SparseCSC fi;
     majorSize = if isRow then size.rows else size.columns fi;
     minorSize = if isRow then size.columns else size.rows fi;
@@ -223,24 +242,10 @@ makeSparse type size data =
 toSparse m =
     if isSparse? m then m
     else
-        { rows, columns } = size m;
-        enumerate m ii jj =
-            case ii of
-            i::irest:
-                case jj of
-                j::rest:
-                    v = getAt i j m;
-                    if v != 0 then { i, j, v } :. \(enumerate m ii rest)
-                    else enumerate m ii rest
-                    fi;
-                 _: enumerate m irest [0..columns-1];
-                esac;
-             _: [];
-            esac;
         makeSparse 
             if isRowMajor? m then RowMajor () else ColumnMajor () fi
                (size m)
-               (enumerate m [0..rows-1] [0..columns-1]);
+               (enumerateDense m);
     fi;
 
 toDense m =
@@ -582,7 +587,8 @@ resizedTo newsize m =
     newMatrix,
     newRowVector,
     newColumnVector,
-    newSparseMatrix = makeSparse
+    newSparseMatrix = makeSparse,
+    enumerate
 }
 as
 {
@@ -627,6 +633,7 @@ as
     newMatrix is (ColumnMajor () | RowMajor ()) -> list<vector> -> matrix, 
     newRowVector is vector -> matrix, 
     newColumnVector is vector -> matrix,
-    newSparseMatrix is (ColumnMajor () | RowMajor ()) -> { .rows is number, .columns is number } -> list<{ .i is number, .j is number, .v is number }> -> matrix
+    newSparseMatrix is (ColumnMajor () | RowMajor ()) -> { .rows is number, .columns is number } -> list<{ .i is number, .j is number, .v is number }> -> matrix,
+    enumerate is matrix -> list<{ .i is number, .j is number, .v is number }>
 }
 
