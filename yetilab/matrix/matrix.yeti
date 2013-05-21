@@ -72,6 +72,15 @@ sparseSlice n d =
         indices = slice d.indices start end,
     });
 
+nonEmptySlices d =
+   (ne = array [];
+    for [0..length d.pointers - 2] do i:
+        if d.pointers[i] != d.pointers[i+1] then
+            push ne i
+        fi
+    done;
+    ne);
+
 fromSlice n m d =
    (slice = sparseSlice n d;
     var v = 0;
@@ -389,23 +398,20 @@ sparseProduct size m1 m2 =
         entries =
            (map do j':
                 cs = sparseSlice j' d;
-                if empty? cs.indices then
-                    []
-                else
-                    hin = mapIntoHash
-                       (at cs.indices) ((flip vec.at) cs.values)
-                       [0..length cs.indices - 1];
-                    hout = [:];
-                    for e do { v, i, j }:
-                        if j in hin then
-                            p = v * hin[j];
-                            hout[i] := p + (if i in hout then hout[i] else 0 fi);                         fi
-                    done;
-                    map do i:
-                        { i, j = j', v = hout[i] }
-                    done (keys hout);
-                fi
-            done [0..size.columns - 1]);
+                hin = mapIntoHash
+                   (at cs.indices) ((flip vec.at) cs.values)
+                   [0..length cs.indices - 1];
+                hout = [:];
+                for e do { v, i, j }:
+                    if j in hin then
+                        p = v * hin[j];
+                        hout[i] := p + (if i in hout then hout[i] else 0 fi);
+                    fi
+                done;
+                map do i:
+                    { i, j = j', v = hout[i] }
+                done (keys hout);
+            done (nonEmptySlices d));
         makeSparse (ColumnMajor ()) size (concat entries));
     SparseCSR _:
         sparseProduct size m1 (flipped m2);
