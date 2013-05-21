@@ -215,6 +215,32 @@ makeTests name flipper =
     yrt
 ),
 
+"sparseSum-\(name)": \(
+    s = mat.newSparseMatrix (ColumnMajor ()) { rows = 2, columns = 3 } [
+        { i = 0, j = 0, v = 1 },
+        { i = 0, j = 2, v = 2 },
+        { i = 1, j = 1, v = 4 },
+    ];
+    t = mat.newSparseMatrix (ColumnMajor ()) { rows = 2, columns = 3 } [
+        { i = 0, j = 1, v = 7 },
+        { i = 1, j = 0, v = 5 },
+        { i = 1, j = 1, v = 6 },
+    ];
+    tot = mat.sum s t;
+    mat.isSparse? tot and
+        compareMatrices tot (mat.sum (mat.toDense s) t) and
+        compareMatrices tot (mat.sum (mat.toDense s) (mat.toDense t)) and
+        compareMatrices tot (mat.sum s (mat.toDense t)) and
+        compareMatrices tot 
+           (mat.newSparseMatrix (RowMajor ()) { rows = 2, columns = 3 } [
+               { i = 0, j = 0, v = 1 },
+               { i = 0, j = 1, v = 7 },
+               { i = 0, j = 2, v = 2 },
+               { i = 1, j = 0, v = 5 },
+               { i = 1, j = 1, v = 10 },
+            ])
+),
+
 "difference-\(name)": \(
     compareMatrices
        (mat.difference (constMatrix 2 { rows = 3, columns = 4 })
@@ -230,6 +256,32 @@ makeTests name flipper =
     catch FailureException e:
         true
     yrt
+),
+
+"sparseDifference-\(name)": \(
+    s = mat.newSparseMatrix (ColumnMajor ()) { rows = 2, columns = 3 } [
+        { i = 0, j = 0, v = 1 },
+        { i = 0, j = 2, v = 2 },
+        { i = 1, j = 1, v = 4 },
+    ];
+    t = mat.newSparseMatrix (ColumnMajor ()) { rows = 2, columns = 3 } [
+        { i = 0, j = 1, v = 7 },
+        { i = 1, j = 0, v = 5 },
+        { i = 1, j = 1, v = 6 },
+    ];
+    diff = mat.difference s t;
+    mat.isSparse? diff and
+        compareMatrices diff (mat.difference (mat.toDense s) t) and
+        compareMatrices diff (mat.difference (mat.toDense s) (mat.toDense t)) and
+        compareMatrices diff (mat.difference s (mat.toDense t)) and
+        compareMatrices diff 
+           (mat.newSparseMatrix (RowMajor ()) { rows = 2, columns = 3 } [
+               { i = 0, j = 0, v = 1 },
+               { i = 0, j = 1, v = -7 },
+               { i = 0, j = 2, v = 2 },
+               { i = 1, j = 0, v = -5 },
+               { i = 1, j = 1, v = -2 },
+            ])
 ),
 
 "abs-\(name)": \(

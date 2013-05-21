@@ -83,7 +83,7 @@ reportOn m =
    (print "                                 ";
     println "isSparse: \(mat.isSparse? m), density \(mat.density m)");
 
-println "\nM * M multiplies:\n";
+println "\nM * M multiplies (and a few sums):\n";
 
 sz = 500;
 
@@ -131,6 +131,34 @@ reportOn (time \(mat.product rms rms));
 
 println "";
 
+print "CMD + CMD... ";
+reportOn (time \(mat.sum cmd cmd));
+
+print "CMD + RMD... ";
+reportOn (time \(mat.sum cmd rmd));
+
+print "RMD + CMD... ";
+reportOn (time \(mat.sum rmd cmd));
+
+print "RMD + RMD... ";
+reportOn (time \(mat.sum rmd rmd));
+
+println "";
+
+print "CMS + CMS... ";
+reportOn (time \(mat.sum cms cms));
+
+print "CMS + RMS... ";
+reportOn (time \(mat.sum cms rms));
+
+print "RMS + CMS... ";
+reportOn (time \(mat.sum rms cms));
+
+print "RMS + RMS... ";
+reportOn (time \(mat.sum rms rms));
+
+println "";
+
 print "CMD * CMD... ";
 reportOn (time \(mat.product cmd cmd));
 
@@ -143,7 +171,7 @@ reportOn (time \(mat.product rmd cmd));
 print "RMD * RMD... ";
 reportOn (time \(mat.product rmd rmd));
 
-println "\nLarge sparse M * M multiplies:\n";
+println "\nLarge sparse M * M multiplies and adds:\n";
 
 sz = 5000000;
 nnz = 10000;
@@ -178,5 +206,18 @@ reportOn (time \(mat.product rms cms));
 print "RMS * RMS... ";
 reportOn (time \(mat.product rms rms));
 
+println "";
+
+print "CMS + CMS... ";
+reportOn (time \(mat.sum cms cms));
+
+print "CMS + RMS... ";
+reportOn (time \(mat.sum cms rms));
+
+print "RMS + CMS... ";
+reportOn (time \(mat.sum rms cms));
+
+print "RMS + RMS... ";
+reportOn (time \(mat.sum rms rms));
 
 ();
