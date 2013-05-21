@@ -4,7 +4,7 @@ module yetilab.vector.test.test_blockfuncs;
 stdSqrt = sqrt;
 
 { zeros, consts, ones, fromList, list } = load yetilab.vector.vector;
-{ sum, max, min, mean, multiply, divideBy, sqr, sqrt, rms, fftshift, ifftshift } = load yetilab.vector.blockfuncs;
+{ sum, max, min, mean, add, subtract, multiply, divideBy, scaled, abs, sqr, sqrt, rms, fftshift, ifftshift } = load yetilab.vector.blockfuncs;
 { compare } = load yetilab.test.test;
 
 [
@@ -37,6 +37,18 @@ stdSqrt = sqrt;
         compare ((mean . fromList) [1,-2,3,0]) 0.5
 ),
 
+"add": \(
+    compare (list (add (zeros 0) (ones 5))) [] and
+        compare (list (add (consts 3 4) (fromList [1,2,3]))) [4,5,6] and
+        compare (list (add (consts (-3) 4) (fromList [1,2,3]))) [-2,-1,0] 
+),
+
+"subtract": \(
+    compare (list (subtract (zeros 0) (ones 5))) [] and
+        compare (list (subtract (consts 3 4) (fromList [1,2,3]))) [2,1,0] and
+        compare (list (subtract (consts (-3) 4) (fromList [1,2,3]))) [-4,-5,-6]
+),
+
 "multiply": \(
     compare (list (multiply (zeros 0) (ones 5))) [] and
         compare (list (multiply (consts (-3) 4) (fromList [1,2,3]))) [-3,-6,-9]
@@ -45,6 +57,16 @@ stdSqrt = sqrt;
 "divideBy": \(
     compare (list (divideBy 5 (ones 0))) [] and
         compare (list (divideBy 5 (fromList [1,2,-3]))) [0.2,0.4,-0.6]
+),
+
+"scaled": \(
+    compare (list (scaled 5 (ones 0))) [] and
+        compare (list (scaled 5 (fromList [1,2,-3]))) [5,10,-15]
+),
+
+"abs": \(
+    compare (list (abs (ones 0))) [] and
+        compare (list (abs (fromList [1,2,-3]))) [1,2,3]
 ),
 
 "sqr": \(

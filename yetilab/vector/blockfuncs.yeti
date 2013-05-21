@@ -45,6 +45,26 @@ mean v =
         len: sum' v / len
     esac;
 
+add b1 b2 =
+   (v1 = raw b1;
+    v2 = raw b2;
+    len = if length v1 < length v2 then length v1 else length v2 fi;
+    out = new double[len];
+    for [0..len-1] do i:
+        out[i] := v1[i] + v2[i]
+    done;
+    vec.vector out);
+
+subtract b1 b2 =
+   (v1 = raw b1;
+    v2 = raw b2;
+    len = if length v1 < length v2 then length v1 else length v2 fi;
+    out = new double[len];
+    for [0..len-1] do i:
+        out[i] := v1[i] - v2[i]
+    done;
+    vec.vector out);
+
 multiply b1 b2 =
    (v1 = raw b1;
     v2 = raw b2;
@@ -58,11 +78,17 @@ multiply b1 b2 =
 divideBy n v =
     vec.fromList (map (/ n) (vec.list v));
 
+scaled n v =
+    vec.fromList (map (* n) (vec.list v));
+
 sqr v =
     multiply v v;
 
 rms =
     sqrt . mean . sqr;
+
+abs' =
+    vec.fromList . (map abs) . vec.list;
 
 sqrt' =
     vec.fromList . (map sqrt) . vec.list;
@@ -80,8 +106,12 @@ ifftshift v =
 {
 sum is vector -> number = sum',
 mean is vector -> number,
+add is vector -> vector -> vector,
+subtract is vector -> vector -> vector,
 multiply is vector -> vector -> vector, 
 divideBy is number -> vector -> vector, 
+scaled is number -> vector -> vector,
+abs is vector -> vector = abs',
 sqr is vector -> vector,
 sqrt is vector -> vector = sqrt',
 rms is vector -> number,
