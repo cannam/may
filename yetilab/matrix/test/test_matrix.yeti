@@ -382,6 +382,15 @@ makeTests name flipper =
        (newMatrix (ColumnMajor ()) [[1,4],[0,5],[3,6]])
 ),
 
+"sparseConcat-horiz-\(name)": \(
+    s = mat.concat (Horizontal ()) 
+          [mat.toSparse (newMatrix (ColumnMajor ()) [[1,4],[0,5]]),
+           mat.toSparse (newMatrix (RowMajor ()) [[3],[6]])];
+    compareMatrices s (newMatrix (ColumnMajor ()) [[1,4],[0,5],[3,6]]) and
+        compare (mat.isSparse? s) true and
+        compare (mat.density s) (5/6)
+),
+
 "concatFail-horiz-\(name)": \(
     try
         \() (mat.concat (Horizontal ()) 
@@ -399,6 +408,15 @@ makeTests name flipper =
           [(newMatrix (ColumnMajor ()) [[1,4],[0,5]]),
            (newMatrix (RowMajor ()) [[3,6]])])
        (newMatrix (ColumnMajor ()) [[1,4,3],[0,5,6]])
+),
+
+"sparseConcat-vert-\(name)": \(
+    s = mat.concat (Vertical ()) 
+          [mat.toSparse (newMatrix (ColumnMajor ()) [[1,4],[0,5]]),
+           mat.toSparse (newMatrix (RowMajor ()) [[3,6]])];
+    compareMatrices s (newMatrix (ColumnMajor ()) [[1,4,3],[0,5,6]]) and
+        compare (mat.isSparse? s) true and
+        compare (mat.density s) (5/6)
 ),
 
 "concatFail-vert-\(name)": \(
