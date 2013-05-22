@@ -4,19 +4,21 @@ module yetilab.transform.window;
 vec = load yetilab.vector.vector;
 bf = load yetilab.vector.blockfuncs;
 
-cosinewin a0 a1 a2 a3 n =
+cosinewin a0 a1 a2 a3 n1 =
+   (n = n1 - 1;
     vec.fromList
        (map do i:
             a0
             - a1 * cos(2 * pi * i / n)
             + a2 * cos(4 * pi * i / n)
-            - a2 * cos(6 * pi * i / n)
-            done [0..n-1]);
+            - a3 * cos(6 * pi * i / n)
+            done [0..n]));
                   
 hann = cosinewin 0.5 0.5 0.0 0.0;
 hamming = cosinewin 0.54 0.46 0.0 0.0;
 blackman = cosinewin 0.42 0.50 0.08 0.0;
-nuttall = cosinewin 0.3635819 0.4891775 0.1365995 0.0106411;
+nuttall = cosinewin 0.355768 0.487396 0.144232 0.012604;
+blackmanNuttall = cosinewin 0.3635819 0.4891775 0.1365995 0.0106411;
 blackmanHarris = cosinewin 0.35875 0.48829 0.14128 0.01168;
 boxcar = vec.consts 0.5;
 
@@ -41,7 +43,7 @@ windowed windowFunc frames =
     esac;
 
 {
-cosinewin, hann, hamming, blackman, nuttall, blackmanHarris, boxcar, bartlett,
-windowed
+cosinewin, hann, hamming, blackman, nuttall, blackmanNuttall, blackmanHarris,
+boxcar, bartlett, windowed
 };
 
