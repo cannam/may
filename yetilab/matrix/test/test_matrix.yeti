@@ -224,7 +224,7 @@ makeTests name flipper =
     t = mat.newSparseMatrix (ColumnMajor ()) { rows = 2, columns = 3 } [
         { i = 0, j = 1, v = 7 },
         { i = 1, j = 0, v = 5 },
-        { i = 1, j = 1, v = 6 },
+        { i = 1, j = 1, v = -4 }, // NB this means [1,1] -> 0, sparse zero
     ];
     tot = mat.sum s t;
     mat.isSparse? tot and
@@ -237,8 +237,8 @@ makeTests name flipper =
                { i = 0, j = 1, v = 7 },
                { i = 0, j = 2, v = 2 },
                { i = 1, j = 0, v = 5 },
-               { i = 1, j = 1, v = 10 },
-            ])
+            ]) and
+        compare (mat.density tot) (4/6)
 ),
 
 "difference-\(name)": \(
@@ -351,7 +351,10 @@ makeTests name flipper =
         compareMatrices
            (mat.resizedTo { rows = 2, columns = 3 }
                (mat.zeroSizeMatrix ()))
-           (newMatrix (RowMajor ()) [[0,0,0],[0,0,0]])
+           (newMatrix (RowMajor ()) [[0,0,0],[0,0,0]]) and
+        mat.isSparse?
+           (mat.resizedTo { rows = 1, columns = 1 }
+               (mat.toSparse (newMatrix (ColumnMajor ()) [[1,4],[2,5],[3,6]])))
 ),
 
 "zeroSizeMatrix-\(name)": \(
@@ -488,10 +491,17 @@ makeTests name flipper =
         { i = 0, j = 2, v = 0 },
         { i = 1, j = 1, v = 4 },
     ];
+    // Any out-of-range or non-integer i, j should be ignored too
+    u = mat.newSparseMatrix (ColumnMajor ()) { rows = 2, columns = 3 } [
+        { i = -1, j = 0, v = 1 },
+        { i = 0, j = 4, v = 3 },
+        { i = 1, j = 1.5, v = 4 },
+    ];
     compare (mat.density s) (3/6) and
         compare (mat.density t) (2/6) and
         compareMatrices s (newMatrix (RowMajor ()) [[1,0,2],[0,4,0]]) and
-        compareMatrices t (newMatrix (RowMajor ()) [[1,0,0],[0,4,0]])
+        compareMatrices t (newMatrix (RowMajor ()) [[1,0,0],[0,4,0]]) and
+        compareMatrices u (newMatrix (RowMajor ()) [[0,0,0],[0,0,0]])
 ),
 
 "enumerate-\(name)": \(

@@ -42,7 +42,7 @@ makeMatrices sz sparsity =
 println "\nR * M multiplies:\n";
 
 sz = 2000;
-sparsity = 0.98;
+sparsity = 0.95;
 
 { cmd, rmd, cms, rms } = makeMatrices sz sparsity;
 
