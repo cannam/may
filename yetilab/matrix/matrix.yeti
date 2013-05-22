@@ -356,11 +356,6 @@ newRowVector data = //!!! NB does not copy data
 newColumnVector data = //!!! NB does not copy data
     DenseCols (array [data]);
 
-thresholded threshold m = //!!! v inefficient; and should take a threshold function?
-    generate do row col:
-        v = getAt row col m; if (abs v) > threshold then v else 0 fi
-    done (size m);
-
 denseLinearOp op m1 m2 =
     if isRowMajor? m1 then
         newMatrix (RowMajor ()) 
@@ -432,6 +427,21 @@ abs' m =
         newMatrix (RowMajor ()) (map bf.abs (asRows m));
     else
         newMatrix (ColumnMajor ()) (map bf.abs (asColumns m));
+    fi;
+
+filter f m =
+    if isSparse? m then
+        makeSparse
+            if isRowMajor? m then (RowMajor ()) else (ColumnMajor ()) fi
+            (size m)
+            (map do { i, j, v }: { i, j, v = if f v then v else 0 fi } done (enumerate m))
+    else
+        vfilter = vec.fromList . (map do i: if f i then i else 0 fi done) . vec.list;
+        if isRowMajor? m then
+            newMatrix (RowMajor ()) (map vfilter (asRows m));
+        else
+            newMatrix (ColumnMajor ()) (map vfilter (asColumns m));
+        fi;
     fi;
 
 sparseProductLeft size m1 m2 =
@@ -627,13 +637,13 @@ resizedTo newsize m =
     toSparse,
     toDense,
     scaled,
-    thresholded,
     resizedTo,
     asRows,
     asColumns,
     sum = sum',
     difference,
     abs = abs',
+    filter,
     product,
     concat,
     rowSlice,
@@ -680,6 +690,7 @@ as
     sum is matrix -> matrix -> matrix,
     difference is matrix -> matrix -> matrix,
     abs is matrix -> matrix,
+    filter is (number -> boolean) -> matrix -> matrix,
     product is matrix -> matrix -> matrix,
     concat is (Horizontal () | Vertical ()) -> list<matrix> -> matrix,
     rowSlice is number -> number -> matrix -> matrix, 

@@ -449,12 +449,12 @@ makeTests name flipper =
         compareMatrices (mat.toSparse (mat.toDense m)) m
 ),
 
-"thresholded-\(name)": \(
+"filter-\(name)": \(
     m = newMatrix (ColumnMajor ()) [[1,2,0],[-1,-4,6],[0,0,3]];
     compareMatrices
-       (mat.thresholded 2 m)
-       (newMatrix (ColumnMajor ()) [[0,0,0],[0,-4,6],[0,0,3]]) and
-        compare (mat.density (mat.thresholded 2 m)) (3/9)
+       (mat.filter (> 2) m)
+       (newMatrix (ColumnMajor ()) [[0,0,0],[0,0,6],[0,0,3]]) and
+        compare (mat.density (mat.filter (> 2) m)) (2/9)
 ),
 
 "newSparseMatrix-\(name)": \(

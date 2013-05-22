@@ -20,7 +20,7 @@ makeMatrices sz sparsity =
     m = time \(mat.randomMatrix { rows = sz, columns = sz });
     makeSparse () = 
        (print "Making \(sparsity * 100)% sparse version (as dense matrix)...";
-        t = time \(mat.thresholded sparsity m);
+        t = time \(mat.filter (> sparsity) m);
         println "Reported density: \(mat.density t) (non-zero values: \(mat.nonZeroValues t))";
         print "Converting to sparse matrix...";
         s = time \(mat.toSparse t);
