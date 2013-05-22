@@ -21,7 +21,7 @@ interleaved m =
         v = new double[columns * rows];
         for [0..rows-1] do row:
             for [0..columns-1] do col:
-                v[col * rows + row] := mat.getAt row col m;
+                v[col * rows + row] := mat.at m row col;
             done;
         done;
         vec.vector v;
@@ -47,7 +47,7 @@ mixedDown m =  //!!! sum or average? at the moment we sum
     v = new double[columns];
     for [0..rows-1] do row:
         for [0..columns-1] do col:
-            v[col] := v[col] + mat.getAt row col m;
+            v[col] := v[col] + mat.at m row col;
         done;
     done;
     vec.vector v);

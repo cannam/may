@@ -164,10 +164,10 @@ repeated s =
             avail = (mat.width cache) - start;
             if avail >= count then
                 pos := pos + count;
-                [mat.columnSlice start count cache]
+                [mat.columnSlice cache start (start + count)]
             else
                 pos := pos + avail;
-                mat.columnSlice start avail cache ::
+                mat.columnSlice cache start (start + avail) ::
                     cachedPartsFor (count - avail);
             fi);
         readFromCache count =

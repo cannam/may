@@ -84,7 +84,7 @@ fromSlice n m d =
     var v = 0;
     for [0..length slice.indices - 1] do i:
         if slice.indices[i] == m then
-            v := vec.at i slice.values;
+            v := vec.at slice.values i;
         fi
     done;
     v);
@@ -93,14 +93,14 @@ filledSlice n d =
    (slice = sparseSlice n d;
     dslice = new double[d.extent];
     for [0..length slice.indices - 1] do i:
-        dslice[slice.indices[i]] := vec.at i slice.values;
+        dslice[slice.indices[i]] := vec.at slice.values i;
     done;
     vec.vector dslice);
 
-getAt row col m =
+at' m row col =
     case m of
-    DenseRows rows: r = rows[row]; vec.at col r;
-    DenseCols cols: c = cols[col]; vec.at row c;
+    DenseRows rows: r = rows[row]; vec.at r col;
+    DenseCols cols: c = cols[col]; vec.at c row;
     SparseCSR data: fromSlice row col data;
     SparseCSC data: fromSlice col row data;
     esac;
@@ -109,14 +109,14 @@ getColumn j m =
     case m of
     DenseCols cols: cols[j];
     SparseCSC data: filledSlice j data;
-    _: vec.fromList (map do i: getAt i j m done [0..height m - 1]);
+    _: vec.fromList (map do i: at' m i j done [0..height m - 1]);
     esac;
 
 getRow i m =
     case m of
     DenseRows rows: rows[i];
     SparseCSR data: filledSlice i data; 
-    _: vec.fromList (map do j: getAt i j m done [0..width m - 1]);
+    _: vec.fromList (map do j: at' m i j done [0..width m - 1]);
     esac;
 
 asRows m =
@@ -282,10 +282,10 @@ flipped m =
         fi
     else
         if isRowMajor? m then
-            generate do row col: getAt row col m done (size m);
+            generate do row col: at' m row col done (size m);
         else
             transposed
-               (generate do row col: getAt col row m done
+               (generate do row col: at' m col row done
                 { rows = (width m), columns = (height m) });
         fi
     fi;
@@ -448,7 +448,7 @@ sparseProductLeft size m1 m2 =
     for [0..size.columns - 1] do j':
         c = getColumn j' m2;
         for e do { v, i, j }:
-            data[j'][i] := data[j'][i] + v * (vec.at j c);
+            data[j'][i] := data[j'][i] + v * (vec.at c j);
         done;
     done;
     DenseCols (array (map vec.vector (list data))));
@@ -459,7 +459,7 @@ sparseProductRight size m1 m2 =
     for [0..size.rows - 1] do i':
         r = getRow i' m1;
         for e do { v, i, j }:
-            data[i'][j] := data[i'][j] + v * (vec.at i r);
+            data[i'][j] := data[i'][j] + v * (vec.at r i);
         done;
     done;
     DenseRows (array (map vec.vector (list data))));
@@ -472,7 +472,7 @@ sparseProduct size m1 m2 =
            (map do j':
                 cs = sparseSlice j' d;
                 hin = mapIntoHash
-                   (at cs.indices) ((flip vec.at) cs.values)
+                   (at cs.indices) (vec.at cs.values)
                    [0..length cs.indices - 1];
                 hout = [:];
                 for e do { v, i, j }:
@@ -563,7 +563,6 @@ checkDimensionsFor direction first mm =
     fi);
 
 concat direction mm = //!!! doc: storage order is taken from first matrix in sequence
-    //!!! would this be better as separate concatHorizontal/concatVertical functions?
     case length mm of
     0: zeroSizeMatrix ();
     1: head mm;
@@ -591,21 +590,23 @@ concat direction mm = //!!! doc: storage order is taken from first matrix in seq
         fi;
     esac;
 
-//!!! inconsistent with std.slice which has start..end not start+count (see also vec.slice/rangeOf)
-rowSlice start count m = //!!! doc: storage order same as input
+//!!! doc note: argument order chosen for consistency with std module slice
+rowSlice m start end = //!!! doc: storage order same as input
     if isRowMajor? m then
-        DenseRows (array (map ((flip getRow) m) [start .. start + count - 1]))
+        DenseRows (array (map ((flip getRow) m) [start .. end - 1]))
     else 
-        DenseCols (array (map (vec.rangeOf start count) (asColumns m)))
+        DenseCols (array (map do v: vec.slice v start end done (asColumns m)))
     fi;
 
-columnSlice start count m = //!!! doc: storage order same as input
+//!!! doc note: argument order chosen for consistency with std module slice
+columnSlice m start end = //!!! doc: storage order same as input
     if not isRowMajor? m then
-        DenseCols (array (map ((flip getColumn) m) [start .. start + count - 1]))
+        DenseCols (array (map ((flip getColumn) m) [start .. end - 1]))
     else 
-        DenseRows (array (map (vec.rangeOf start count) (asRows m)))
+        DenseRows (array (map do v: vec.slice v start end done (asRows m)))
     fi;
 
+//!!! needs sparse version
 resizedTo newsize m =
    (if newsize == (size m) then
         m
@@ -617,13 +618,13 @@ resizedTo newsize m =
         rowm = isRowMajor? m;
         resizedTo newsize
             if rowm and growrows < 0 then
-                rowSlice 0 newsize.rows m
+                rowSlice m 0 newsize.rows
             elif (not rowm) and growcols < 0 then 
-                columnSlice 0 newsize.columns m
+                columnSlice m 0 newsize.columns
             elif growrows < 0 then 
-                rowSlice 0 newsize.rows m
+                rowSlice m 0 newsize.rows
             elif growcols < 0 then 
-                columnSlice 0 newsize.columns m
+                columnSlice m 0 newsize.columns
             else
                 if growrows > 0 then
                     concat (Vertical ())
@@ -641,7 +642,7 @@ resizedTo newsize m =
     height,
     density,
     nonZeroValues,
-    getAt,
+    at = at',
     getColumn,
     getRow,
     isRowMajor?,
@@ -687,7 +688,7 @@ as
     height is matrix -> number,
     density is matrix -> number,
     nonZeroValues is matrix -> number,
-    getAt is number -> number -> matrix -> number,
+    at is matrix -> number -> number -> number,
     getColumn is number -> matrix -> vector,
     getRow is number -> matrix -> vector,
     isRowMajor? is matrix -> boolean,
@@ -717,8 +718,8 @@ as
     filter is (number -> boolean) -> matrix -> matrix,
     product is matrix -> matrix -> matrix,
     concat is (Horizontal () | Vertical ()) -> list<matrix> -> matrix,
-    rowSlice is number -> number -> matrix -> matrix, 
-    columnSlice is number -> number -> matrix -> matrix,
+    rowSlice is matrix -> number -> number -> matrix, 
+    columnSlice is matrix -> number -> number -> matrix,
     newMatrix is (ColumnMajor () | RowMajor ()) -> list<vector> -> matrix, 
     newRowVector is vector -> matrix, 
     newColumnVector is vector -> matrix,

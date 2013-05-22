@@ -96,12 +96,12 @@ sqrt' =
 fftshift v =
    (len = vec.length v;
     half = int(len/2 + 0.5); // round up for odd-length sequences
-    vec.concat [vec.rangeOf half (len-half) v, vec.rangeOf 0 half v]);
+    vec.concat [vec.slice v half len, vec.slice v 0 half]);
 
 ifftshift v =
    (len = vec.length v;
     half = int(len/2); // round down for odd-length sequences
-    vec.concat [vec.rangeOf half (len-half) v, vec.rangeOf 0 half v]);
+    vec.concat [vec.slice v half len, vec.slice v 0 half]);
 
 {
 sum is vector -> number = sum',

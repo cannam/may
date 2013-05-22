@@ -40,8 +40,8 @@ length' =
 empty?' =
     empty? . list';
 
-//!!! this is reversed from std.at, fix
-at' n v is number -> ~double[] -> number =
+//!!! doc note: argument order chosen for consistency with std module function
+at' v n is ~double[] -> number -> number =
     v[n];
 
 floats a is ~double[] -> ~float[] =
@@ -70,11 +70,9 @@ equalUnder comparator v1 v2 =
 copyOf v is ~double[] -> ~double[] =
     Arrays#copyOf(v, list' v |> length);
 
-rangeOf start len v is number -> number -> ~double[] -> ~double[] =
-    Arrays#copyOfRange(v, start, start + len);
-
+//!!! doc note: argument order chosen for consistency with std module function
 slice v start end is ~double[] -> number -> number -> ~double[] =
-    rangeOf start (end - start) v;
+    Arrays#copyOfRange(v, start, end);
 
 resizedTo n v is number -> ~double[] -> ~double[] =
     Arrays#copyOf(v, n);
@@ -106,7 +104,6 @@ concat vv is list?<~double[]> -> ~double[] =
     at = at',
     equal,
     equalUnder,
-    rangeOf,
     slice,
     resizedTo,
     concat,
@@ -123,11 +120,10 @@ concat vv is list?<~double[]> -> ~double[] =
     array is vector -> array<number>,
     length is vector -> number,
     empty? is vector -> boolean,
-    at is number -> vector -> number,
+    at is vector -> number -> number,
     equal is vector -> vector -> boolean,
     equalUnder is (number -> number -> boolean) -> vector -> vector -> boolean,
-    rangeOf is number -> number -> vector -> vector, //!!! not well-named now vector arg is at the end
-    slice is vector -> number -> number -> vector, //!!! duplication with rangeOf (std module function on arrays is called slice though)
+    slice is vector -> number -> number -> vector,
     resizedTo is number -> vector -> vector,
     concat is list?<vector> -> vector,
 }

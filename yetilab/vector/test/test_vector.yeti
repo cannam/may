@@ -75,24 +75,11 @@ vec = load yetilab.vector.vector;
     w'' = vec.ones 3;
     vec.equal v w and not vec.equal v w' and not vec.equal v w'';
 ),
-/*
-"copyOf-empty": \(
-    vec.equal (vec.fromList []) (vec.copyOf (vec.fromList []))
-),
 
-"copyOf": \(
+"slice": \(
     v = vec.fromList [1,2,3,4];
-    w = vec.copyOf v;
-    vec.equal v w and (
-        v[0] := 0; // check result is not aliasing inputs
-        not vec.equal v w
-    );
-),
-*/
-"rangeOf": \(
-    v = vec.fromList [1,2,3,4];
-    vec.equal (vec.rangeOf 0 4 v) v and (
-        vec.equal (vec.rangeOf 2 2 v) (vec.fromList [3,4])
+    vec.equal (vec.slice v 0 4) v and (
+        vec.equal (vec.slice v 2 4) (vec.fromList [3,4])
     )
 ),
 
@@ -109,9 +96,6 @@ vec = load yetilab.vector.vector;
     x = vec.concat [v, w];
     x' = vec.fromList [1,2,3,4,5,6];
     vec.equal x x' and
-/*       (v[0] := 0; // check result is not aliasing inputs
-        w[0] := 0;
-        vec.equal x x') and */
         vec.equal x' (vec.concat [x', vec.fromList []]) and
         vec.equal x' (vec.concat [vec.fromList [], x'])
 ),

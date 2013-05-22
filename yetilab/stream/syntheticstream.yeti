@@ -46,7 +46,7 @@ precalculated rate data =
         get finished? () = not (n > position),
         read count = ch.deinterleaved 1
            (rc = min count (n - position);
-            result = vec.rangeOf position rc data;
+            result = vec.slice data position (position + rc);
             position := position + rc;
             result),
         close = \(),
