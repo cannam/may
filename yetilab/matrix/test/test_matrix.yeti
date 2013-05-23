@@ -1,11 +1,11 @@
 
 module yetilab.matrix.test.test_matrix;
 
-mat = load yetilab.matrix.matrix;
-vec = load yetilab.vector.vector;
+mat = load yetilab.matrix;
+vec = load yetilab.vector;
 
-load yetilab.vector.vectortype;
-load yetilab.matrix.matrixtype;
+load yetilab.vector.type;
+load yetilab.matrix.type;
 
 import yeti.lang: FailureException;
 

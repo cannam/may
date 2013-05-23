@@ -1,7 +1,7 @@
 
-module yetilab.matrix.matrixtype;
+module yetilab.matrix.type;
 
-load yetilab.vector.vectortype;
+load yetilab.vector.type;
 
 typedef opaque matrix =
     DenseRows. array<vector> | // array of rows

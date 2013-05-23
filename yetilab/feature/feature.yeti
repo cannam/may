@@ -1,7 +1,7 @@
 
 module yetilab.feature.feature;
 
-vec = load yetilab.vector.vector;
+vec = load yetilab.vector;
 fr = load yetilab.stream.framer;
 
 // Utility functions for feature extractors

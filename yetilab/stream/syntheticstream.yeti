@@ -2,10 +2,10 @@
 module yetilab.stream.syntheticstream;
 
 ch = load yetilab.stream.channels;
-vec = load yetilab.vector.vector;
+vec = load yetilab.vector;
 
-load yetilab.vector.vectortype;
-load yetilab.stream.streamtype;
+load yetilab.vector.type;
+load yetilab.stream.type;
 
 generated sampleRate generator =
    (// generator takes sample number as arg, returns number in -1,+1 range

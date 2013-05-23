@@ -1,5 +1,5 @@
 
-module yetilab.matrix.matrix;
+module yetilab.matrix;
 
 // A matrix is an array of vectors.
 
@@ -9,11 +9,11 @@ module yetilab.matrix.matrix;
 // result regardless of storage order.  (The transpose function just
 // switches the row/column order without moving the elements.)
 
-vec = load yetilab.vector.vector;
+vec = load yetilab.vector;
 bf = load yetilab.vector.blockfuncs;
 
-load yetilab.vector.vectortype;
-load yetilab.matrix.matrixtype;
+load yetilab.vector.type;
+load yetilab.matrix.type;
 
 size m =
     case m of

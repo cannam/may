@@ -1,8 +1,8 @@
 
 module yetilab.stream.test.test_filter;
 
-vec = load yetilab.vector.vector;
-mat = load yetilab.matrix.matrix;
+vec = load yetilab.vector;
+mat = load yetilab.matrix;
 syn = load yetilab.stream.syntheticstream;
 filt = load yetilab.stream.filter;
 

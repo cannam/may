@@ -1,7 +1,7 @@
 
-module yetilab.vector.vector;
+module yetilab.vector;
 
-load yetilab.vector.vectortype;
+load yetilab.vector.type;
 
 import java.util: Arrays;
 

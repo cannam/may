@@ -1,7 +1,7 @@
 
-module yetilab.stream.streamtype;
+module yetilab.stream.type;
 
-load yetilab.matrix.matrixtype;
+load yetilab.matrix.type;
 
 typedef stream =
     {

@@ -1,7 +1,7 @@
 
 module yetilab.stream.audiofile;
 
-load yetilab.stream.streamtype;
+load yetilab.stream.type;
 
 import javax.sound.sampled:
      AudioSystem, AudioInputStream, AudioFormat, AudioFormat$Encoding,
@@ -12,7 +12,7 @@ import java.io: File, IOException;
 import java.nio: ByteBuffer, ByteOrder;
 
 ch = load yetilab.stream.channels;
-vec = load yetilab.vector.vector;
+vec = load yetilab.vector;
 
 decode8u bytes doubles n is ~byte[] -> ~double[] -> number -> () =
    (for [0..n-1] do i:

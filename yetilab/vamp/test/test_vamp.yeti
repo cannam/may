@@ -1,10 +1,10 @@
 module yetilab.vamp.test.test_vamp;
 
-v = load yetilab.vamp.vamp;
+v = load yetilab.vamp;
 synthetic = load yetilab.stream.syntheticstream;
 filter = load yetilab.stream.filter;
-mat = load yetilab.matrix.matrix;
-vec = load yetilab.vector.vector;
+mat = load yetilab.matrix;
+vec = load yetilab.vector;
 
 { compare, compareUsing } = load yetilab.test.test;
 

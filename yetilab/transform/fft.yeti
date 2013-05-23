@@ -3,10 +3,10 @@ module yetilab.transform.fft;
 
 import edu.emory.mathcs.jtransforms.fft: DoubleFFT_1D;
 
-vec = load yetilab.vector.vector;
-complex = load yetilab.vector.complex;
+vec = load yetilab.vector;
+complex = load yetilab.complex;
 
-load yetilab.vector.complextype;
+load yetilab.complex.type;
 
 packedToComplex len p is number -> ~double[] -> array<cplx> =
    (n = len / 2;

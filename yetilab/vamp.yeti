@@ -1,4 +1,4 @@
-module yetilab.vamp.vamp;
+module yetilab.vamp;
 
 import org.vamp_plugins:
        Plugin, Plugin$InputDomain,
@@ -10,10 +10,10 @@ import java.lang: UnsatisfiedLinkError;
 
 import java.util: Map, List;
 
-vec = load yetilab.vector.vector;
+vec = load yetilab.vector;
 fr = load yetilab.stream.framer;
 af = load yetilab.stream.audiofile;
-mat = load yetilab.matrix.matrix;
+mat = load yetilab.matrix;
 vamprdf = load yetilab.vamp.vamprdf;
 vamppost = load yetilab.vamp.vamppost;
 
@@ -235,7 +235,7 @@ loadPlugin rate key =
 
 //!!! bring vector typedef into scope -- this shouldn't be necessary,
 //but see comment in processed below
-load yetilab.vector.vectortype;
+load yetilab.vector.type;
 
 processed { p, sampleRate, hop } frames count 
     // I don't know why this type declaration is necessary. Without

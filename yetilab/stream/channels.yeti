@@ -1,10 +1,10 @@
 
 module yetilab.stream.channels;
 
-vec = load yetilab.vector.vector;
-mat = load yetilab.matrix.matrix;
+vec = load yetilab.vector;
+mat = load yetilab.matrix;
 
-load yetilab.vector.vectortype;
+load yetilab.vector.type;
 
 //!!! "internal" vector function to retrieve data for read-only
 // purposes without copying

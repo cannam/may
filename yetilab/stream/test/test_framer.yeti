@@ -2,8 +2,8 @@
 module yetilab.stream.test.test_framer;
 
 fr = load yetilab.stream.framer;
-vec = load yetilab.vector.vector;
-mat = load yetilab.matrix.matrix;
+vec = load yetilab.vector;
+mat = load yetilab.matrix;
 syn = load yetilab.stream.syntheticstream;
 
 { compare, compareUsing } = load yetilab.test.test;

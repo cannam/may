@@ -3,7 +3,7 @@ module yetilab.vector.test.test_blockfuncs;
 
 stdSqrt = sqrt;
 
-{ zeros, consts, ones, fromList, list } = load yetilab.vector.vector;
+{ zeros, consts, ones, fromList, list } = load yetilab.vector;
 { sum, max, min, mean, add, subtract, multiply, divideBy, scaled, abs, sqr, sqrt, rms, fftshift, ifftshift } = load yetilab.vector.blockfuncs;
 { compare } = load yetilab.test.test;
 

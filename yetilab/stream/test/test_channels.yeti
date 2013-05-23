@@ -2,8 +2,8 @@
 module yetilab.stream.test.test_channels;
 
 ch = load yetilab.stream.channels;
-mat = load yetilab.matrix.matrix;
-vec = load yetilab.vector.vector;
+mat = load yetilab.matrix;
+vec = load yetilab.vector;
 
 { compare, compareUsing } = load yetilab.test.test;
 

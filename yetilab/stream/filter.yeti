@@ -1,10 +1,10 @@
 
 module yetilab.stream.filter;
 
-mat = load yetilab.matrix.matrix;
+mat = load yetilab.matrix;
 ch = load yetilab.stream.channels;
 
-load yetilab.stream.streamtype;
+load yetilab.stream.type;
 
 minDurationOf d1 d2 =
     case d1 of 

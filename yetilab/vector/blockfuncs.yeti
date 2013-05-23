@@ -1,9 +1,9 @@
 
 module yetilab.vector.blockfuncs;
 
-vec = load yetilab.vector.vector;
+vec = load yetilab.vector;
 
-load yetilab.vector.vectortype;
+load yetilab.vector.type;
 
 //!!! "internal" vector function to retrieve data for read-only
 // purposes without copying

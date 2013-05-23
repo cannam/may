@@ -2,8 +2,8 @@
 module yetilab.stream.test.test_audiofile;
 
 af = load yetilab.stream.audiofile;
-vec = load yetilab.vector.vector;
-mat = load yetilab.matrix.matrix;
+vec = load yetilab.vector;
+mat = load yetilab.matrix;
 bf = load yetilab.vector.blockfuncs;
 
 ref = load yetilab.stream.test.audiofile_reference;
