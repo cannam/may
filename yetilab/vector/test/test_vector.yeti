@@ -90,6 +90,13 @@ vec = load yetilab.vector.vector;
         vec.equal (vec.resizedTo 2 (vec.fromList [1,2,3])) (vec.fromList [1,2]);
 ),
 
+"repeated": \(
+    vec.equal (vec.repeated (vec.fromList []) 2) (vec.fromList []) and
+        vec.equal (vec.repeated (vec.fromList [1,2,3]) 0) (vec.fromList []) and
+        vec.equal (vec.repeated (vec.fromList [1,2,3]) 1) (vec.fromList [1,2,3]) and
+        vec.equal (vec.repeated (vec.fromList [1,2,3]) 2) (vec.fromList [1,2,3,1,2,3])
+),
+
 "reversed": \(
     vec.equal (vec.reversed (vec.fromList [])) (vec.fromList []) and
         vec.equal (vec.reversed (vec.fromList [1,2,3])) (vec.fromList [3,2,1]) and

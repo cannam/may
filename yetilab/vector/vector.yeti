@@ -96,6 +96,9 @@ concat vv is list?<~double[]> -> ~double[] =
     done;
     vout);
 
+repeated v n is ~double[] -> number -> ~double[] =
+    concat (map \(v) [1..n]);
+
 {
     zeros,
     consts,
@@ -115,6 +118,7 @@ concat vv is list?<~double[]> -> ~double[] =
     slice,
     resizedTo,
     reversed,
+    repeated,
     concat,
 } as {
     zeros is number -> vector,
@@ -135,6 +139,7 @@ concat vv is list?<~double[]> -> ~double[] =
     slice is vector -> number -> number -> vector,
     resizedTo is number -> vector -> vector,
     reversed is vector -> vector,
+    repeated is vector -> number -> vector,
     concat is list?<vector> -> vector,
 }
 
