@@ -4,22 +4,38 @@ module yetilab.transform.window;
 vec = load yetilab.vector.vector;
 bf = load yetilab.vector.blockfuncs;
 
-cosinewin a0 a1 a2 a3 n1 =
-   (n = n1 - 1;
+cosineWindowSymmetric a0 a1 a2 a3 n =
+   (n1 = n - 1;
     vec.fromList
+       (map do i:
+            a0
+            - a1 * cos(2 * pi * i / n1)
+            + a2 * cos(4 * pi * i / n1)
+            - a3 * cos(6 * pi * i / n1)
+            done [0..n1]));
+
+cosineWindowPeriodic a0 a1 a2 a3 n =
+   (vec.fromList
        (map do i:
             a0
             - a1 * cos(2 * pi * i / n)
             + a2 * cos(4 * pi * i / n)
             - a3 * cos(6 * pi * i / n)
-            done [0..n]));
+            done [0..n-1]));
                   
-hann = cosinewin 0.5 0.5 0.0 0.0;
-hamming = cosinewin 0.54 0.46 0.0 0.0;
-blackman = cosinewin 0.42 0.50 0.08 0.0;
-nuttall = cosinewin 0.355768 0.487396 0.144232 0.012604;
-blackmanNuttall = cosinewin 0.3635819 0.4891775 0.1365995 0.0106411;
-blackmanHarris = cosinewin 0.35875 0.48829 0.14128 0.01168;
+cosineWindow a0 a1 a2 a3 sampling n =
+    case sampling of 
+    Symmetric (): cosineWindowSymmetric;
+    Periodic (): cosineWindowPeriodic;
+    esac a0 a1 a2 a3 n;
+
+hann = cosineWindow 0.5 0.5 0.0 0.0;
+hamming = cosineWindow 0.54 0.46 0.0 0.0;
+blackman = cosineWindow 0.42 0.50 0.08 0.0;
+nuttall = cosineWindow 0.355768 0.487396 0.144232 0.012604;
+blackmanNuttall = cosineWindow 0.3635819 0.4891775 0.1365995 0.0106411;
+blackmanHarris = cosineWindow 0.35875 0.48829 0.14128 0.01168;
+
 boxcar = vec.consts 0.5;
 
 bartlett n =
@@ -34,6 +50,22 @@ bartlett n =
                 done [0..m-1]
             ]);
 
+windowFunction type options n =
+   (var sampling = Periodic ();
+    for options \case of
+        Symmetric s: if s then sampling := Symmetric () fi
+        esac;
+    case type of
+    Hann (): hann sampling;
+    Hamming (): hamming sampling;
+    Blackman (): blackman sampling;
+    Nuttall (): nuttall sampling;
+    BlackmanNuttall (): blackmanNuttall sampling;
+    BlackmanHarris (): blackmanHarris sampling;
+    Boxcar (): boxcar;
+    Bartlett (): bartlett;
+    esac);
+
 windowed windowFunc frames =
     case frames of
         []: frames;
@@ -43,7 +75,15 @@ windowed windowFunc frames =
     esac;
 
 {
-cosinewin, hann, hamming, blackman, nuttall, blackmanNuttall, blackmanHarris,
-boxcar, bartlett, windowed
+cosineWindow,
+hann = hann (Periodic ()),
+hamming = hamming (Periodic ()), 
+blackman = blackman (Periodic ()), 
+nuttall = nuttall (Periodic ()), 
+blackmanNuttall = blackmanNuttall (Periodic ()), 
+blackmanHarris = blackmanHarris (Periodic ()),
+boxcar, bartlett, 
+windowFunction,
+windowed
 };
 
