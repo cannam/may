@@ -1,5 +1,5 @@
 
-module yetilab.transform.window;
+module yetilab.signal.window;
 
 vec = load yetilab.vector.vector;
 bf = load yetilab.vector.blockfuncs;

@@ -9,7 +9,7 @@ module yetilab.stream.framer;
 vec = load yetilab.vector.vector;
 bf = load yetilab.vector.blockfuncs;
 af = load yetilab.stream.audiofile;
-win = load yetilab.transform.window;
+win = load yetilab.signal.window;
 fft = load yetilab.transform.fft;
 mat = load yetilab.matrix.matrix;
 ch = load yetilab.stream.channels;
