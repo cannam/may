@@ -452,12 +452,27 @@ filter f m =
     fi;
 
 sparseProductLeft size m1 m2 =
-   (e = enumerateSparse m1;
+   (d1 = case m1 of
+         SparseCSR d: d; 
+         SparseCSC d: d;
+         _: failWith "sparseProductLeft called for non-sparse m1";
+         esac;
+    swap = not isRowMajor? m1;
     data = array (map \(new double[size.rows]) [1..size.columns]);
+    vv = d1.values;
+    ii = d1.indices;
+    pp = d1.pointers;
     for [0..size.columns - 1] do j':
         c = getColumn j' m2;
-        for e do { v, i, j }:
-            data[j'][i] := data[j'][i] + v * (vec.at c j);
+        var i = 0;
+        for [0..length ii - 1] do ix:
+            j = ii[ix];
+            ix == pp[i+1] loop (i := i + 1);
+            if swap then
+                data[j'][j] := data[j'][j] + (vec.at vv ix) * (vec.at c i);
+            else
+                data[j'][i] := data[j'][i] + (vec.at vv ix) * (vec.at c j);
+            fi;
         done;
     done;
     DenseCols (array (map vec.vector (list data))));
