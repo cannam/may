@@ -452,38 +452,41 @@ filter f m =
     fi;
 
 sparseProductLeft size m1 m2 =
-   (d1 = case m1 of
-         SparseCSR d: d; 
+   ({ values, indices, pointers } = case m1 of
+         SparseCSR d: d;
          SparseCSC d: d;
          _: failWith "sparseProductLeft called for non-sparse m1";
          esac;
-    swap = not isRowMajor? m1;
+    rows = isRowMajor? m1;
     data = array (map \(new double[size.rows]) [1..size.columns]);
-    vv = d1.values;
-    ii = d1.indices;
-    pp = d1.pointers;
     for [0..size.columns - 1] do j':
         c = getColumn j' m2;
-        var i = 0;
-        for [0..length ii - 1] do ix:
-            j = ii[ix];
-            ix == pp[i+1] loop (i := i + 1);
-            if swap then
-                data[j'][j] := data[j'][j] + (vec.at vv ix) * (vec.at c i);
-            else
-                data[j'][i] := data[j'][i] + (vec.at vv ix) * (vec.at c j);
-            fi;
+        var p = 0;
+        for [0..length indices - 1] do ix:
+            ix == pointers[p+1] loop (p := p + 1);
+            i = if rows then p else indices[ix] fi;
+            j = if rows then indices[ix] else p fi;
+            data[j'][i] := data[j'][i] + (vec.at values ix) * (vec.at c j);
         done;
     done;
     DenseCols (array (map vec.vector (list data))));
 
 sparseProductRight size m1 m2 =
-   (e = enumerateSparse m2;
+   ({ values, indices, pointers } = case m2 of
+         SparseCSR d: d;
+         SparseCSC d: d;
+         _: failWith "sparseProductLeft called for non-sparse m1";
+         esac;
+    rows = isRowMajor? m2;
     data = array (map \(new double[size.columns]) [1..size.rows]);
     for [0..size.rows - 1] do i':
         r = getRow i' m1;
-        for e do { v, i, j }:
-            data[i'][j] := data[i'][j] + v * (vec.at r i);
+        var p = 0;
+        for [0..length indices - 1] do ix:
+            ix == pointers[p+1] loop (p := p + 1);
+            i = if rows then p else indices[ix] fi;
+            j = if rows then indices[ix] else p fi;
+            data[i'][j] := data[i'][j] + (vec.at values ix) * (vec.at r i);
         done;
     done;
     DenseRows (array (map vec.vector (list data))));
@@ -491,7 +494,18 @@ sparseProductRight size m1 m2 =
 sparseProduct size m1 m2 =
     case m2 of
     SparseCSC d:
-       (e = enumerateSparse m1;
+       ({ values, indices, pointers } = case m1 of
+            SparseCSR d1: d1;
+            SparseCSC d1: d1;
+            _: failWith "sparseProduct called for non-sparse matrices";
+            esac;
+        rows = isRowMajor? m1;
+        var p = 0;
+        pindices = new int[length indices];
+        for [0..length indices - 1] do ix:
+            ix == pointers[p+1] loop (p := p + 1);
+            pindices[ix] := p;
+        done;
         entries =
            (map do j':
                 cs = sparseSlice j' d;
@@ -499,11 +513,13 @@ sparseProduct size m1 m2 =
                    (at cs.indices) (vec.at cs.values)
                    [0..length cs.indices - 1];
                 hout = [:];
-                for e do { v, i, j }:
+                for [0..length indices - 1] do ix:
+                    i = if rows then pindices[ix] else indices[ix] fi;
+                    j = if rows then indices[ix] else pindices[ix] fi;
                     if j in hin then
-                        p = v * hin[j];
+                        p = (vec.at values ix) * hin[j];
                         hout[i] := p + (if i in hout then hout[i] else 0 fi);
-                    fi
+                    fi;
                 done;
                 map do i:
                     { i, j = j', v = hout[i] }

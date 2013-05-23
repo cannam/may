@@ -5,7 +5,6 @@ af = load yetilab.stream.audiofile;
 vec = load yetilab.vector.vector;
 mat = load yetilab.matrix.matrix;
 bf = load yetilab.vector.blockfuncs;
-pl = load yetilab.plot.plot;
 
 ref = load yetilab.stream.test.audiofile_reference;
 
