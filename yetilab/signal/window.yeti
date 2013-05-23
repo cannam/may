@@ -24,10 +24,13 @@ cosineWindowPeriodic a0 a1 a2 a3 n =
             done [0..n-1]));
                   
 cosineWindow a0 a1 a2 a3 sampling n =
-    case sampling of 
-    Symmetric (): cosineWindowSymmetric;
-    Periodic (): cosineWindowPeriodic;
-    esac a0 a1 a2 a3 n;
+    if n < 2 then vec.ones n
+    else
+        case sampling of 
+        Symmetric (): cosineWindowSymmetric;
+        Periodic (): cosineWindowPeriodic;
+        esac a0 a1 a2 a3 n;
+    fi;
 
 bartlettSymmetric n =
     if n < 2 then vec.ones n
@@ -64,7 +67,7 @@ nuttall = cosineWindow 0.355768 0.487396 0.144232 0.012604;
 blackmanNuttall = cosineWindow 0.3635819 0.4891775 0.1365995 0.0106411;
 blackmanHarris = cosineWindow 0.35875 0.48829 0.14128 0.01168;
 
-boxcar = vec.consts 0.5;
+boxcar n = if n < 2 then vec.ones n else vec.consts 0.5 n fi;
 
 windowFunction type options =
    (var sampling = Periodic ();
