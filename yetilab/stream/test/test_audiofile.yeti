@@ -26,30 +26,8 @@ readAll stream =
     esac;
 
 bitdepthComparator depth =
-   (range = fold do a _: a*2 done 1 [1..depth]; // 2^depth
-    unsigned = (range == 8);
-    // Although for float->int conversion on writing we multiply by
-    // max-1 (e.g. by 32767 in 16-bit signed export), when reading we
-    // divide by 32768 -- in both cases trying to avoid overflow.  For
-    // this comparison we get a test sample (read from a file) and a
-    // reference sample (synthesised locally) and we need to simulate
-    // the export process for the synthetic one while inverting the
-    // import process for the test sample.
-    do test ref:
-        test' = round
-            if unsigned then (test + 1) * range
-            else test * (range/2)
-            fi;
-        ref' = round
-            if unsigned then (ref * (range-1)) - (range/2)
-            else ref * (range/2 - 1)
-            fi;
-        if abs(test' - ref') <= 1 then true
-        else 
-            eprintln "bitdepthComparator: \(test) != \(ref) at bitdepth \(depth) [\(test') != \(ref')]";
-            false;
-        fi;
-    done);
+   (slack = if depth == 8 then 0.015 else 0.001 fi;
+    do test ref: abs (test - ref) < slack done);
 
 maxOf m =
     bf.max (vec.fromList (map bf.max (mat.asRows m)));
