@@ -1,0 +1,107 @@
+
+module yetilab.signal.test.test_window;
+
+win = load yetilab.signal.window;
+vec = load yetilab.vector.vector;
+
+{ compare, compareUsing } = load yetilab.test.test;
+
+functions = [
+    Hann () : win.hann,
+    Hamming () : win.hamming,
+    Blackman () : win.blackman,
+    Nuttall () : win.nuttall,
+    BlackmanNuttall () : win.blackmanNuttall,
+    BlackmanHarris () : win.blackmanHarris,
+    Boxcar () : win.boxcar,
+    Bartlett () : win.bartlett,
+];
+
+close aa bb = all id (map2 do a b: (abs (a - b) < 0.00001) done aa bb);
+
+isSymmetric a =
+   (len = (vec.length a);
+    b = if len % 2 == 0 then
+            half = vec.slice a 0 (len/2);
+            vec.concat [half, vec.reversed half];
+        else
+            half = vec.slice a 0 (int (len/2));
+            mid = vec.slice a (int (len/2)) (int (len/2) + 1);
+            vec.concat [half, mid, vec.reversed half];
+        fi;
+    compareUsing close (vec.list a) (vec.list b));
+
+[
+
+"windowFunction": \(
+    all id (map do type:
+        f = functions[type];
+        a = f 10;
+        b = win.windowFunction type [ Symmetric false ] 10;
+        compareUsing close (vec.list a) (vec.list b)
+            or (eprintln "** failed window type: \(type)"; false)
+    done (keys functions));
+),
+
+"symmetric-even": \(
+    len = 10;
+    all id (map do type:
+        f = win.windowFunction type [ Symmetric true ];
+        v = f len;
+        (compare (vec.length v) len and isSymmetric v) or
+            (eprintln "** failed window type: \(type)"; false);
+    done (keys functions));
+),
+
+"symmetric-odd": \(
+    len = 11;
+    all id (map do type:
+        f = win.windowFunction type [ Symmetric true ];
+        v = f len;
+        (compare (vec.length v) len and isSymmetric v) or
+            (eprintln "** failed window type: \(type)"; false);
+    done (keys functions));
+),
+      
+"periodic-even": \(
+    // We can't actually test whether a function is periodic, given
+    // only one cycle of it! But we can make sure that all but the
+    // first sample is symmetric, which is what a symmetric window
+    // becomes when generated in periodic mode
+    len = 10;
+    all id (map do type:
+        f = win.windowFunction type [ Symmetric false ];
+        v = f len;
+        (compare (vec.length v) len and isSymmetric (vec.slice v 1 len)) or
+            (eprintln "** failed window type: \(type)"; false);
+    done (keys functions));
+),
+
+"periodic-odd": \(
+    len = 11;
+    all id (map do type:
+        f = win.windowFunction type [ Symmetric false ];
+        v = f len;
+        (compare (vec.length v) len and isSymmetric (vec.slice v 1 len)) or
+            (eprintln "** failed window type: \(type)"; false);
+    done (keys functions));
+),
+
+"bartlett-periodic": \(
+    compare (vec.list (win.bartlett 1)) [1] and
+       compare (vec.list (win.bartlett 2)) [0,1] and
+       compare (vec.list (win.bartlett 3)) [0,2/3,2/3] and
+       compare (vec.list (win.bartlett 4)) [0,1/2,1,1/2]
+),
+
+"bartlett-symmetric": \(
+    b = win.windowFunction (Bartlett ()) [ Symmetric true ];
+    compare (vec.list (b 1)) [1] and
+       compare (vec.list (b 2)) [0,0] and
+       compare (vec.list (b 3)) [0,1,0] and
+       compare (vec.list (b 4)) [0,2/3,2/3,0] and
+       compare (vec.list (b 5)) [0,1/2,1,1/2,0]
+),
+
+] is hash<string, () -> boolean>;
+

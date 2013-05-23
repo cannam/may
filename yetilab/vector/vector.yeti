@@ -77,6 +77,14 @@ slice v start end is ~double[] -> number -> number -> ~double[] =
 resizedTo n v is number -> ~double[] -> ~double[] =
     Arrays#copyOf(v, n);
 
+reversed v is ~double[] -> ~double[] =
+   (len = length (list v);
+    a = new double[len];
+    for [0..len-1] do i:
+        a[len-i-1] := v[i];
+    done;
+    a);
+
 concat vv is list?<~double[]> -> ~double[] =
    (len = sum (map length' vv);
     vout = zeros len;
@@ -106,6 +114,7 @@ concat vv is list?<~double[]> -> ~double[] =
     equalUnder,
     slice,
     resizedTo,
+    reversed,
     concat,
 } as {
     zeros is number -> vector,
@@ -125,6 +134,7 @@ concat vv is list?<~double[]> -> ~double[] =
     equalUnder is (number -> number -> boolean) -> vector -> vector -> boolean,
     slice is vector -> number -> number -> vector,
     resizedTo is number -> vector -> vector,
+    reversed is vector -> vector,
     concat is list?<vector> -> vector,
 }
 

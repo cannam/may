@@ -29,6 +29,34 @@ cosineWindow a0 a1 a2 a3 sampling n =
     Periodic (): cosineWindowPeriodic;
     esac a0 a1 a2 a3 n;
 
+bartlettSymmetric n =
+    if n < 2 then vec.ones n
+    else
+        vec.fromList
+           (n1 = n - 1;
+            h = int (n1 / 2);
+            concat [
+                map do i:
+                    2 * i / n1
+                    done [0..h],
+                map do i:
+                    2 - (2 * i / n1)
+                    done [h+1..n1]
+                ]);
+    fi;
+
+bartlettPeriodic n = 
+    if n < 2 then vec.ones n
+    else
+        vec.slice (bartlettSymmetric (n+1)) 0 n;
+    fi;
+
+bartlett sampling =
+    case sampling of
+    Symmetric (): bartlettSymmetric;
+    Periodic (): bartlettPeriodic;
+    esac;
+
 hann = cosineWindow 0.5 0.5 0.0 0.0;
 hamming = cosineWindow 0.54 0.46 0.0 0.0;
 blackman = cosineWindow 0.42 0.50 0.08 0.0;
@@ -38,19 +66,7 @@ blackmanHarris = cosineWindow 0.35875 0.48829 0.14128 0.01168;
 
 boxcar = vec.consts 0.5;
 
-bartlett n =
-    vec.fromList
-       (m = n/2;
-        concat [
-            map do i:
-                i / m
-                done [0..m-1],
-            map do i:
-                1.0 - (i / m)
-                done [0..m-1]
-            ]);
-
-windowFunction type options n =
+windowFunction type options =
    (var sampling = Periodic ();
     for options \case of
         Symmetric s: if s then sampling := Symmetric () fi
@@ -63,7 +79,7 @@ windowFunction type options n =
     BlackmanNuttall (): blackmanNuttall sampling;
     BlackmanHarris (): blackmanHarris sampling;
     Boxcar (): boxcar;
-    Bartlett (): bartlett;
+    Bartlett (): bartlett sampling;
     esac);
 
 windowed windowFunc frames =
@@ -82,7 +98,8 @@ blackman = blackman (Periodic ()),
 nuttall = nuttall (Periodic ()), 
 blackmanNuttall = blackmanNuttall (Periodic ()), 
 blackmanHarris = blackmanHarris (Periodic ()),
-boxcar, bartlett, 
+boxcar,
+bartlett = bartlett (Periodic ()), 
 windowFunction,
 windowed
 };
