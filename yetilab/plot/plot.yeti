@@ -1,5 +1,7 @@
 module yetilab.plot.plot;
 
+vec = load yetilab.vector.vector;
+
 import org.jzy3d.plot3d.builder: Mapper;
 import org.jzy3d.maths: Range, Coord3d;
 import org.jzy3d.chart: Chart, ChartLauncher;
@@ -102,6 +104,9 @@ plot structures =
             plotCurve chart depth curve;
         Series series:
             plotSeries chart depth series;
+        Vector vector:
+            plotSeries chart depth
+                { start = 0, step = 1, values = vec.list vector };
         other:
             failWith "Unable to plot \(other)";
         esac;
