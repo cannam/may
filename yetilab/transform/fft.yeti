@@ -32,6 +32,7 @@ complexToPacked arr =
     v[1] := complex.real arr[n-1];
     v);
 
+//!!! doc: n is supplied separately from the input vector to support partial evaluation
 realForward n = 
    (d = new DoubleFFT_1D(n);
     do bl:
