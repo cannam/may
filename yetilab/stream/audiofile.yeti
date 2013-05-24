@@ -97,14 +97,15 @@ openWithReader reader ch name is 'a -> number -> string -> stream =
     aistream = AudioSystem#getAudioInputStream(f);
     format = aistream#getFormat();
     len = available' { format, aistream }; // at start of stream
+    syncd = synchronized aistream;
     {
-        get position () = len - available' { aistream, format },
+        get position () = syncd \(len - available' { aistream, format }),
         get channels () = if ch == 0 then format#getChannels() else ch fi,
         get sampleRate () = format#getSampleRate(),
-        get available () = Known (available' { aistream, format }),
-        get finished? () = not (aistream#available() > 0),
-        read = reader { aistream, format },
-        close () = close' { aistream },
+        get available () = syncd \(Known (available' { aistream, format })),
+        get finished? () = syncd \(not (aistream#available() > 0)),
+        read = syncd \(reader { aistream, format }),
+        close () = syncd \(close' { aistream }),
     });
 
 open = openWithReader read' 0;
