@@ -641,20 +641,40 @@ concat' direction mm = //!!! doc: storage order is taken from first matrix in se
 concat direction mm =
     concat' direction (filter do mat: not (isZeroSize? mat) done mm);
 
+//!!! next two v. clumsy
+
 //!!! doc note: argument order chosen for consistency with std module slice
+//!!! NB always returns dense matrix, should have sparse version
 rowSlice m start end = //!!! doc: storage order same as input
-    if isRowMajor? m then
-        DenseRows (array (map ((flip getRow) m) [start .. end - 1]))
-    else 
-        DenseCols (array (map do v: vec.slice v start end done (asColumns m)))
+    if start < 0 then rowSlice m 0 end
+    elif start > height m then rowSlice m (height m) end
+    else
+        if end < start then rowSlice m start start
+        elif end > height m then rowSlice m start (height m)
+        else
+            if isRowMajor? m then
+                DenseRows (array (map ((flip getRow) m) [start .. end - 1]))
+            else 
+                DenseCols (array (map do v: vec.slice v start end done (asColumns m)))
+            fi;
+        fi;
     fi;
 
 //!!! doc note: argument order chosen for consistency with std module slice
+//!!! NB always returns dense matrix, should have sparse version
 columnSlice m start end = //!!! doc: storage order same as input
-    if not isRowMajor? m then
-        DenseCols (array (map ((flip getColumn) m) [start .. end - 1]))
-    else 
-        DenseRows (array (map do v: vec.slice v start end done (asRows m)))
+    if start < 0 then columnSlice m 0 end
+    elif start > width m then columnSlice m (width m) end
+    else
+        if end < start then columnSlice m start start
+        elif end > width m then columnSlice m start (width m)
+        else
+            if not isRowMajor? m then
+                DenseCols (array (map ((flip getColumn) m) [start .. end - 1]))
+            else 
+                DenseRows (array (map do v: vec.slice v start end done (asRows m)))
+            fi;
+        fi;
     fi;
 
 resizedTo newsize m =
