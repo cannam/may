@@ -72,7 +72,15 @@ copyOf v is ~double[] -> ~double[] =
 
 //!!! doc note: argument order chosen for consistency with std module function
 slice v start end is ~double[] -> number -> number -> ~double[] =
-    Arrays#copyOfRange(v, start, end);
+    if start < 0 then slice v 0 end
+    elif start > length' v then slice v (length' v) end
+    else
+        if end < start then slice v start start
+        elif end > length' v then slice v start (length' v)
+        else
+            Arrays#copyOfRange(v, start, end);
+        fi
+    fi;
 
 resizedTo n v is number -> ~double[] -> ~double[] =
     Arrays#copyOf(v, n);

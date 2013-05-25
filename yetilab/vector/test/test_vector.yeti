@@ -78,9 +78,12 @@ vec = load yetilab.vector;
 
 "slice": \(
     v = vec.fromList [1,2,3,4];
-    vec.equal (vec.slice v 0 4) v and (
-        vec.equal (vec.slice v 2 4) (vec.fromList [3,4])
-    )
+    vec.equal (vec.slice v 0 4) v and
+        vec.equal (vec.slice v 2 4) (vec.fromList [3,4]) and
+        vec.equal (vec.slice v (-1) 2) (vec.fromList [1,2]) and
+        vec.equal (vec.slice v 3 5) (vec.fromList [4]) and
+        vec.equal (vec.slice v 5 7) (vec.fromList []) and
+        vec.equal (vec.slice v 3 2) (vec.fromList [])
 ),
 
 "resizedTo": \(
