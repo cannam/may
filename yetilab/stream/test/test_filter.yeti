@@ -518,7 +518,7 @@ makeTests name withUnknown =
         compare s1.available (Known 0) and
         compare s2.position 2 and
         compare s2.finished? false and
-        compare s2.available (maybeKnown 1) and
+        compare s2.available (Known 1) and // when one is known, so is the other
 
         compare (map vec.list (mat.asRows (s1.read 3))) [] and
 

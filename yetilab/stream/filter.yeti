@@ -217,8 +217,7 @@ duplicated copies s =
             pos[i] := pos[i] + n;
             encroachment = lowtide () - formerLow;
             if encroachment > 0 then
-                cache := mat.columnSlice cache encroachment
-                   (mat.width cache - encroachment);
+                cache := mat.columnSlice cache encroachment (mat.width cache);
             fi);
         map do instance:
             pos[instance] := 0;
@@ -242,11 +241,11 @@ duplicated copies s =
                     else
                         if count > ready then
                             more = s.read (count - ready);
-                            cache := mat.concat (Horizontal ())
-                               [cache, more];
+                            cache := mat.concat (Horizontal ()) [cache, more];
+                            hightide := hightide + (mat.width more);
                         fi;
-                        chunk = mat.columnSlice cache
-                           (pos[instance] - (lowtide ())) count;
+                        offset = pos[instance] - (lowtide ());
+                        chunk = mat.columnSlice cache offset (offset + count);
                         advance instance (mat.width chunk);
                         chunk;
                     fi),
