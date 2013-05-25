@@ -360,7 +360,19 @@ makeTests name flipper =
 "zeroSizeMatrix-\(name)": \(
     compareMatrices
        (mat.zeroSizeMatrix ())
-       (newMatrix (ColumnMajor ()) [])
+       (newMatrix (ColumnMajor ()) []) and
+        compareMatrices
+           (mat.zeroSizeMatrix ())
+           (newMatrix (ColumnMajor ()) [[]]) and
+        compareMatrices
+           (newMatrix (ColumnMajor ()) [[]])
+           (newMatrix (RowMajor ()) [[]]) and
+        compareMatrices
+           (mat.zeroSizeMatrix ())
+           (mat.newSparseMatrix (ColumnMajor ()) { rows = 0, columns = 1 } []) and
+        compareMatrices
+           (mat.zeroSizeMatrix ())
+           (mat.newSparseMatrix (ColumnMajor ()) { rows = 1, columns = 0 } [])
 ),
 
 "asRows-\(name)": \(

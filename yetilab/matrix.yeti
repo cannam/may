@@ -9,6 +9,11 @@ module yetilab.matrix;
 // result regardless of storage order.  (The transpose function just
 // switches the row/column order without moving the elements.)
 
+// The matrix representation does not take into account different
+// forms of zero-width or zero-height matrix. That is, all matrices of
+// zero width or height are equal to each other and to the zero-size
+// matrix -- they can't be distinguished.
+
 vec = load yetilab.vector;
 bf = load yetilab.vector.blockfuncs;
 
@@ -167,6 +172,8 @@ zeroMatrixWithTypeOf m { rows, columns } =
     fi;
 
 zeroSizeMatrix () = zeroMatrix { rows = 0, columns = 0 };
+
+isZeroSize? m = (width m == 0 or height m == 0);
 
 generate f { rows, columns } =
     if rows < 1 or columns < 1 then zeroSizeMatrix ()
@@ -333,7 +340,9 @@ equal'' comparator vecComparator m1 m2 =
     esac);
 
 equal' comparator vecComparator m1 m2 =
-    if size m1 != size m2 then 
+    if isZeroSize? m1 and isZeroSize? m2 then
+        true
+    elif size m1 != size m2 then 
         false
     elif isRowMajor? m1 != isRowMajor? m2 then
         equal' comparator vecComparator (flipped m1) m2;
@@ -437,7 +446,7 @@ abs' m =
         newMatrix (typeOf m) (map bf.abs (asColumns m));
     fi;
 
-filter f m =
+filter' f m =
     if isSparse? m then
         makeSparse (typeOf m) (size m)
            (map do { i, j, v }: { i, j, v = if f v then v else 0 fi } done
@@ -600,7 +609,7 @@ checkDimensionsFor direction first mm =
         failWith "Matrix dimensions incompatible for concat (found \(map do m: counter (size m) done mm) not all of which are \(n))";
     fi);
 
-concat direction mm = //!!! doc: storage order is taken from first matrix in sequence
+concat' direction mm = //!!! doc: storage order is taken from first matrix in sequence
     case length mm of
     0: zeroSizeMatrix ();
     1: head mm;
@@ -627,6 +636,10 @@ concat direction mm = //!!! doc: storage order is taken from first matrix in seq
             esac;
         fi;
     esac;
+
+//!!! doc this filter -- zero-size elts are ignored
+concat direction mm =
+    concat' direction (filter do mat: not (isZeroSize? mat) done mm);
 
 //!!! doc note: argument order chosen for consistency with std module slice
 rowSlice m start end = //!!! doc: storage order same as input
@@ -694,6 +707,7 @@ resizedTo newsize m =
     zeroMatrix,
     identityMatrix,
     zeroSizeMatrix,
+    isZeroSize?,
     equal,
     equalUnder,
     transposed,
@@ -709,7 +723,7 @@ resizedTo newsize m =
     sum = sum',
     difference,
     abs = abs',
-    filter,
+    filter = filter',
     product,
     concat,
     rowSlice,
@@ -740,6 +754,7 @@ as
     zeroMatrix is { .rows is number, .columns is number } -> matrix, 
     identityMatrix is { .rows is number, .columns is number } -> matrix, 
     zeroSizeMatrix is () -> matrix,
+    isZeroSize? is matrix -> boolean,
     equal is matrix -> matrix -> boolean,
     equalUnder is (number -> number -> boolean) -> matrix -> matrix -> boolean,
     transposed is matrix -> matrix,

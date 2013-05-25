@@ -202,6 +202,64 @@ repeated s =
         }
     fi;
 
+duplicated copies s = 
+//!!! doc fact that original s cannot be used independently of this afterward
+// (so maybe name is misleading?)
+    if copies < 2 then map \s [1..copies];
+    else
+        pos = [:];
+        lowtide () = head (sort (map (at pos) (keys pos)));
+        var hightide = 0;
+        var cache = mat.zeroSizeMatrix ();
+        syncd = synchronized pos;
+        advance i n =
+           (formerLow = lowtide ();
+            pos[i] := pos[i] + n;
+            encroachment = lowtide () - formerLow;
+            if encroachment > 0 then
+                cache := mat.columnSlice cache encroachment
+                   (mat.width cache - encroachment);
+            fi);
+        map do instance:
+            pos[instance] := 0;
+            {
+                get position () = syncd \(pos[instance]),
+                get channels () = syncd \(s.channels),
+                get sampleRate () = syncd \(s.sampleRate),
+                get available () = syncd
+                  \(case s.available of
+                    Known av: Known (av + (hightide - pos[instance]));
+                    other: other;
+                    esac),
+                get finished? () = syncd
+                  \(if not s.finished? then false
+                    else pos[instance] >= hightide
+                    fi),
+                read count = syncd
+                  \(ready = hightide - pos[instance];
+                    if s.finished? and ready <= 0 
+                    then mat.zeroSizeMatrix ()
+                    else
+                        if count > ready then
+                            more = s.read (count - ready);
+                            cache := mat.concat (Horizontal ())
+                               [cache, more];
+                        fi;
+                        chunk = mat.columnSlice cache
+                           (pos[instance] - (lowtide ())) count;
+                        advance instance (mat.width chunk);
+                        chunk;
+                    fi),
+                close () = syncd
+                  \(delete pos instance;
+                    if empty? pos then
+                        s.close ()
+                    fi),
+            }
+            done [1..copies];
+    fi;
+                        
+
 {
     withDuration is number -> stream -> stream,
     delayedBy is number -> stream -> stream,
@@ -209,7 +267,6 @@ repeated s =
     mixed is list<stream> -> stream,
     multiplexed is list<stream> -> stream,
     repeated is stream -> stream,
+    duplicated is number -> stream -> list<stream>,
 }
-
-
 

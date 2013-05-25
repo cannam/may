@@ -9,7 +9,7 @@ filt = load yetilab.stream.filter;
 { compare, compareUsing } = load yetilab.test.test;
 
 makeTests name withUnknown =
-   (withDuration n str =
+   (maybeDuration n str =
         // Truncate a stream, but if withUnknown is true, return it
         // with availability Unknown -- so as to test that other
         // filter functions behave correctly even if availability is
@@ -68,7 +68,7 @@ makeTests name withUnknown =
     // we're actually testing filt.withDuration here rather than just
     // generating a stream for use in another test. The inner call
     // does use the wrapper.
-    str = filt.withDuration 5 (withDuration 3 (syn.generated 2 id));
+    str = filt.withDuration 5 (maybeDuration 3 (syn.generated 2 id));
     compare str.position 0 and
         compare str.channels 1 and
         compare str.sampleRate 2 and
@@ -86,7 +86,7 @@ makeTests name withUnknown =
 ),
 
 "delayedBy-0-3-\(name)": \(
-    str = filt.delayedBy 0 (withDuration 3 (syn.generated 2 id));
+    str = filt.delayedBy 0 (maybeDuration 3 (syn.generated 2 id));
     compare str.position 0 and
         compare str.channels 1 and
         compare str.sampleRate 2 and
@@ -114,7 +114,7 @@ makeTests name withUnknown =
 ),
 
 "delayedBy-2-3-\(name)": \(
-    str = filt.delayedBy 2 (withDuration 3 (syn.generated 2 id));
+    str = filt.delayedBy 2 (maybeDuration 3 (syn.generated 2 id));
     compare str.position 0 and
         compare str.channels 1 and
         compare str.sampleRate 2 and
@@ -132,7 +132,7 @@ makeTests name withUnknown =
 ),
 
 "delayedBy-m2-3-\(name)": \(
-    str = filt.delayedBy (-2) (withDuration 3 (syn.generated 2 id));
+    str = filt.delayedBy (-2) (maybeDuration 3 (syn.generated 2 id));
     compare str.position 0 and
         compare str.channels 1 and
         compare str.sampleRate 2 and
@@ -146,7 +146,7 @@ makeTests name withUnknown =
 ),
 
 "delayedBy-m4-3-\(name)": \(
-    str = filt.delayedBy (-4) (withDuration 3 (syn.generated 2 id));
+    str = filt.delayedBy (-4) (maybeDuration 3 (syn.generated 2 id));
     compare str.position 0 and
         compare str.channels 1 and
         compare str.sampleRate 2 and
@@ -157,7 +157,7 @@ makeTests name withUnknown =
 ),
 
 "delayedBy-2-3b-\(name)": \(
-    str = filt.delayedBy 2 (withDuration 3 (syn.generated 2 id));
+    str = filt.delayedBy 2 (maybeDuration 3 (syn.generated 2 id));
     compare str.position 0 and
         compare str.channels 1 and
         compare str.sampleRate 2 and
@@ -175,7 +175,7 @@ makeTests name withUnknown =
 ),
 
 "delayedBy-2-3c-\(name)": \(
-    str = filt.delayedBy 2 (withDuration 3 (syn.generated 2 id));
+    str = filt.delayedBy 2 (maybeDuration 3 (syn.generated 2 id));
     compare str.position 0 and
         compare str.channels 1 and
         compare str.sampleRate 2 and
@@ -221,7 +221,7 @@ makeTests name withUnknown =
 ),
 
 "mixedTo-1-2-\(name)": \(
-    str = filt.mixedTo 2 (withDuration 3 (syn.generated 2 id));
+    str = filt.mixedTo 2 (maybeDuration 3 (syn.generated 2 id));
     compare str.position 0 and
         compare str.channels 2 and
         compare str.sampleRate 2 and
@@ -237,8 +237,8 @@ makeTests name withUnknown =
 "mixedTo-2-1-\(name)": \(
     str = filt.mixedTo 1
        (filt.multiplexed
-          [withDuration 3 (syn.generated 2 id),
-           withDuration 3 (syn.generated 2 id)]);
+          [maybeDuration 3 (syn.generated 2 id),
+           maybeDuration 3 (syn.generated 2 id)]);
     compare str.position 0 and
         compare str.channels 1 and
         compare str.sampleRate 2 and
@@ -254,8 +254,8 @@ makeTests name withUnknown =
 "mixedTo-2-3-\(name)": \(
     str = filt.mixedTo 3
        (filt.multiplexed
-          [withDuration 3 (syn.generated 2 id),
-           withDuration 3 (syn.generated 2 (+1))]);
+          [maybeDuration 3 (syn.generated 2 id),
+           maybeDuration 3 (syn.generated 2 (+1))]);
     compare str.position 0 and
         compare str.channels 3 and
         compare str.sampleRate 2 and
@@ -269,7 +269,7 @@ makeTests name withUnknown =
 ),
 
 "mixedTo-1-3-\(name)": \(
-    str = filt.mixedTo 3 (withDuration 3 (syn.generated 2 id));
+    str = filt.mixedTo 3 (maybeDuration 3 (syn.generated 2 id));
     compare str.position 0 and
         compare str.channels 3 and
         compare str.sampleRate 2 and
@@ -296,7 +296,7 @@ makeTests name withUnknown =
 ),
 
 "mixed-inf-trunc-\(name)": \(
-    str = filt.mixed [syn.generated 2 (2*), withDuration 3 (syn.generated 2 (0-))];
+    str = filt.mixed [syn.generated 2 (2*), maybeDuration 3 (syn.generated 2 (0-))];
     compare str.position 0 and
         compare str.channels 1 and
         compare str.sampleRate 2 and
@@ -312,7 +312,7 @@ makeTests name withUnknown =
 "mixed-precalc-trunc-\(name)": \(
     str = filt.mixed
        [syn.precalculated 2 (vec.fromList [1,2]),
-        withDuration 3 (syn.generated 2 (0-))];
+        maybeDuration 3 (syn.generated 2 (0-))];
     compare str.position 0 and
         compare str.channels 1 and
         compare str.sampleRate 2 and
@@ -329,7 +329,7 @@ makeTests name withUnknown =
     str = filt.mixed
        [syn.precalculated 2 (vec.fromList [1,2]),
         filt.multiplexed [syn.precalculated 2 (vec.fromList [3,4]),
-                          withDuration 3 (syn.generated 2 (0-))]];
+                          maybeDuration 3 (syn.generated 2 (0-))]];
     compare str.position 0 and
         compare str.channels 2 and
         compare str.sampleRate 2 and
@@ -346,7 +346,7 @@ makeTests name withUnknown =
     str = filt.mixed
        [syn.precalculated 2 (vec.fromList [1,2]),
         syn.precalculated 2 (vec.fromList [3,4]),
-        withDuration 3 (syn.generated 2 (0-))];
+        maybeDuration 3 (syn.generated 2 (0-))];
     compare str.position 0 and
         compare str.channels 1 and
         compare str.sampleRate 2 and
@@ -374,7 +374,7 @@ makeTests name withUnknown =
 ),
 
 "multiplexed-inf-trunc-\(name)": \(
-    str = filt.multiplexed [syn.generated 2 id, withDuration 3 (syn.generated 2 (0-))];
+    str = filt.multiplexed [syn.generated 2 id, maybeDuration 3 (syn.generated 2 (0-))];
     compare str.position 0 and
         compare str.channels 2 and
         compare str.sampleRate 2 and
@@ -390,7 +390,7 @@ makeTests name withUnknown =
 "multiplexed-precalc-trunc-\(name)": \(
     str = filt.multiplexed
        [syn.precalculated 2 (vec.fromList [1,2]),
-        withDuration 3 (syn.generated 2 (0-))];
+        maybeDuration 3 (syn.generated 2 (0-))];
     compare str.position 0 and
         compare str.channels 2 and
         compare str.sampleRate 2 and
@@ -407,7 +407,7 @@ makeTests name withUnknown =
     str = filt.multiplexed
        [syn.precalculated 2 (vec.fromList [1,2]),
         filt.multiplexed [syn.precalculated 2 (vec.fromList [3,4]),
-                          withDuration 3 (syn.generated 2 (0-))]];
+                          maybeDuration 3 (syn.generated 2 (0-))]];
     compare str.position 0 and
         compare str.channels 3 and
         compare str.sampleRate 2 and
@@ -424,7 +424,7 @@ makeTests name withUnknown =
     str = filt.multiplexed
        [syn.precalculated 2 (vec.fromList [1,2]),
         syn.precalculated 2 (vec.fromList [3,4]),
-        withDuration 3 (syn.generated 2 (0-))];
+        maybeDuration 3 (syn.generated 2 (0-))];
     compare str.position 0 and
         compare str.channels 3 and
         compare str.sampleRate 2 and
@@ -458,6 +458,77 @@ makeTests name withUnknown =
         compare str.finished? false and
         compare str.position 22 and
         ( str.close (); true )
+),
+
+"duplicated-1-\(name)": \(
+    original = maybeDuration 3 (syn.precalculated 2 (vec.fromList [1,2,3]));
+    sn = filt.duplicated 1 original;
+    str = (head sn);
+    compare (length sn) 1 and
+        compare str.position 0 and
+        compare str.channels 1 and
+        compare str.sampleRate 2 and
+        compare str.available (maybeKnown 3) and
+        compare str.finished? false and
+        compare (map vec.list (mat.asRows (str.read 1))) [[1]] and
+        compare str.position 1 and
+        compare str.available (maybeKnown 2) and
+        compare (map vec.list (mat.asRows (str.read 3))) [[2,3]] and
+        compare str.position 3 and
+        compare str.finished? true and
+        compare str.available (Known 0) and
+        ( str.close (); true )
+),
+
+"duplicated-2-\(name)": \(
+    original = maybeDuration 3 (syn.precalculated 2 (vec.fromList [1,2,3]));
+    sn = filt.duplicated 2 original;
+    s1 = (head sn);
+    s2 = (head (tail sn));
+
+    compare (length sn) 2 and
+
+        compare s1.position 0 and
+        compare s1.channels 1 and
+        compare s1.sampleRate 2 and
+        compare s1.available (maybeKnown 3) and
+        compare s1.finished? false and
+
+        compare s2.position 0 and
+        compare s2.channels 1 and
+        compare s2.sampleRate 2 and
+        compare s2.available (maybeKnown 3) and
+        compare s2.finished? false and
+
+        compare (map vec.list (mat.asRows (s1.read 1))) [[1]] and
+        compare s1.position 1 and
+        compare s1.available (maybeKnown 2) and
+        compare s2.position 0 and
+        compare s2.available (maybeKnown 3) and
+
+        compare (map vec.list (mat.asRows (s2.read 2))) [[1,2]] and
+        compare s1.position 1 and
+        compare s1.available (maybeKnown 2) and
+        compare s2.position 2 and
+        compare s2.available (maybeKnown 1) and
+
+        compare (map vec.list (mat.asRows (s1.read 3))) [[2,3]] and
+        compare s1.position 3 and
+        compare s1.finished? true and
+        compare s1.available (Known 0) and
+        compare s2.position 2 and
+        compare s2.finished? false and
+        compare s2.available (maybeKnown 1) and
+
+        compare (map vec.list (mat.asRows (s1.read 3))) [] and
+
+        compare (map vec.list (mat.asRows (s2.read 1))) [[3]] and
+        compare s1.position 3 and
+        compare s1.finished? true and
+        compare s2.position 3 and
+        compare s2.finished? true and
+
+        ( s1.close (); s2.close() ; true )
 ),
 
 //!!! still no tests for filters with multi-channel inputs
