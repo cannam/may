@@ -531,6 +531,23 @@ makeTests name withUnknown =
         ( s1.close (); s2.close() ; true )
 ),
 
+"convolvedWith-\(name)": \(
+    ir = vec.fromList [1,2,3];
+    signal = maybeDuration 2 (syn.precalculated 2 (vec.fromList [1,2]));
+    c = filt.convolvedWith ir signal;
+    compare c.position 0 and
+        compare c.channels 1 and
+        compare c.sampleRate 2 and
+        compare c.available (maybeKnown 4) and
+        compare (map vec.list (mat.asRows (c.read 3))) [[1,4,7]] and
+        compare c.available (maybeKnown 1) and
+        compare c.finished? false and
+        compare (map vec.list (mat.asRows (c.read 4))) [[6]] and
+        compare c.available (Known 0) and
+        compare c.finished? true and
+        ( c.close (); true )
+),
+
 //!!! still no tests for filters with multi-channel inputs
 
 ]);

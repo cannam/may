@@ -3,8 +3,10 @@ module yetilab.stream.filter;
 
 mat = load yetilab.matrix;
 ch = load yetilab.stream.channels;
+vec = load yetilab.vector;
 
 load yetilab.stream.type;
+load yetilab.vector.type;
 
 minDurationOf d1 d2 =
     case d1 of 
@@ -257,7 +259,38 @@ duplicated copies s =
             }
             done [1..copies];
     fi;
-                        
+
+convolvedWith ir s = //!!! currently ir is single channel vector only; very slow
+   (var buffer = mat.toRowMajor
+       (mat.zeroMatrix { rows = s.channels, columns = vec.length ir });
+    s with 
+    {
+        get available () = 
+            case s.available of
+            Known n: Known (n + vec.length ir - 1);
+            other: other;
+            esac,
+        read count = 
+           (signal = s.read count;
+            out = array (map \(new double[mat.width signal]) [1..s.channels]);
+            for [0..s.channels - 1] do ch:
+                for [0..mat.width signal - 1] do i:
+                    for [0..vec.length ir - 1] do j:
+                    history = 
+                        if j > i then
+                            mat.at buffer ch (mat.width buffer + i - j)
+                        else
+                            mat.at signal ch (i - j)
+                        fi;
+                        out[ch][i] := out[ch][i] + history * (vec.at ir j);
+                    done;
+                done;
+            done;
+            extended = mat.concat (Horizontal ()) [buffer, signal];
+            w = mat.width extended;
+            buffer := mat.columnSlice extended (w - vec.length ir) w;
+            mat.newMatrix (RowMajor ()) (map vec.vector out)),
+    });
 
 {
     withDuration is number -> stream -> stream,
@@ -267,5 +300,6 @@ duplicated copies s =
     multiplexed is list<stream> -> stream,
     repeated is stream -> stream,
     duplicated is number -> stream -> list<stream>,
+    convolvedWith is vector -> stream -> stream,
 }
 
