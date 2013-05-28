@@ -397,6 +397,15 @@ makeTests name flipper =
        (newMatrix (ColumnMajor ()) [[1,4],[0,5],[3,6]])
 ),
 
+"concatEmpty-horiz-\(name)": \(
+    compareMatrices
+       (mat.concat (Horizontal ()) 
+          [(newMatrix (ColumnMajor ()) [[]]),
+           (newMatrix (RowMajor ()) [[]]),
+           (mat.zeroSizeMatrix ())])
+       (mat.zeroSizeMatrix ());
+),
+
 "sparseConcat-horiz-\(name)": \(
     s = mat.concat (Horizontal ()) 
           [mat.toSparse (newMatrix (ColumnMajor ()) [[1,4],[0,5]]),

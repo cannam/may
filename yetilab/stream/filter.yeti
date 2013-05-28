@@ -7,6 +7,7 @@ vec = load yetilab.vector;
 
 load yetilab.stream.type;
 load yetilab.vector.type;
+load yetilab.matrix.type;
 
 minDurationOf d1 d2 =
     case d1 of 
@@ -260,36 +261,59 @@ duplicated copies s =
             done [1..copies];
     fi;
 
-convolvedWith ir s = //!!! currently ir is single channel vector only; very slow
-   (var buffer = mat.toRowMajor
-       (mat.zeroMatrix { rows = s.channels, columns = vec.length ir });
+convolvedWith ir s =
+   (if mat.height ir != s.channels then
+        failWith "Signal stream and IR must have same number of channels (\(s.channels) != \(mat.height ir))"
+    fi;
+    var history = mat.toRowMajor
+       (mat.zeroMatrix { rows = s.channels, columns = mat.width ir - 1 });
     s with 
     {
+        get finished? () =
+            s.finished? and (mat.isZeroSize? history),
         get available () = 
             case s.available of
-            Known n: Known (n + vec.length ir - 1);
+            Known n: Known (n + mat.width history);
             other: other;
             esac,
         read count = 
-           (signal = s.read count;
-            out = array (map \(new double[mat.width signal]) [1..s.channels]);
+           (// Example: The IR is four samples long; we have three
+            // samples in history; two samples are available to read
+            // before the stream runs out. That means we can return
+            // up to five samples. Caller requests 6.
+            signal = s.read count;                     // -> two samples
+            siglen = mat.width signal;                 // -> 2
+            histlen = mat.width history;               // -> 3
+            convlen = min count (siglen + histlen);    // -> 5
+            input = mat.resizedTo { rows = s.channels, columns = convlen }
+                signal;  // example input now 5 samples, of which 2 are signal
+            output = array (map \(new double[convlen]) [1..s.channels]);
             for [0..s.channels - 1] do ch:
-                for [0..mat.width signal - 1] do i:
-                    for [0..vec.length ir - 1] do j:
-                    history = 
-                        if j > i then
-                            mat.at buffer ch (mat.width buffer + i - j)
-                        else
-                            mat.at signal ch (i - j)
-                        fi;
-                        out[ch][i] := out[ch][i] + history * (vec.at ir j);
+                for [0..mat.width input - 1] do i:
+                    for [0..mat.width ir - 1] do j:
+                        v = 
+                            if i >= j then
+                                mat.at input ch (i - j)
+                            else
+                                ix = mat.width ir + i - j - 1;
+                                if ix >= histlen then 
+                                    0 
+                                else
+                                    mat.at history ch ix
+                                fi
+                            fi;
+                        output[ch][i] := output[ch][i] + v * (mat.at ir ch j);
                     done;
                 done;
             done;
-            extended = mat.concat (Horizontal ()) [buffer, signal];
+            // Remove from history a number of samples equal to the
+            // number returned; add to it a number equal to the number
+            // read from source
+            extended = mat.concat (Horizontal ()) [history, signal]; // -> 5
+            newlen = (histlen + siglen) - convlen; // -> 0
             w = mat.width extended;
-            buffer := mat.columnSlice extended (w - vec.length ir) w;
-            mat.newMatrix (RowMajor ()) (map vec.vector out)),
+            history := mat.columnSlice extended (w - newlen) w;
+            mat.newMatrix (RowMajor ()) (map vec.vector output)),
     });
 
 {
@@ -300,6 +324,6 @@ convolvedWith ir s = //!!! currently ir is single channel vector only; very slow
     multiplexed is list<stream> -> stream,
     repeated is stream -> stream,
     duplicated is number -> stream -> list<stream>,
-    convolvedWith is vector -> stream -> stream,
+    convolvedWith is matrix -> stream -> stream,
 }
 

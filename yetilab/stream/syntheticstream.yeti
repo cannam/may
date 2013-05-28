@@ -35,7 +35,7 @@ whiteNoise rate =
 silent rate =
     generated rate \0;
 
-precalculated rate data = //!!! hang on -- these are returning 1-ch vectors, not matrices like other streams. how is this working?
+precalculated rate data =
    (n = vec.length data;
     var position = 0;
     {
