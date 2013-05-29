@@ -3,6 +3,7 @@ module yetilab.stream.syntheticstream;
 
 ch = load yetilab.stream.channels;
 vec = load yetilab.vector;
+mat = load yetilab.matrix;
 
 load yetilab.vector.type;
 load yetilab.stream.type;
@@ -69,7 +70,7 @@ empty rate channels = // degenerate stream with no data in it, occasionally usef
     sinusoid is number -> number -> stream, 
     whiteNoise is number -> stream,
     silent is number -> stream,
-    empty = number -> number -> stream,
+    empty is number -> number -> stream,
 }
 
 

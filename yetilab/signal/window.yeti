@@ -85,6 +85,7 @@ windowFunction type options =
     Bartlett (): bartlett sampling;
     esac);
 
+//!!! should use vector. but does anyone use this function anyway? would we use it in framer if it used vector?
 windowed windowFunc frames =
     case frames of
         []: frames;

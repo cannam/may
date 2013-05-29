@@ -270,7 +270,7 @@ convolvedWith ir s =
     s with 
     {
         get finished? () =
-            s.finished? and (mat.isZeroSize? history),
+            s.finished? and (mat.empty? history),
         get available () = 
             case s.available of
             Known n: Known (n + mat.width history);

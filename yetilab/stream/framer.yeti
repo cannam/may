@@ -14,6 +14,7 @@ fft = load yetilab.transform.fft;
 mat = load yetilab.matrix;
 ch = load yetilab.stream.channels;
 syn = load yetilab.stream.syntheticstream;
+filt = load yetilab.stream.filter;
 
 blockList framesize stream =
     if stream.finished? then
@@ -58,33 +59,85 @@ frames { framesize, hop } stream =
             framesize (map \(vec.zeros framesize) [0..stream.channels-1]);
     fi;
 
-streamContiguous rate framesize fr =
-    if empty? frames then
-        syn.empty rate 1
-    else
-        var position = 0;
-        var frames = fr;
-        var fini = false;
-        channels = mat.height (head frames); // so we don't need to keep head ptr
+streamContiguous rate framesize frames =
+   (var remaining = frames;
+    var buffered = mat.zeroSizeMatrix ();
+    var position = 0;
+    channels = mat.height (head frames); // so we don't need to keep a head ptr
+    {
+        get position () = position,
+        get channels () = channels,
+        get sampleRate () = rate,
+        get finished? () = empty? remaining and mat.empty? buffered,
+        get available () = 
+            // Don't take length of frames -- we don't want to lose laziness.
+            // If the caller cares that much, they can measure frames themselves
+            if empty? remaining then
+                Known (mat.width buffered) 
+            else
+                Unknown ()
+            fi,
+        read count =
+           (framesFor samples acc =
+                if samples <= 0 or empty? remaining then
+                    acc
+                else
+                    this = head remaining;
+                    remaining := tail remaining;
+                    framesFor (samples - mat.width this) (acc ++ [this])
+                fi;
+            source = mat.concat (Horizontal ()) (framesFor count [buffered]);
+            toReturn = mat.columnSlice source 0 count;
+            position := position + mat.width toReturn;
+            buffered := mat.columnSlice source count (mat.width source);
+            toReturn),
+        close = \(),
+    });
+
+streamOverlapping rate framesize hop frames =
+   (var remaining = frames;
+    var buffered = mat.zeroSizeMatrix ();
+    var position = 0;
+    w = win.hann framesize;
+    channels = mat.height (head frames); // so we don't need to keep a head ptr
+    filt.delayedBy (- (framesize - hop))
         {
             get position () = position,
             get channels () = channels,
             get sampleRate () = rate,
-            get available () = if fini then Known 0 else Unknown () fi,
-            get finished? () = fini,
-                            
-                            
+            get finished? () = empty? remaining and mat.empty? buffered,
+            get available () = 
+                // Don't take length of frames: we don't want to lose
+                // laziness.  If the caller cares that much, they can
+                // measure frames themselves
+                if empty? remaining then
+                    Known (mat.width buffered) 
+                else
+                    Unknown ()
+                fi,
+            read count =
+               (framesFor samples acc =
+                    if samples <= 0 or empty? remaining then
+                        acc
+                    else
+                        this = mat.newMatrix (RowMajor ())
+                           (map (bf.multiply w) (mat.asRows (head remaining)));
+                        remaining := tail remaining;
+                        framesFor (samples - hop) (acc ++ [this])
+                    fi;
+                source = mat.concat (Horizontal ()) (framesFor count [buffered]);
+                toReturn = mat.columnSlice source 0 count;
+                buffered := mat.columnSlice source count (mat.width source);
+                toReturn),
             close = \(),
-        }
-    fi;
-
+        });
+    
 //!!! doc: convert frames back to a stream
 streamed rate { framesize, hop } frames =
     if framesize == hop then
         streamContiguous rate framesize frames
     else
-        //!!! OLA
-        syn.empty rate 1;
+        streamOverlapping rate framesize hop frames
     fi;
 
 monoFrames params stream =
@@ -115,5 +168,7 @@ frequencyDomainFrames { framesize, hop } stream =
 
     frequencyDomainFramesOfFile parameters filename = 
         frequencyDomainFrames parameters (af.open filename),
+
+    streamed,
 }
 

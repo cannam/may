@@ -173,7 +173,7 @@ zeroMatrixWithTypeOf m { rows, columns } =
 
 zeroSizeMatrix () = zeroMatrix { rows = 0, columns = 0 };
 
-isZeroSize? m = (width m == 0 or height m == 0);
+empty?' m = (width m == 0 or height m == 0);
 
 generate f { rows, columns } =
     if rows < 1 or columns < 1 then zeroSizeMatrix ()
@@ -340,7 +340,7 @@ equal'' comparator vecComparator m1 m2 =
     esac);
 
 equal' comparator vecComparator m1 m2 =
-    if isZeroSize? m1 and isZeroSize? m2 then
+    if empty?' m1 and empty?' m2 then
         true
     elif size m1 != size m2 then 
         false
@@ -639,7 +639,7 @@ concat' direction mm = //!!! doc: storage order is taken from first matrix in se
 
 //!!! doc this filter -- zero-size elts are ignored
 concat direction mm =
-    concat' direction (filter do mat: not (isZeroSize? mat) done mm);
+    concat' direction (filter do mat: not (empty?' mat) done mm);
 
 //!!! next two v. clumsy
 
@@ -727,7 +727,7 @@ resizedTo newsize m =
     zeroMatrix,
     identityMatrix,
     zeroSizeMatrix,
-    isZeroSize?,
+    empty? = empty?',
     equal,
     equalUnder,
     transposed,
@@ -774,7 +774,7 @@ as
     zeroMatrix is { .rows is number, .columns is number } -> matrix, 
     identityMatrix is { .rows is number, .columns is number } -> matrix, 
     zeroSizeMatrix is () -> matrix,
-    isZeroSize? is matrix -> boolean,
+    empty? is matrix -> boolean,
     equal is matrix -> matrix -> boolean,
     equalUnder is (number -> number -> boolean) -> matrix -> matrix -> boolean,
     transposed is matrix -> matrix,
