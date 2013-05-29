@@ -13,6 +13,7 @@ win = load yetilab.signal.window;
 fft = load yetilab.transform.fft;
 mat = load yetilab.matrix;
 ch = load yetilab.stream.channels;
+syn = load yetilab.stream.syntheticstream;
 
 blockList framesize stream =
     if stream.finished? then
@@ -55,6 +56,35 @@ frames { framesize, hop } stream =
     else
         overlappingBlockList framesize hop stream 
             framesize (map \(vec.zeros framesize) [0..stream.channels-1]);
+    fi;
+
+streamContiguous rate framesize fr =
+    if empty? frames then
+        syn.empty rate 1
+    else
+        var position = 0;
+        var frames = fr;
+        var fini = false;
+        channels = mat.height (head frames); // so we don't need to keep head ptr
+        {
+            get position () = position,
+            get channels () = channels,
+            get sampleRate () = rate,
+            get available () = if fini then Known 0 else Unknown () fi,
+            get finished? () = fini,
+                            
+                            
+            close = \(),
+        }
+    fi;
+
+//!!! doc: convert frames back to a stream
+streamed rate { framesize, hop } frames =
+    if framesize == hop then
+        streamContiguous rate framesize frames
+    else
+        //!!! OLA
+        syn.empty rate 1;
     fi;
 
 monoFrames params stream =

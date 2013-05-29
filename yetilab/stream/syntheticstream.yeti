@@ -52,12 +52,24 @@ precalculated rate data =
         close = \(),
     });
 
+empty rate channels = // degenerate stream with no data in it, occasionally useful
+    {
+        get position () = 0,
+        get channels () = channels,
+        get sampleRate () = rate,
+        get available () = Known 0,
+        get finished? () = true,
+        read count = mat.zeroSizeMatrix (),
+        close = \(),
+    };
+
 {
     generated is number -> (number -> number) -> stream, 
     precalculated is number -> vector -> stream,
     sinusoid is number -> number -> stream, 
     whiteNoise is number -> stream,
     silent is number -> stream,
+    empty = number -> number -> stream,
 }
 
 
