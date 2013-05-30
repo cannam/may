@@ -16,24 +16,35 @@ compareFrames frames1 frames2 =
     all id (map2 do f1 f2: compareUsing mat.equal f1 f2 done frames1
        (map (mat.newRowVector . vec.fromList) frames2));
 
-testFrames parameters length expected =
-   (f = fr.frames parameters (testStream length);
-    str = fr.streamed rate parameters f;
-    sz = parameters.framesize;
+testFramesWith params length expected firstChunkSize =
+   (f = fr.frames params (testStream length);
+    str = fr.streamed rate params f;
+    sz = params.framesize;
     ts = testStream length;
+
+    overlapping = params.framesize > params.hop;
+    incomplete = overlapping and // Can't reconstruct with < 50% overlap
+        params.framesize < params.hop * 2; 
+
+    firstChunk = str.read firstChunkSize;
+    restChunk = str.read (length - firstChunkSize);
+
+    println "firstChunkSize = \(firstChunkSize)";
+
     compareFrames f expected and
-        compareUsing mat.equal
-           (str.read length) (ts.read length) and
+       (incomplete or 
+            compareUsing mat.equal
+                firstChunk (ts.read firstChunkSize)) and
+       (incomplete or 
+            compareUsing mat.equal
+                restChunk (ts.read (length - firstChunkSize))) and
         compare str.position length and
-        compare str.available (Known (sz - (length % sz))));
-/*
-        compareUsing mat.equal
-           (str.read 2) (ts.read 2) and
-        compareUsing mat.equal
-           (str.read (length - 2)) (ts.read (length - 2)) and
-        compare str.position length and
-        compare str.available (Known (sz - (length % sz))));
-*/
+       (overlapping or // (overlapping streamer doesn't know when it'll end!)
+           compare str.available (Known (sz - (length % sz)))));
+
+testFrames params length expected =
+    all id (map (testFramesWith params length expected) [1..length]);
+
 [
 
 "framecount-2x2": \( 
