@@ -109,12 +109,20 @@ testFrames parameters length expected =
           [3,4,5], [4,5,6], [5,6,0], [6,0,0] ];
 ),
 
-"overlapAdd": \(
+"overlapAdd-3.1": \(
     compareUsing (mat.equal)
        (fr.overlapAdd 1 3 1 [ mat.newRowVector (vec.fromList [ 1,2,3 ]),
                               mat.newRowVector (vec.fromList [   4,5,6 ]),
                               mat.newRowVector (vec.fromList [     7,8,9 ]) ])
        (mat.newRowVector (vec.fromList [ 1,6,15,14,9 ]))
+),
+
+"overlapAdd-3.2": \(
+    compareUsing (mat.equal)
+       (fr.overlapAdd 1 3 2 [ mat.newRowVector (vec.fromList [ 1,2,3 ]),
+                              mat.newRowVector (vec.fromList [     4,5,6 ]),
+                              mat.newRowVector (vec.fromList [         7,8,9 ]) ])
+       (mat.newRowVector (vec.fromList [ 1,2,7,5,13,8,9 ]))
 ),
 
 ] is hash<string, () -> boolean>;

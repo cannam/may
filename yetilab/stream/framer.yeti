@@ -114,7 +114,7 @@ streamOverlapping rate framesize hop frames =
     var position = 0;
     w = win.windowFunction (Hann ()) [ Symmetric true ] framesize;
     channels = mat.height (head frames); // so we don't need to keep a head ptr
-    filt.delayedBy (- (framesize - hop))
+    filt.delayedBy (- framesize)
         {
             get position () = position,
             get channels () = channels,
@@ -143,6 +143,7 @@ streamOverlapping rate framesize hop frames =
                    (framesFor count [buffered]);
 //                println "source = \(source)";
                 toReturn = mat.columnSlice source 0 count;
+                position := position + mat.width toReturn;
                 buffered := mat.columnSlice source count (mat.width source);
                 toReturn),
             close = \(),
