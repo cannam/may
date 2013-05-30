@@ -112,7 +112,8 @@ streamOverlapping rate framesize hop frames =
    (var remaining = frames;
     var buffered = mat.zeroSizeMatrix ();
     var position = 0;
-    w = win.windowFunction (Hann ()) [ Symmetric false ] framesize;
+    factor = hop / (framesize/2);
+    w = bf.scaled factor (win.hann framesize);
     channels = mat.height (head frames); // so we don't need to keep a head ptr
     filt.delayedBy (- framesize)
         {
