@@ -43,8 +43,8 @@ realForward n =
 
 realInverse n = 
    (d = new DoubleFFT_1D(n);
-    do arr:
-        v = complexToPacked arr;
+    do cplx:
+        v = complexToPacked (array cplx);
         d#realInverse(v, true);
         vec.vector v;
     done);
