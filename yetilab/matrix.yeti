@@ -568,6 +568,13 @@ product m1 m2 =
         fi;
     fi;
 
+entryWiseProduct m1 m2 = // or element-wise, or Hadamard product
+//!!! todo: faster, sparse version, units
+    if (size m1) != (size m2)
+    then failWith "Matrices are not the same size: \(size m1), \(size m2)";
+    else generate do row col: at' m1 row col * at' m2 row col done (size m1);
+    fi;
+
 concatAgainstGrain tagger getter counter mm =
    (n = counter (size (head mm));
     tagger (array
@@ -745,6 +752,7 @@ resizedTo newsize m =
     abs = abs',
     filter = filter',
     product,
+    entryWiseProduct,
     concat,
     rowSlice,
     columnSlice,
@@ -793,6 +801,7 @@ as
     abs is matrix -> matrix,
     filter is (number -> boolean) -> matrix -> matrix,
     product is matrix -> matrix -> matrix,
+    entryWiseProduct is matrix -> matrix -> matrix,
     concat is (Horizontal () | Vertical ()) -> list<matrix> -> matrix,
     rowSlice is matrix -> number -> number -> matrix, 
     columnSlice is matrix -> number -> number -> matrix,
