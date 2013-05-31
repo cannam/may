@@ -609,7 +609,7 @@ checkDimensionsFor direction first mm =
         failWith "Matrix dimensions incompatible for concat (found \(map do m: counter (size m) done mm) not all of which are \(n))";
     fi);
 
-concat' direction mm = //!!! doc: storage order is taken from first matrix in sequence
+concat' direction mm = //!!! doc: storage order is taken from first matrix in sequence; concat is obviously not lazy (unlike std module)
     case length mm of
     0: zeroSizeMatrix ();
     1: head mm;

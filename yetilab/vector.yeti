@@ -93,7 +93,7 @@ reversed v is ~double[] -> ~double[] =
     done;
     a);
 
-concat vv is list?<~double[]> -> ~double[] =
+concat vv is list?<~double[]> -> ~double[] = //!!! doc: concat is obviously not lazy (unlike std module)
    (len = sum (map length' vv);
     vout = zeros len;
     var base = 0;
