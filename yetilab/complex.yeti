@@ -57,8 +57,15 @@ magnitude c is ~Cplx -> number =
 angle c is ~Cplx -> number =
     c#getAngle();
 
-add c1 c2 is ~Cplx -> ~Cplx -> ~Cplx =
-    complex (real c1 + real c2) (imaginary c1 + imaginary c2);
+sum' cc is list?<~Cplx> -> ~Cplx =
+    complex (sum (map real cc)) (sum (map imaginary cc));
+
+multiply c1 c2 is ~Cplx -> ~Cplx -> ~Cplx =
+   (a = real c1;
+    b = imaginary c1;
+    c = real c2;
+    d = imaginary c2;
+    complex (a * c - b * d) (b * c + a * d)); //!!! need units
 
 scale r c is number -> ~Cplx -> ~Cplx =
     complex (r * real c) (r * imaginary c);
@@ -78,7 +85,8 @@ angles cc is list?<~Cplx> -> vector =
    complex,
    magnitude,
    angle,
-   add,
+   sum = sum',
+   multiply,
    scale,
    zeros,
    magnitudes,
@@ -89,7 +97,8 @@ angles cc is list?<~Cplx> -> vector =
    complex is number -> number -> cplx,
    magnitude is cplx -> number,
    angle is cplx -> number,
-   add is cplx -> cplx -> cplx,
+   sum is list?<cplx> -> cplx,
+   multiply is cplx -> cplx -> cplx,
    scale is number -> cplx -> cplx,
    zeros is number -> array<cplx>,
    magnitudes is list?<cplx> -> vector,
