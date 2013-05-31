@@ -4,6 +4,10 @@ module yetilab.stream.filter;
 mat = load yetilab.matrix;
 ch = load yetilab.stream.channels;
 vec = load yetilab.vector;
+fr = load yetilab.stream.framer;
+win = load yetilab.signal.window;
+fft = load yetilab.transform.fft;
+syn = load yetilab.stream.syntheticstream;
 
 load yetilab.stream.type;
 load yetilab.vector.type;
@@ -262,6 +266,21 @@ duplicated copies s =
             }
             done [1..copies];
     fi;
+
+zeroPaddedFreqFrames framesize stream =
+//!!! mono only for now
+   (f = fft.realForward framesize;
+    map f
+       (map (vec.resizedTo (2 * framesize))
+           (fr.windowedFrames
+                { framesize, hop = framesize, window = win.boxcar }
+                stream)));
+
+fastConvolvedWith ir framesize s =
+   (irfr = zeroPaddedFreqFrames framesize (syn.precalculated (s.sampleRate) ir);
+    sigfr = zeroPaddedFreqFrames framesize s;
+    s
+    );
 
 convolvedWith ir s =
    (if mat.height ir != s.channels then
