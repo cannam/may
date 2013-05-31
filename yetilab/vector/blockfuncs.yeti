@@ -45,13 +45,14 @@ mean v =
         len: sum' v / len
     esac;
 
-add b1 b2 =
-   (v1 = raw b1;
-    v2 = raw b2;
-    len = if length v1 < length v2 then length v1 else length v2 fi;
+add bb =
+   (len = head (sort (map vec.length bb));
+    vv = map raw bb;
     out = new double[len];
     for [0..len-1] do i:
-        out[i] := v1[i] + v2[i]
+        for vv do v: 
+            out[i] := out[i] + v[i];
+        done;
     done;
     vec.vector out);
 
@@ -106,7 +107,7 @@ ifftshift v =
 {
 sum is vector -> number = sum',
 mean is vector -> number,
-add is vector -> vector -> vector,
+add is list?<vector> -> vector,
 subtract is vector -> vector -> vector,
 multiply is vector -> vector -> vector, 
 divideBy is number -> vector -> vector, 

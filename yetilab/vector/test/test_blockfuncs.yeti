@@ -38,9 +38,9 @@ stdSqrt = sqrt;
 ),
 
 "add": \(
-    compare (list (add (zeros 0) (ones 5))) [] and
-        compare (list (add (consts 3 4) (fromList [1,2,3]))) [4,5,6] and
-        compare (list (add (consts (-3) 4) (fromList [1,2,3]))) [-2,-1,0] 
+    compare (list (add [zeros 0, ones 5])) [] and
+        compare (list (add [consts 3 4, fromList [1,2,3] ])) [4,5,6] and
+        compare (list (add [consts (-3) 4, fromList [1,2,3] ])) [-2,-1,0] 
 ),
 
 "subtract": \(
