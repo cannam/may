@@ -13,7 +13,6 @@ win = load yetilab.signal.window;
 fft = load yetilab.transform.fft;
 mat = load yetilab.matrix;
 ch = load yetilab.stream.channels;
-filt = load yetilab.stream.filter;
 
 //!!! todo: synchronized for everything with state assignment
 
@@ -119,39 +118,46 @@ streamOverlapping rate framesize hop frames =
    (var remaining = frames;
     var buffered = mat.zeroSizeMatrix ();
     var position = 0;
+
     factor = hop / (framesize/2);
     w = bf.scaled factor (win.hann framesize); // periodic window, not symmetric
     channels = mat.height (head frames); // so we don't need to keep a head ptr
+
     syncd = synchronized remaining;
-    finished () = syncd \(empty? remaining and mat.empty? buffered);
-    filt.delayedBy (- (framesize - hop))
-        {
-            get position () = syncd \(position),
-            get channels () = channels,
-            get sampleRate () = rate,
-            get finished? () = finished (),
-            get available () = if finished () then Known 0 else Unknown () fi,
-            read count = syncd
-              \(framesFor samples acc =
-                    if samples <= 0 or empty? remaining then
-                        acc
-                    else
-                        this = mat.resizedTo
-                            { columns = framesize, rows = channels }
-                            (mat.newMatrix (RowMajor ())
-                                (map (bf.multiply w)
-                                    (mat.asRows (head remaining))));
-                        remaining := tail remaining;
-                        framesFor (samples - hop) (acc ++ [this])
-                    fi;
-                source = overlapAdd (framesize - hop)
-                   (framesFor count [buffered]);
-                toReturn = mat.columnSlice source 0 count;
-                position := position + mat.width toReturn;
-                buffered := mat.columnSlice source count (mat.width source);
-                toReturn),
-            close = \(),
-        });
+
+    finished' () = syncd \(empty? remaining and mat.empty? buffered);
+
+    read' count = 
+       (framesFor samples acc =
+            if samples <= 0 or empty? remaining then
+                acc
+            else
+                this = mat.resizedTo { columns = framesize, rows = channels }
+                   (mat.newMatrix (RowMajor ())
+                       (map (bf.multiply w) (mat.asRows (head remaining))));
+                remaining := tail remaining;
+                framesFor (samples - hop) (acc ++ [this])
+            fi;
+        source = overlapAdd (framesize - hop)
+           (framesFor count [buffered]);
+        buffered := mat.columnSlice source count (mat.width source);
+        mat.columnSlice source 0 count);
+
+    // lose initial padding
+    \() (read' (framesize - hop));
+    
+    {
+        get position () = syncd \(position),
+        get channels () = channels,
+        get sampleRate () = rate,
+        get finished? () = finished' (),
+        get available () = if finished' () then Known 0 else Unknown () fi,
+        read count = syncd
+          \(data = read' count;
+            position := position + mat.width data;
+            data),
+        close = \(),
+    });
     
 //!!! doc: convert frames back to a stream
 streamed rate { framesize, hop } frames =
@@ -168,9 +174,9 @@ windowedFrames { framesize, hop, window } stream =
    (win = window framesize;
     map (bf.multiply win) (monoFrames { framesize, hop } stream));
 
-frequencyDomainFrames { framesize, hop } stream =
-   (f = fft.realForward framesize;
-    map f (windowedFrames { framesize, hop, window = win.hann } stream));
+frequencyDomainFrames parameters stream =
+   (f = fft.realForward parameters.framesize;
+    map f (windowedFrames parameters stream));
 
 { 
     frames,
