@@ -19,31 +19,38 @@ compareFrames frames1 frames2 =
 testFramesWith params length expected firstChunkSize =
    (f = fr.frames params (testStream length);
     str = fr.streamed rate params f;
-    sz = params.framesize;
-    ts = testStream length;
-
-    overlapping = params.framesize > params.hop;
-    incomplete = overlapping and // Can't reconstruct with < 50% overlap
-        params.framesize < params.hop * 2; 
-
-    println "firstChunkSize = \(firstChunkSize):";
-
-    firstChunk = str.read firstChunkSize;
-    restChunk = str.read (length - firstChunkSize);
+    ts = testStream length; // newly initialised stream
 
     compareFrames f expected and
-       (incomplete or 
-            compareUsing mat.equal
-                firstChunk (ts.read firstChunkSize)) and
-       (incomplete or 
-            compareUsing mat.equal
-                restChunk (ts.read (length - firstChunkSize))) and
+
+       (firstChunk = str.read firstChunkSize;
+        compareUsing mat.equal
+            firstChunk (ts.read firstChunkSize)) and
+
+        compare str.position firstChunkSize and
+        compare str.finished? false and
+
+       (restChunk = str.read (length - firstChunkSize);
+        compareUsing mat.equal
+            restChunk (ts.read (length - firstChunkSize))) and
         compare str.position length and
-       (overlapping or // (overlapping streamer doesn't know when it'll end!)
-           compare str.available (Known (sz - (length % sz)))));
+
+       (trailingZeros = str.read (params.framesize + 1);
+        compareUsing mat.equal
+            trailingZeros
+               (mat.zeroMatrix
+                { rows = str.channels, columns = mat.width trailingZeros }) and
+           (mat.width trailingZeros < params.framesize)) and
+
+       compare str.finished? true and
+       compare str.available (Known 0));
+
+testFramesInvertible params length expected =
+    all id (map (testFramesWith params length expected) [1..length]);
 
 testFrames params length expected =
-    all id (map (testFramesWith params length expected) [1..length]);
+   (f = fr.frames params (testStream length);
+    compareFrames f expected);
 
 [
 
@@ -103,7 +110,7 @@ testFrames params length expected =
 ),
 
 "frames-2x5": \( 
-    testFrames { framesize = 2, hop = 2 } 5 [ [1,2], [3,4], [5,0] ];
+    testFramesInvertible { framesize = 2, hop = 2 } 5 [ [1,2], [3,4], [5,0] ];
 ),
 
 "frames-4.3x4": \( 
@@ -115,46 +122,49 @@ testFrames params length expected =
 ),
 
 "frames-3.1x6": \(
-    testFrames { framesize = 3, hop = 1 } 6
+    testFramesInvertible { framesize = 3, hop = 1 } 6
         [ [0,0,1], [0,1,2], [1,2,3], [2,3,4],
           [3,4,5], [4,5,6], [5,6,0], [6,0,0] ];
 ),
 
 "frames-4.2x8": \(
-    testFrames { framesize = 4, hop = 2 } 8
+    testFramesInvertible { framesize = 4, hop = 2 } 8
         [ [0,0,1,2], [1,2,3,4], [3,4,5,6], [5,6,7,8], [7,8,0,0] ];
 ),
 
 "overlapAdd-3.1": \(
     compareUsing (mat.equal)
-       (fr.overlapAdd 1 2 [ mat.newRowVector (vec.fromList [ 1,2,3 ]),
-                            mat.newRowVector (vec.fromList [   4,5,6 ]),
-                            mat.newRowVector (vec.fromList [     7,8,9 ]) ])
+       (fr.overlapAdd 2 [ mat.newRowVector (vec.fromList [ 1,2,3 ]),
+                          mat.newRowVector (vec.fromList [   4,5,6 ]),
+                          mat.newRowVector (vec.fromList [     7,8,9 ]) ])
        (mat.newRowVector (vec.fromList [ 1,6,15,14,9 ]))
 ),
 
 "overlapAdd-3.2": \(
     compareUsing (mat.equal)
-       (fr.overlapAdd 1 1 [ mat.newRowVector (vec.fromList [ 1,2,3 ]),
-                            mat.newRowVector (vec.fromList [     4,5,6 ]),
-                            mat.newRowVector (vec.fromList [         7,8,9 ]) ])
+       (fr.overlapAdd 1 [ mat.newRowVector (vec.fromList [ 1,2,3 ]),
+                          mat.newRowVector (vec.fromList [     4,5,6 ]),
+                          mat.newRowVector (vec.fromList [         7,8,9 ]) ])
        (mat.newRowVector (vec.fromList [ 1,2,7,5,13,8,9 ]))
 ),
 
 "overlapAdd-4.2": \(
     compareUsing (mat.equal)
-       (fr.overlapAdd 1 2 [ mat.newRowVector (vec.fromList [ 1,2,3,4 ]),
-                            mat.newRowVector (vec.fromList [     5,6,7,8 ]),
-                            mat.newRowVector (vec.fromList [         9,0,1,2 ]) ])
+       (fr.overlapAdd 2 [ mat.newRowVector (vec.fromList [ 1,2,3,4 ]),
+                          mat.newRowVector (vec.fromList [     5,6,7,8 ]),
+                          mat.newRowVector (vec.fromList [         9,0,1,2 ]) ])
        (mat.newRowVector (vec.fromList [ 1,2,8,10,16,8,1,2 ]))
 ),
 
-"overlapAdd-6+4.2": \( // Must work even if blocks vary in length (what if shorter than overlap though?)
+"overlapAdd-6+4.2": \(
+    // Must work even if blocks vary in length (what if shorter than
+    // overlap though?)
     compareUsing (mat.equal)
-       (fr.overlapAdd 1 2 [ mat.newRowVector (vec.fromList [ 1,2,3,4,5,6 ]),
-                            mat.newRowVector (vec.fromList [         7,8,9,0 ]),
-                            mat.newRowVector (vec.fromList [             1,2,3,4 ]) ])
-       (mat.newRowVector (vec.fromList [ 1,2,3,4,12,14,10,2,3,4 ]))
+       (fr.overlapAdd 2 [ mat.newRowVector (vec.fromList [ 1,2,3,4,5,6 ]),
+                          mat.newRowVector (vec.fromList [         7,8,9,0 ]),
+                          mat.newRowVector (vec.fromList [             1,2,3 ]),
+                          mat.newRowVector (vec.fromList [               4,5,6 ]) ])
+       (mat.newRowVector (vec.fromList [ 1,2,3,4,12,14,10,6,8,6 ]))
 ),
 
 ] is hash<string, () -> boolean>;

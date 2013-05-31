@@ -13,8 +13,9 @@ win = load yetilab.signal.window;
 fft = load yetilab.transform.fft;
 mat = load yetilab.matrix;
 ch = load yetilab.stream.channels;
-syn = load yetilab.stream.syntheticstream;
 filt = load yetilab.stream.filter;
+
+//!!! todo: synchronized for everything with state assignment
 
 blockList framesize stream =
     if stream.finished? then
@@ -94,26 +95,25 @@ streamContiguous rate framesize frames =
         close = \(),
     });
 
-overlapAdd channels overlap frames =
+overlapAdd overlap frames =
    (ola fr acc =
-        if empty? fr then
-           [acc]
-        else
-            pre = mat.columnSlice acc 0 (mat.width acc - overlap);
-            added = mat.sum (head fr) 
-               (mat.resizedTo { columns = mat.width (head fr), rows = channels }
-                   (mat.columnSlice acc (mat.width acc - overlap) (mat.width acc)));
-    /*               
-            frameSized = mat.resizedTo
-               { columns = framesize, rows = channels };
-            extended = frameSized
-               (mat.columnSlice acc hop (mat.width acc));
-            added = mat.sum (frameSized (head fr)) extended;
-           (mat.columnSlice acc 0 hop) :: ola (tail fr) added;
-*/
-            pre :: ola (tail fr) added;
-        fi;
-    mat.concat (Horizontal ()) (ola frames (mat.zeroSizeMatrix ())));
+        case fr of
+        first::rest:
+           (w = mat.width acc;
+            pre = mat.columnSlice acc 0 (w - overlap);
+            added = mat.sum first
+               (mat.resizedTo (mat.size first)
+               (mat.columnSlice acc (w - overlap) w));
+            pre :: ola rest added);
+         _:
+            [acc];
+        esac;
+    case frames of
+    first::rest:
+        mat.concat (Horizontal ()) (ola rest first);
+     _: 
+        mat.zeroSizeMatrix ();
+    esac);
 
 streamOverlapping rate framesize hop frames =
    (var remaining = frames;
@@ -121,21 +121,21 @@ streamOverlapping rate framesize hop frames =
     var position = 0;
     factor = hop / (framesize/2);
     w = bf.scaled factor (win.hann framesize); // periodic window, not symmetric
-    println "window is \(vec.list w)";
     channels = mat.height (head frames); // so we don't need to keep a head ptr
-    filt.delayedBy (- framesize)
+    syncd = synchronized remaining;
+    finished () = syncd \(empty? remaining and mat.empty? buffered);
+    filt.delayedBy (- (framesize - hop))
         {
-            get position () = position,
+            get position () = syncd \(position),
             get channels () = channels,
             get sampleRate () = rate,
-            get finished? () = empty? remaining and mat.empty? buffered,
-            get available () = Unknown (),
-            read count =
-               (framesFor samples acc =
+            get finished? () = finished (),
+            get available () = if finished () then Known 0 else Unknown () fi,
+            read count = syncd
+              \(framesFor samples acc =
                     if samples <= 0 or empty? remaining then
                         acc
                     else
-                        println "multiplying \(head remaining) by window";
                         this = mat.resizedTo
                             { columns = framesize, rows = channels }
                             (mat.newMatrix (RowMajor ())
@@ -144,13 +144,11 @@ streamOverlapping rate framesize hop frames =
                         remaining := tail remaining;
                         framesFor (samples - hop) (acc ++ [this])
                     fi;
-                source = overlapAdd channels (framesize - hop)
+                source = overlapAdd (framesize - hop)
                    (framesFor count [buffered]);
                 toReturn = mat.columnSlice source 0 count;
                 position := position + mat.width toReturn;
                 buffered := mat.columnSlice source count (mat.width source);
-                println "count = \(count), framesize = \(framesize), hop = \(hop)";
-                println "leaving position = \(position), buffered = \(buffered), returning \(toReturn)";
                 toReturn),
             close = \(),
         });

@@ -9,6 +9,8 @@ load yetilab.stream.type;
 load yetilab.vector.type;
 load yetilab.matrix.type;
 
+//!!! todo: synchronized for everything with state assignment
+
 minDurationOf d1 d2 =
     case d1 of 
     Known a:
