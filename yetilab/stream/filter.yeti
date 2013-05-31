@@ -4,10 +4,12 @@ module yetilab.stream.filter;
 mat = load yetilab.matrix;
 ch = load yetilab.stream.channels;
 vec = load yetilab.vector;
+bf = load yetilab.vector.blockfuncs;
 fr = load yetilab.stream.framer;
 win = load yetilab.signal.window;
 fft = load yetilab.transform.fft;
 syn = load yetilab.stream.syntheticstream;
+cplx = load yetilab.complex;
 
 load yetilab.stream.type;
 load yetilab.vector.type;
@@ -269,7 +271,7 @@ duplicated copies s =
 
 zeroPaddedFreqFrames framesize stream =
 //!!! mono only for now
-   (f = fft.realForward framesize;
+   (f = fft.realForward (framesize * 2);
     map f
        (map (vec.resizedTo (2 * framesize))
            (fr.windowedFrames
@@ -279,10 +281,26 @@ zeroPaddedFreqFrames framesize stream =
 fastConvolvedWith ir framesize s =
    (irfr = zeroPaddedFreqFrames framesize (syn.precalculated (s.sampleRate) ir);
     sigfr = zeroPaddedFreqFrames framesize s;
-    s
-    );
+    complexSums ccc = map cplx.sum ccc;
+    complexMultiplies cc1 cc2 = map2 cplx.multiply cc1 cc2;
+    convolve irframes history remaining = 
+    //!!! todo: tail recursive
+        case remaining of
+        first::rest:
+            (complexSums (map2 complexMultiplies irframes history)) :: 
+                convolve irframes (first::history) rest;
+         _: [];
+        esac;
+    cframes = convolve
+        irfr [] (sigfr ++ (map \(cplx.zeros framesize) [1..length irfr-1]));
+    rframes = map (fft.realInverse (framesize * 2)) cframes;
+    fr.streamed s.sampleRate { framesize, hop = framesize }
+       (map mat.newRowVector rframes));
 
-convolvedWith ir s =
+convolvedWith ir s = //!!! cheap mono thing here
+    fastConvolvedWith (mat.getRow 0 ir) 10 s; //!!! framesize hardcoded there
+
+plainConvolvedWith ir s =
    (if mat.height ir != s.channels then
         failWith "Signal stream and IR must have same number of channels (\(s.channels) != \(mat.height ir))"
     fi;
