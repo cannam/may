@@ -414,7 +414,8 @@ sum' m1 m2 =
     elif isSparse? m1 and isSparse? m2 then
         sparseSumOrDifference (+) m1 m2;
     else
-        denseLinearOp bf.add m1 m2;
+        add2 v1 v2 = bf.add [v1,v2];
+        denseLinearOp add2 m1 m2;
     fi;
 
 difference m1 m2 =
