@@ -1,6 +1,6 @@
-module yetilab.vector.test.test_complex;
+module yetilab.complex.test.test_complex;
 
-{ real, imaginary, complex, magnitude, angle, add, scale, zeros, magnitudes, angles }
+{ real, imaginary, complex, magnitude, angle, sum, scale, zeros, magnitudes, angles }
    = load yetilab.complex;
 
 { compare } = load yetilab.test.test;
@@ -34,8 +34,8 @@ vec = load yetilab.vector;
         compare (angle (complex 0 (-1))) (-pi/2)
 ),
 
-"add": \(
-    compare (add (complex 2 3) (complex (-4) 5)) (complex (-2) 8)
+"sum": \(
+    compare (sum [complex 2 3, complex (-4) 5]) (complex (-2) 8)
 ),
 
 "scale": \(
