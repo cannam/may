@@ -114,13 +114,13 @@ overlapAdd overlap frames =
         mat.zeroSizeMatrix ();
     esac);
 
-streamOverlapping rate framesize hop frames =
+streamOverlapping rate { framesize, hop, window } frames =
    (var remaining = frames;
     var buffered = mat.zeroSizeMatrix ();
     var position = 0;
 
     factor = hop / (framesize/2);
-    w = bf.scaled factor (win.hann framesize); // periodic window, not symmetric
+    w = bf.scaled factor (window framesize);
     channels = mat.height (head frames); // so we don't need to keep a head ptr
 
     syncd = synchronized remaining;
@@ -164,7 +164,9 @@ streamed rate { framesize, hop } frames =
     if framesize == hop then
         streamContiguous rate framesize frames
     else
-        streamOverlapping rate framesize hop frames
+        streamOverlapping rate
+            { framesize, hop, window = win.hann } // periodic, not symmetric
+            frames
     fi;
 
 monoFrames params stream =
@@ -199,5 +201,6 @@ frequencyDomainFrames parameters stream =
     overlapAdd,
 
     streamed,
+    streamOverlapping,
 }
 

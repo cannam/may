@@ -298,13 +298,15 @@ fastConvolvedWith ir framesize s =
         esac;
     cframes = convolve
         irfr [] (sigfr ++ (map \(cplx.zeros fs1) [1..length irfr-1]));
-    rframes = map (fft.realInverse (framesize * 2)) cframes;
+    rframes = (vec.zeros (framesize * 2)) ::
+        map (fft.realInverse (framesize * 2)) cframes;
 //    println "irfr \(irfr)\nsigfr \(sigfr)\ncframes \(cframes)\nrframes \(rframes)\nframesize \(framesize)";
-    fr.streamed s.sampleRate { framesize, hop = framesize }
-       (map do f: mat.newRowVector (vec.slice f 0 framesize) done rframes));
+    fr.streamOverlapping s.sampleRate
+       { framesize = framesize * 2, hop = framesize, window = win.boxcar }
+       (map mat.newRowVector rframes));
 
 convolvedWith ir s = //!!! cheap mono thing here
-    fastConvolvedWith (mat.getRow 0 ir) 256 s; //!!! framesize hardcoded there
+    fastConvolvedWith (mat.getRow 0 ir) 16384 s; //!!! framesize hardcoded there
 
 plainConvolvedWith ir s =
    (if mat.height ir != s.channels then
