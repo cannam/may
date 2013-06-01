@@ -33,6 +33,7 @@ complexToPacked arr =
     v);
 
 //!!! doc: n is supplied separately from the input vector to support partial evaluation
+//!!! doc: output has n+1 complex values
 realForward n = 
    (d = new DoubleFFT_1D(n);
     do bl:
@@ -41,6 +42,7 @@ realForward n =
         packedToComplex (vec.length bl) v;
     done);
 
+//!!! doc: input requires n+1 complex values (or should test and throw?)
 realInverse n = 
    (d = new DoubleFFT_1D(n);
     do cplx:
