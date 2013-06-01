@@ -9,9 +9,9 @@ vec = load yetilab.vector;
 import java.lang: ClassCastException;
 
 class Cplx(double real, double imag)
-    int getReal()
+    double getReal()
         real,
-    int getImag()
+    double getImag()
         imag,
     double getMagnitude()
         sqrt (real * real + imag * imag),

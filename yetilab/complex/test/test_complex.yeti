@@ -15,11 +15,13 @@ vec = load yetilab.vector;
 ),
 
 "real": \(
-    compare (real (complex 3 2)) 3
+    compare (real (complex 3 2)) 3 and
+        compare (real (complex 3.3 2.2)) 3.3
 ),
 
 "imaginary": \(
-    compare (imaginary (complex 3 4)) 4
+    compare (imaginary (complex 3 4)) 4 and
+        compare (imaginary (complex 3 (-4.1))) (-4.1)
 ),
 
 "magnitude": \(
