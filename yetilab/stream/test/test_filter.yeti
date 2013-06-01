@@ -534,7 +534,7 @@ makeTests name withUnknown =
 "convolvedImpulse-\(name)": \(
     ir = mat.newRowVector (vec.fromList [1,0,-1,0]);
     signal = maybeDuration 4 (syn.precalculated 2 (vec.fromList [1,0,0,0]));
-    c = filt.convolvedWith ir signal;
+    c = filt.convolvedWith [] ir signal; //!!! todo: the options
     compare (map vec.list (mat.asRows (c.read 4))) [[ 1,0,-1,0 ]] and
         ( c.close (); true )
 ),
@@ -542,7 +542,7 @@ makeTests name withUnknown =
 "convolvedImpulse2-\(name)": \(
     ir = mat.newRowVector (vec.fromList [8,6,4,2]);
     signal = maybeDuration 4 (syn.precalculated 2 (vec.fromList [1,0,0,0]));
-    c = filt.convolvedWith ir signal;
+    c = filt.convolvedWith [] ir signal; //!!! todo: the options
     compare (map vec.list (mat.asRows (c.read 4))) [[ 8,6,4,2 ]] and
         ( c.close (); true )
 ),
@@ -550,7 +550,7 @@ makeTests name withUnknown =
 "convolvedWith-\(name)": \(
     ir = mat.newRowVector (vec.fromList [1,2,3,4,5]);
     signal = maybeDuration 3 (syn.precalculated 2 (vec.fromList [1,2,3]));
-    c = filt.convolvedWith ir signal;
+    c = filt.convolvedWith [] ir signal; //!!! todo: the options
     compare c.position 0 and
         compare c.channels 1 and
         compare c.sampleRate 2 and

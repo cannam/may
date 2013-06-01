@@ -36,7 +36,7 @@ whiteNoise rate =
 silent rate =
     generated rate \0;
 
-precalculated rate data =
+precalculated rate data = //!!! should take multi-channel matrix
    (n = vec.length data;
     var position = 0;
     {

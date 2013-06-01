@@ -305,9 +305,6 @@ fastConvolvedWith ir framesize s =
        { framesize = framesize * 2, hop = framesize, window = win.boxcar }
        (map mat.newRowVector rframes));
 
-convolvedWith ir s = //!!! cheap mono thing here
-    fastConvolvedWith (mat.getRow 0 ir) 16384 s; //!!! framesize hardcoded there
-
 plainConvolvedWith ir s =
    (if mat.height ir != s.channels then
         failWith "Signal stream and IR must have same number of channels (\(s.channels) != \(mat.height ir))"
@@ -363,6 +360,28 @@ plainConvolvedWith ir s =
             mat.newMatrix (RowMajor ()) (map vec.vector output)),
     });
 
+nextPowerOfTwo n =
+   (nextPowerOfTwo' p n =
+        if p >= n then p
+        else nextPowerOfTwo' (p * 2) n
+        fi;
+    nextPowerOfTwo' 1 n);
+
+convolvedWith options ir s = //!!! cheap mono thing here
+   (var type = Fast ();
+    var framesize = nextPowerOfTwo (mat.width ir);
+    for options \case of
+    //!!! todo: test these options
+        Fast s: if s then type := Fast () else type := Plain () fi;
+        Framesize n: framesize := nextPowerOfTwo n;
+        esac;
+    case type of
+    Fast ():
+        fastConvolvedWith (mat.getRow 0 ir) framesize s;
+    Plain ():
+        plainConvolvedWith ir s;
+    esac);
+
 {
     withDuration is number -> stream -> stream,
     delayedBy is number -> stream -> stream,
@@ -371,6 +390,6 @@ plainConvolvedWith ir s =
     multiplexed is list<stream> -> stream,
     repeated is stream -> stream,
     duplicated is number -> stream -> list<stream>,
-    convolvedWith is matrix -> stream -> stream,
+    convolvedWith is list<Fast boolean | Framesize number> -> matrix -> stream -> stream,
 }
 
