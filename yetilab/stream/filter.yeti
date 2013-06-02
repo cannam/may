@@ -286,8 +286,8 @@ time f =
     println "\(end-start)ms";
     result);
 
-fastConvolve irframes history remaining /*acc*/ = 
-   (println "convolve: irframes \(length irframes) history \(length history) remaining \(length remaining)";
+fastConvolve irframes history remaining acc = 
+   (println "convolve: irframes \(length irframes) history \(length history) remaining \(length remaining) acc \(length acc)";
     case remaining of
     first::rest:
        (println "convolve: \(length remaining) remaining of which length rest is \(length rest)";
@@ -299,10 +299,9 @@ fastConvolve irframes history remaining /*acc*/ =
                     map2 cplx.multiply irf histf;
                     done irframes newhistory));
         println "convolve: recursing with \(length rest) frames";
-//        fastConvolve irframes newhistory rest (acc ++ [convolvedFrame]));
-        convolvedFrame :: fastConvolve irframes newhistory rest);
+        fastConvolve irframes newhistory rest (acc ++ [convolvedFrame]));
      _: println "remaining only has 0 or 1 entries, returning";
-        [];
+        acc;
     esac);
 
 fastConvolvedWith ir framesize s =
@@ -315,7 +314,7 @@ len = time \(length sigfr);
 println "sigfr has \(len) frames";
     fs1 = framesize + 1;
     cframes = fastConvolve
-        irfr [] (sigfr ++ (map \(cplx.zeros fs1) [1..length irfr-1])) /* [] */;
+        irfr [] (sigfr ++ (map \(cplx.zeros fs1) [1..length irfr-1])) [];
     rframes = (vec.zeros (framesize * 2)) ::
         map (fft.realInverse (framesize * 2)) cframes;
 //    println "irfr \(irfr)\nsigfr \(sigfr)\ncframes \(cframes)\nrframes \(rframes)\nframesize \(framesize)";
