@@ -8,6 +8,13 @@ filt = load yetilab.stream.filter;
 
 { compare, compareUsing } = load yetilab.test.test;
 
+compareClose = compareUsing 
+    do m1 m2:
+        all id (map2 do v1 v2:
+            all id (map2 do a b: abs(a - b) < 1e-10 done v1 v2)
+        done m1 m2)
+    done;
+
 makeTests name withUnknown =
    (maybeDuration n str =
         // Truncate a stream, but if withUnknown is true, return it
@@ -535,7 +542,7 @@ makeTests name withUnknown =
     ir = mat.newRowVector (vec.fromList [1,0,-1,0]);
     signal = maybeDuration 4 (syn.precalculatedMono 2 (vec.fromList [1,0,0,0]));
     c = filt.convolvedWith [] ir signal; //!!! todo: the options
-    compare (map vec.list (mat.asRows (c.read 4))) [[ 1,0,-1,0 ]] and
+    compareClose (map vec.list (mat.asRows (c.read 4))) [[ 1,0,-1,0 ]] and
         ( c.close (); true )
 ),
 
@@ -543,7 +550,7 @@ makeTests name withUnknown =
     ir = mat.newRowVector (vec.fromList [8,6,4,2]);
     signal = maybeDuration 4 (syn.precalculatedMono 2 (vec.fromList [1,0,0,0]));
     c = filt.convolvedWith [] ir signal; //!!! todo: the options
-    compare (map vec.list (mat.asRows (c.read 4))) [[ 8,6,4,2 ]] and
+    compareClose (map vec.list (mat.asRows (c.read 4))) [[ 8,6,4,2 ]] and
         ( c.close (); true )
 ),
 
@@ -555,13 +562,13 @@ makeTests name withUnknown =
         compare c.channels 1 and
         compare c.sampleRate 2 and
 //        compare c.available (maybeKnown 4) and
-        compare (map vec.list (mat.asRows (c.read 3)))
+        compareClose (map vec.list (mat.asRows (c.read 3)))
             [[ 1*1,
                2*1 + 1*2,
                3*1 + 2*2 + 1*3 ]] and
 //        compare c.available (Known 1) and
         compare c.finished? false and
-        compare (map vec.list (mat.asRows (c.read 4)))
+        compareClose (map vec.list (mat.asRows (c.read 4)))
             [[       3*2 + 2*3 + 1*4,
                            3*3 + 2*4 + 1*5,
                                  3*4 + 2*5,

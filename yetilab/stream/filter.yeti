@@ -367,6 +367,7 @@ nextPowerOfTwo n =
         fi;
     nextPowerOfTwo' 1 n);
 
+//!!! todo: partial application so as to preprocess ir (in fast convolution case)
 convolvedWith options ir s = //!!! cheap mono thing here
    (var type = Fast ();
     var framesize = nextPowerOfTwo (mat.width ir);
