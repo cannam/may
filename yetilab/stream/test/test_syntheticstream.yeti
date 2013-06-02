@@ -48,8 +48,8 @@ epsilon = 0.000001;
         compare str.position 3
 ),
 
-"precalculated-empty": \(
-    str = syn.precalculated 2 (vec.fromList []);
+"precalculatedMono-empty": \(
+    str = syn.precalculatedMono 2 (vec.fromList []);
     compare str.position 0 and
         compare str.channels 1 and
         compare str.sampleRate 2 and
@@ -59,8 +59,8 @@ epsilon = 0.000001;
         compare str.position 0
 ),
 
-"precalculated": \(
-    str = syn.precalculated 2 (vec.fromList [ 1, 2, 3, 4 ]);
+"precalculatedMono": \(
+    str = syn.precalculatedMono 2 (vec.fromList [ 1, 2, 3, 4 ]);
     compare str.position 0 and
         compare str.channels 1 and
         compare str.sampleRate 2 and

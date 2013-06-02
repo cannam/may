@@ -311,7 +311,7 @@ makeTests name withUnknown =
 
 "mixed-precalc-trunc-\(name)": \(
     str = filt.mixed
-       [syn.precalculated 2 (vec.fromList [1,2]),
+       [syn.precalculatedMono 2 (vec.fromList [1,2]),
         maybeDuration 3 (syn.generated 2 (0-))];
     compare str.position 0 and
         compare str.channels 1 and
@@ -327,8 +327,8 @@ makeTests name withUnknown =
 
 "mixed-2-1-\(name)": \(
     str = filt.mixed
-       [syn.precalculated 2 (vec.fromList [1,2]),
-        filt.multiplexed [syn.precalculated 2 (vec.fromList [3,4]),
+       [syn.precalculatedMono 2 (vec.fromList [1,2]),
+        filt.multiplexed [syn.precalculatedMono 2 (vec.fromList [3,4]),
                           maybeDuration 3 (syn.generated 2 (0-))]];
     compare str.position 0 and
         compare str.channels 2 and
@@ -344,8 +344,8 @@ makeTests name withUnknown =
 
 "mixed-3-\(name)": \(
     str = filt.mixed
-       [syn.precalculated 2 (vec.fromList [1,2]),
-        syn.precalculated 2 (vec.fromList [3,4]),
+       [syn.precalculatedMono 2 (vec.fromList [1,2]),
+        syn.precalculatedMono 2 (vec.fromList [3,4]),
         maybeDuration 3 (syn.generated 2 (0-))];
     compare str.position 0 and
         compare str.channels 1 and
@@ -389,7 +389,7 @@ makeTests name withUnknown =
 
 "multiplexed-precalc-trunc-\(name)": \(
     str = filt.multiplexed
-       [syn.precalculated 2 (vec.fromList [1,2]),
+       [syn.precalculatedMono 2 (vec.fromList [1,2]),
         maybeDuration 3 (syn.generated 2 (0-))];
     compare str.position 0 and
         compare str.channels 2 and
@@ -405,8 +405,8 @@ makeTests name withUnknown =
 
 "multiplexed-2-1-\(name)": \(
     str = filt.multiplexed
-       [syn.precalculated 2 (vec.fromList [1,2]),
-        filt.multiplexed [syn.precalculated 2 (vec.fromList [3,4]),
+       [syn.precalculatedMono 2 (vec.fromList [1,2]),
+        filt.multiplexed [syn.precalculatedMono 2 (vec.fromList [3,4]),
                           maybeDuration 3 (syn.generated 2 (0-))]];
     compare str.position 0 and
         compare str.channels 3 and
@@ -422,8 +422,8 @@ makeTests name withUnknown =
 
 "multiplexed-2-1b-\(name)": \(
     str = filt.multiplexed
-       [syn.precalculated 2 (vec.fromList [1,2]),
-        syn.precalculated 2 (vec.fromList [3,4]),
+       [syn.precalculatedMono 2 (vec.fromList [1,2]),
+        syn.precalculatedMono 2 (vec.fromList [3,4]),
         maybeDuration 3 (syn.generated 2 (0-))];
     compare str.position 0 and
         compare str.channels 3 and
@@ -439,7 +439,7 @@ makeTests name withUnknown =
 
 "repeated-2-\(name)": \(
     str = filt.repeated
-       (syn.precalculated 2 (vec.fromList [1,2,3]));
+       (syn.precalculatedMono 2 (vec.fromList [1,2,3]));
     compare str.position 0 and
         compare str.channels 1 and
         compare str.sampleRate 2 and
@@ -461,7 +461,7 @@ makeTests name withUnknown =
 ),
 
 "duplicated-1-\(name)": \(
-    original = maybeDuration 3 (syn.precalculated 2 (vec.fromList [1,2,3]));
+    original = maybeDuration 3 (syn.precalculatedMono 2 (vec.fromList [1,2,3]));
     sn = filt.duplicated 1 original;
     str = (head sn);
     compare (length sn) 1 and
@@ -481,7 +481,7 @@ makeTests name withUnknown =
 ),
 
 "duplicated-2-\(name)": \(
-    original = maybeDuration 3 (syn.precalculated 2 (vec.fromList [1,2,3]));
+    original = maybeDuration 3 (syn.precalculatedMono 2 (vec.fromList [1,2,3]));
     sn = filt.duplicated 2 original;
     s1 = (head sn);
     s2 = (head (tail sn));
@@ -533,7 +533,7 @@ makeTests name withUnknown =
 
 "convolvedImpulse-\(name)": \(
     ir = mat.newRowVector (vec.fromList [1,0,-1,0]);
-    signal = maybeDuration 4 (syn.precalculated 2 (vec.fromList [1,0,0,0]));
+    signal = maybeDuration 4 (syn.precalculatedMono 2 (vec.fromList [1,0,0,0]));
     c = filt.convolvedWith [] ir signal; //!!! todo: the options
     compare (map vec.list (mat.asRows (c.read 4))) [[ 1,0,-1,0 ]] and
         ( c.close (); true )
@@ -541,7 +541,7 @@ makeTests name withUnknown =
 
 "convolvedImpulse2-\(name)": \(
     ir = mat.newRowVector (vec.fromList [8,6,4,2]);
-    signal = maybeDuration 4 (syn.precalculated 2 (vec.fromList [1,0,0,0]));
+    signal = maybeDuration 4 (syn.precalculatedMono 2 (vec.fromList [1,0,0,0]));
     c = filt.convolvedWith [] ir signal; //!!! todo: the options
     compare (map vec.list (mat.asRows (c.read 4))) [[ 8,6,4,2 ]] and
         ( c.close (); true )
@@ -549,7 +549,7 @@ makeTests name withUnknown =
 
 "convolvedWith-\(name)": \(
     ir = mat.newRowVector (vec.fromList [1,2,3,4,5]);
-    signal = maybeDuration 3 (syn.precalculated 2 (vec.fromList [1,2,3]));
+    signal = maybeDuration 3 (syn.precalculatedMono 2 (vec.fromList [1,2,3]));
     c = filt.convolvedWith [] ir signal; //!!! todo: the options
     compare c.position 0 and
         compare c.channels 1 and

@@ -10,7 +10,7 @@ syn = load yetilab.stream.syntheticstream;
 
 rate = 10;
 
-testStream n is number -> 'a  = syn.precalculated rate (vec.fromList [1..n]);
+testStream n is number -> 'a  = syn.precalculatedMono rate (vec.fromList [1..n]);
 
 compareFrames frames1 frames2 =
     all id (map2 do f1 f2: compareUsing mat.equal f1 f2 done frames1

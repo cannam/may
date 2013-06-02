@@ -6,6 +6,7 @@ vec = load yetilab.vector;
 mat = load yetilab.matrix;
 
 load yetilab.vector.type;
+load yetilab.matrix.type;
 load yetilab.stream.type;
 
 generated sampleRate generator =
@@ -36,7 +37,7 @@ whiteNoise rate =
 silent rate =
     generated rate \0;
 
-precalculated rate data = //!!! should take multi-channel matrix
+precalculatedMono rate data =
    (n = vec.length data;
     var position = 0;
     {
@@ -48,6 +49,24 @@ precalculated rate data = //!!! should take multi-channel matrix
         read count = ch.deinterleaved 1
            (rc = min count (n - position);
             result = vec.slice data position (position + rc);
+            position := position + rc;
+            result),
+        close = \(),
+    });
+
+precalculated rate data =
+   (n = mat.width data;
+    c = mat.height data;
+    var position = 0;
+    {
+        get position () = position,
+        get channels () = c,
+        get sampleRate () = rate,
+        get available () = Known (n - position),
+        get finished? () = not (n > position),
+        read count = 
+           (rc = min count (n - position);
+            result = mat.columnSlice data position (position + rc);
             position := position + rc;
             result),
         close = \(),
@@ -66,7 +85,8 @@ empty rate channels = // degenerate stream with no data in it, occasionally usef
 
 {
     generated is number -> (number -> number) -> stream, 
-    precalculated is number -> vector -> stream,
+    precalculated is number -> matrix -> stream,
+    precalculatedMono is number -> vector -> stream,
     sinusoid is number -> number -> stream, 
     whiteNoise is number -> stream,
     silent is number -> stream,

@@ -278,7 +278,7 @@ zeroPaddedFreqFrames framesize stream =
     map f padded);
 
 fastConvolvedWith ir framesize s =
-   (irfr = zeroPaddedFreqFrames framesize (syn.precalculated (s.sampleRate) ir);
+   (irfr = zeroPaddedFreqFrames framesize (syn.precalculatedMono (s.sampleRate) ir);
     sigfr = zeroPaddedFreqFrames framesize s;
     fs1 = framesize + 1;
     convolve irframes history remaining acc = 
