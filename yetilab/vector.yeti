@@ -20,13 +20,7 @@ consts m n =
 ones = consts 1.0;
 
 fromList l is list?<number> -> ~double[] =
-   (arr = array(l);
-    len = length arr;
-    v = zeros len;
-    for [0..len-1] do i:
-        v[i] := arr[i];
-    done;
-    v);
+    l as ~double[];
 
 list' a is ~double[] -> list<number> =
     list a;
