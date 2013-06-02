@@ -60,6 +60,9 @@ angle c is ~Cplx -> number =
 sum' cc is list?<~Cplx> -> ~Cplx =
     complex (sum (map real cc)) (sum (map imaginary cc));
 
+add c1 c2 is ~Cplx -> ~Cplx -> ~Cplx =
+    complex (real c1 + real c2) (imaginary c1 + imaginary c2);
+
 multiply c1 c2 is ~Cplx -> ~Cplx -> ~Cplx =
    (a = real c1;
     b = imaginary c1;
@@ -86,6 +89,7 @@ angles cc is list?<~Cplx> -> vector =
    magnitude,
    angle,
    sum = sum',
+   add,
    multiply,
    scale,
    zeros,
@@ -98,6 +102,7 @@ angles cc is list?<~Cplx> -> vector =
    magnitude is cplx -> number,
    angle is cplx -> number,
    sum is list?<cplx> -> cplx,
+   add is cplx -> cplx -> cplx,
    multiply is cplx -> cplx -> cplx,
    scale is number -> cplx -> cplx,
    zeros is number -> array<cplx>,

@@ -3,6 +3,7 @@ module yetilab.stream.channels;
 
 vec = load yetilab.vector;
 mat = load yetilab.matrix;
+bf = load yetilab.vector.blockfuncs;
 
 load yetilab.vector.type;
 
@@ -44,13 +45,13 @@ deinterleaved channels b =
 
 mixedDown m =  //!!! sum or average? at the moment we sum
    ({ columns, rows } = (mat.size m);
-    v = new double[columns];
-    for [0..rows-1] do row:
-        for [0..columns-1] do col:
-            v[col] := v[col] + mat.at m row col;
-        done;
-    done;
-    vec.vector v);
+    if rows < 1 or columns < 1 then
+        vec.zeros 0
+    elif rows == 1 then
+        mat.getRow 0 m
+    else
+        bf.add (mat.asRows m);
+    fi);
 
 mixedDownFromInterleaved channels b =
     if channels == 1 then
