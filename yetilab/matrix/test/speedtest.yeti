@@ -4,16 +4,11 @@ program yetilab.matrix.test.speedtest;
 mat = load yetilab.matrix;
 vec = load yetilab.vector;
 
-{ compare, compareUsing } = load yetilab.test.test;
+{ compare, compareUsing, time } = load yetilab.test.test;
+
+norec time f = time "" f;
 
 compareMatrices = compareUsing mat.equal;
-
-time f =
-   (start = System#currentTimeMillis();
-    result = f ();
-    end = System#currentTimeMillis();
-    println " \(end-start)ms";
-    result);
 
 makeMatrices sz sparsity =
    (print "Making \(sz) * \(sz) random matrix...";

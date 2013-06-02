@@ -15,6 +15,13 @@ compareUsing comparator obtained expected =
 
 compare obtained expected = compareUsing (==) obtained expected;
 
+time msg f =
+   (start = System#currentTimeMillis();
+    result = f ();
+    end = System#currentTimeMillis();
+    println "\(msg): \(end-start)ms";
+    result);
+
 select f = fold do r x: if f x then x::r else r fi done [];
 
 failedTests testHash =
@@ -43,6 +50,7 @@ runTests group testHash =
 
 {
     compare, compareUsing,
+    time,
     runTests, 
 }
 
