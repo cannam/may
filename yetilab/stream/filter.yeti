@@ -296,7 +296,7 @@ fastConvolve irframes history remaining acc =
                (map2 do irf histf:
                     map2 cplx.multiply irf histf;
                     done irframes newhistory));
-        fastConvolve irframes newhistory rest (acc ++ [convolvedFrame]));
+        fastConvolve irframes newhistory rest (acc ++ [convolvedFrame]);
      _: acc;
     esac);
 
