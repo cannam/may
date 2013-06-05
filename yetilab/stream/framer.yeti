@@ -14,6 +14,11 @@ fft = load yetilab.transform.fft;
 mat = load yetilab.matrix;
 ch = load yetilab.stream.channels;
 
+load yetilab.stream.type;
+load yetilab.matrix.type;
+load yetilab.vector.type;
+load yetilab.complex.type;
+
 //!!! todo: synchronized for everything with state assignment
 
 blockList framesize stream =
@@ -180,11 +185,14 @@ frequencyDomainFrames parameters stream =
    (f = fft.realForward parameters.framesize;
     map f (windowedFrames parameters stream));
 
+typedef params = { framesize is number, hop is number };
+typedef winparams = { framesize is number, hop is number, window is number -> vector };
+
 { 
-    frames,
-    monoFrames,
-    windowedFrames,
-    frequencyDomainFrames,
+    frames is params -> stream -> list<matrix>,
+    monoFrames is params -> stream -> list<vector>,
+    windowedFrames is winparams -> stream -> list<vector>,
+    frequencyDomainFrames is winparams -> stream -> list<array<cplx> >,
 
     framesOfFile parameters filename =
         frames parameters (af.open filename),
@@ -198,9 +206,9 @@ frequencyDomainFrames parameters stream =
     frequencyDomainFramesOfFile parameters filename = 
         frequencyDomainFrames parameters (af.open filename),
 
-    overlapAdd,
+    overlapAdd is number -> list<matrix> -> matrix,
 
-    streamed,
-    streamOverlapping,
+    streamed is number -> params -> list<matrix> -> stream,
+    streamOverlapping is number -> winparams -> list<matrix> -> stream,
 }
 
