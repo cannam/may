@@ -85,11 +85,11 @@ streamContiguous rate framesize frames =
         read count =
            (framesFor samples acc =
                 if samples <= 0 or empty? remaining then
-                    acc
+                    reverse acc
                 else
                     this = head remaining;
                     remaining := tail remaining;
-                    framesFor (samples - mat.width this) (acc ++ [this])
+                    framesFor (samples - mat.width this) (this :: acc)
                 fi;
             source = mat.concat (Horizontal ()) (framesFor count [buffered]);
             toReturn = mat.columnSlice source 0 count;
@@ -135,13 +135,13 @@ streamOverlapping rate { framesize, hop, window } frames =
     read' count = 
        (framesFor samples acc =
             if samples <= 0 or empty? remaining then
-                acc
+                reverse acc
             else
                 this = mat.resizedTo { columns = framesize, rows = channels }
                    (mat.newMatrix (RowMajor ())
                        (map (bf.multiply w) (mat.asRows (head remaining))));
                 remaining := tail remaining;
-                framesFor (samples - hop) (acc ++ [this])
+                framesFor (samples - hop) (this::acc)
             fi;
         source = overlapAdd (framesize - hop)
            (framesFor count [buffered]);
