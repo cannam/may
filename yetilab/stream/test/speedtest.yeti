@@ -1,0 +1,28 @@
+
+program yetilab.stream.test.speedtest;
+
+af = load yetilab.stream.audiofile;
+vec = load yetilab.vector;
+mat = load yetilab.matrix;
+filt = load yetilab.stream.filter;
+
+import java.lang: StackOverflowError;
+
+{ compare, compareUsing, time } = load yetilab.test.test;
+
+str = time "open audio file" \(af.openMono "shortish.wav");
+
+try 
+
+\() (time "prepare convolve" \(filt.convolvedWith [] (mat.newRowVector (vec.fromList [ 1, 0.8, 0.5 ])) str));
+
+catch StackOverflowError e:
+    elts = e#getStackTrace();
+    for elts println;
+    println "that was \(length elts) elts";
+yrt;
+
+println "Done";
+
+
+
