@@ -151,6 +151,13 @@ isSymmetric a =
     ]
 ),
 
+"sinc": \(
+    compareUsing close (vec.list (win.sinc 1 5)) [ 0, 0, 1, 0, 0 ] and
+        compareUsing close (vec.list (win.sinc 2 5)) [ 0, 0, 1, 0, 0 ] and
+        compareUsing close (vec.list (win.sinc 4 7)) [ -0.2122, 0, 0.6366, 1, 0.6366, 0, -0.2122 ] and
+        compareUsing close (vec.list (win.sinc 4 6)) [ -0.2122, 0, 0.6366, 1, 0.6366, 0 ]
+),
+
 "degenerate": \(
     all id (map do type:
         f = functions[type];

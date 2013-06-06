@@ -85,6 +85,23 @@ windowFunction type options =
     Bartlett (): bartlett sampling;
     esac);
 
+/**
+ * Make a vector of size n containing the values of sinc(x) with
+ * x=0 in the middle, i.e. at sample (n-1)/2 for odd n or n/2+1 for
+ * even n, such that the distance from -pi to pi (the point at
+ * which the sinc function first crosses zero, for negative and
+ * positive arguments respectively) is p samples.  p does not have
+ * to be an integer.
+ */
+sinc p n =
+    if n < 2 then vec.ones n
+    else 
+        n0 = if n % 2 == 0 then n/2 else (n-1)/2 fi;
+        n1 = if n % 2 == 0 then n/2 else (n+1)/2 fi;
+        half = 1 :: map do i: x = i * 2*pi / p; sin(x) / x done [1..n/2];
+        vec.fromList ((take n0 (reverse half)) ++ (take n1 half));
+    fi;
+
 //!!! should use vector. but does anyone use this function anyway? would we use it in framer if it used vector?
 windowed windowFunc frames =
     case frames of
@@ -104,6 +121,7 @@ blackmanNuttall = blackmanNuttall (Periodic ()),
 blackmanHarris = blackmanHarris (Periodic ()),
 boxcar,
 bartlett = bartlett (Periodic ()), 
+sinc,
 windowFunction,
 windowed
 };
