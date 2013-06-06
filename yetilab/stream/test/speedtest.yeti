@@ -14,7 +14,7 @@ before = System#currentTimeMillis();
 
 str = time "open audio file" \(af.openMono "shortish.wav");
 
-conv = time "prepare convolve" \(filt.convolvedWith [Framesize 2048] (mat.newRowVector (vec.fromList [ 1, 0.8, 0.5 ])) str);
+conv = time "prepare convolve" \(filt.convolvedWith [ Framesize 256 ] (mat.newRowVector (vec.fromList [ 1, 0.8, 0.5 ])) str);
 
 var len = 0;
 time "read convolve" \((not conv.finished?) loop len := len + mat.width (conv.read 65536));
