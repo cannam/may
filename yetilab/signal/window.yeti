@@ -69,22 +69,6 @@ blackmanHarris = cosineWindow 0.35875 0.48829 0.14128 0.01168;
 
 boxcar n = vec.ones n;
 
-windowFunction type options =
-   (var sampling = Periodic ();
-    for options \case of
-        Symmetric s: if s then sampling := Symmetric () fi
-        esac;
-    case type of
-    Hann (): hann sampling;
-    Hamming (): hamming sampling;
-    Blackman (): blackman sampling;
-    Nuttall (): nuttall sampling;
-    BlackmanNuttall (): blackmanNuttall sampling;
-    BlackmanHarris (): blackmanHarris sampling;
-    Boxcar (): boxcar;
-    Bartlett (): bartlett sampling;
-    esac);
-
 /**
  * Make a vector of size n containing the values of sinc(x) with
  * x=0 in the middle, i.e. at sample (n-1)/2 for odd n or n/2+1 for
@@ -101,6 +85,60 @@ sinc p n =
         half = 1 :: map do i: x = i * 2*pi / p; sin(x) / x done [1..n/2];
         vec.fromList ((take n0 (reverse half)) ++ (take n1 half));
     fi;
+
+kaiser beta n =
+   (bes0 x = 
+       (fact x = fold do x y: x*y done 1 [1..x];
+        ipow a b = fold do x _: x*a done 1 [1..b];
+        square x = x*x;
+        term x i =
+            case i of
+             0: 1;
+             _: (ipow (x/2) (i*2)) / (square (fact i));
+            esac;
+        sum (map (term x) [0..24]));
+    denominator = bes0 beta;
+    vec.fromList
+       (map do i:
+            k = 2*i / (n-1) - 1;
+            bes0 (beta * sqrt (1 - k*k)) / denominator;
+            done [0..n-1]));
+
+/**
+  Kaiser window with sidelobe attenuation of alpha dB and transition width
+  of (tw * samplerate) / (2 * pi)
+*/
+kaiserFor alpha tw =
+   (m = if alpha > 21 
+        then Math#ceil((alpha - 7.95) / (2.285 * tw))
+        else Math#ceil(5.79 / tw)
+        fi;
+    beta =
+        if alpha > 50 then 0.1102 * (alpha - 8.7)
+        elif alpha > 21 then 0.5842 * Math#pow(alpha - 21, 0.4) + 0.07886 * (alpha - 21)
+        else 0
+        fi;
+println "for alpha \(alpha) and tw \(tw), beta is \(beta) and m is \(m)";
+    kaiser beta (m+1));
+
+windowFunction type options =
+   (var sampling = Periodic ();
+    var beta = 4;
+    for options \case of
+        Symmetric s: if s then sampling := Symmetric () fi;
+        Beta b: beta := b;
+        esac;
+    case type of
+    Hann (): hann sampling;
+    Hamming (): hamming sampling;
+    Blackman (): blackman sampling;
+    Nuttall (): nuttall sampling;
+    BlackmanNuttall (): blackmanNuttall sampling;
+    BlackmanHarris (): blackmanHarris sampling;
+    Boxcar (): boxcar;
+    Bartlett (): bartlett sampling;
+    Kaiser (): kaiser beta;
+    esac);
 
 //!!! should use vector. but does anyone use this function anyway? would we use it in framer if it used vector?
 windowed windowFunc frames =
@@ -122,6 +160,7 @@ blackmanHarris = blackmanHarris (Periodic ()),
 boxcar,
 bartlett = bartlett (Periodic ()), 
 sinc,
+kaiser, kaiserFor,
 windowFunction,
 windowed
 };
