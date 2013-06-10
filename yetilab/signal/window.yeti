@@ -1,4 +1,3 @@
-
 module yetilab.signal.window;
 
 vec = load yetilab.vector;
@@ -86,47 +85,46 @@ sinc p n =
         vec.fromList ((take n0 (reverse half)) ++ (take n1 half));
     fi;
 
-kaiser beta n =
+kaiser 𝛽 n =
    (bes0 x = 
-       (fact x = fold do x y: x*y done 1 [1..x];
-        ipow a b = fold do x _: x*a done 1 [1..b];
+       (fact x = fold do x y: x*y done 1 [1..x];   // x!
+        ipow a b = fold do x _: x*a done 1 [1..b]; // a^b where b∈ℕ
         square x = x*x;
         term x i =
             case i of
              0: 1;
              _: (ipow (x/2) (i*2)) / (square (fact i));
             esac;
-        sum (map (term x) [0..24]));
-    denominator = bes0 beta;
+        sum (map (term x) [0..20]));
+    denominator = bes0 𝛽;
     vec.fromList
        (map do i:
             k = 2*i / (n-1) - 1;
-            bes0 (beta * sqrt (1 - k*k)) / denominator;
+            bes0 (𝛽 * sqrt (1 - k*k)) / denominator;
             done [0..n-1]));
 
 /**
-  Kaiser window with sidelobe attenuation of alpha dB and transition width
+  Kaiser window with sidelobe attenuation of 𝛼 dB and transition width
   of (tw * samplerate) / (2 * pi)
 */
-kaiserFor alpha tw =
-   (m = if alpha > 21 
-        then Math#ceil((alpha - 7.95) / (2.285 * tw))
+kaiserFor 𝛼 tw =
+   (m = if 𝛼 > 21 
+        then Math#ceil((𝛼 - 7.95) / (2.285 * tw))
         else Math#ceil(5.79 / tw)
         fi;
-    beta =
-        if alpha > 50 then 0.1102 * (alpha - 8.7)
-        elif alpha > 21 then 0.5842 * Math#pow(alpha - 21, 0.4) + 0.07886 * (alpha - 21)
+    𝛽 =
+        if 𝛼 > 50 then 0.1102 * (𝛼 - 8.7)
+        elif 𝛼 > 21 then 0.5842 * Math#pow(𝛼 - 21, 0.4) + 0.07886 * (𝛼 - 21)
         else 0
         fi;
-println "for alpha \(alpha) and tw \(tw), beta is \(beta) and m is \(m)";
-    kaiser beta (m+1));
+    kaiser 𝛽 (m+1));
 
 windowFunction type options =
    (var sampling = Periodic ();
-    var beta = 4;
+    var 𝛽 = 4;
     for options \case of
         Symmetric s: if s then sampling := Symmetric () fi;
-        Beta b: beta := b;
+        Beta b: 𝛽 := b;
         esac;
     case type of
     Hann (): hann sampling;
@@ -137,7 +135,7 @@ windowFunction type options =
     BlackmanHarris (): blackmanHarris sampling;
     Boxcar (): boxcar;
     Bartlett (): bartlett sampling;
-    Kaiser (): kaiser beta;
+    Kaiser (): kaiser 𝛽;
     esac);
 
 //!!! should use vector. but does anyone use this function anyway? would we use it in framer if it used vector?
