@@ -1,6 +1,9 @@
 module yetilab.plot;
 
 vec = load yetilab.vector;
+mat = load yetilab.matrix;
+
+{ distinctColour } = load yetilab.plot.colour;
 
 import org.jzy3d.plot3d.builder: Mapper;
 import org.jzy3d.maths: Range, Coord3d;
@@ -16,7 +19,7 @@ import org.jzy3d.plot3d.primitives: FlatLine2d, Point;
 newMatrixMapper matrix =
    (class MMapper extends Mapper
         double f(double x, double y)
-            result = matrix.getAt y x;
+            result = mat.at matrix y x;
             println "f(\(x),\(y)) -> \(result)";
             result
     end;
@@ -25,7 +28,7 @@ newMatrixMapper matrix =
 newMatrixLogMapper matrix =
    (class MMapper extends Mapper
         double f(double x, double y)
-            ln (matrix.getAt y x)
+            ln (mat.at matrix y x)
     end;
     new MMapper());
 
@@ -36,9 +39,10 @@ newMapper mapFunction =
     end;
     new FMapper());
 
-plotMatrix chart matrix is ~Chart -> 'a -> () =
+plotMatrix chart colour matrix is ~Chart -> ~Color -> 'a -> () =
    (mapper = newMatrixMapper matrix;
-    size = matrix.size;
+    size = mat.size matrix;
+    //!!! doesn't work if either rows or columns is 1
     xrange = new Range(0, size.columns - 1);
     yrange = new Range(0, size.rows - 1);
     grid = new OrthonormalGrid(xrange, size.columns, yrange, size.rows);
@@ -47,17 +51,17 @@ plotMatrix chart matrix is ~Chart -> 'a -> () =
     println "Z Bounds: \(surface#getBounds()#getZmin()) -> \(surface#getBounds()#getZmax())";
     surface#setFaceDisplayed(true);
     surface#setWireframeDisplayed(true);
-    surface#setWireframeColor(Color#BLACK);
+    surface#setWireframeColor(colour);
     chart#getScene()#getGraph()#add(surface);
     ());
 
-plotCurve chart depth curve is ~Chart -> number -> 'a -> () =
+plotCurve chart colour depth curve is ~Chart -> ~Color -> number -> 'a -> () =
    (scene = chart#getScene();
     xx = map (.time) curve;
     yy = map (.value) curve;
     line = new FlatLine2d(xx as ~float[], yy as ~float[], depth);
     line#setWireframeDisplayed(true);
-    line#setWireframeColor(Color#BLACK);
+    line#setWireframeColor(colour);
     line#setWireframeWidth(2);
     line#setFaceDisplayed(false);
     scene#add(line);
@@ -72,13 +76,13 @@ plotCurve chart depth curve is ~Chart -> number -> 'a -> () =
 */
     ());
 
-plotSeries chart depth { start, step, values } is ~Chart -> number -> 'a -> () =
+plotSeries chart colour depth { start, step, values } is ~Chart -> ~Color -> number -> 'a -> () =
    (scene = chart#getScene();
     xx = map do i: start + step * i done [0..length values - 1];
     yy = list values;
     line = new FlatLine2d(xx as ~float[], yy as ~float[], depth);
     line#setWireframeDisplayed(true);
-    line#setWireframeColor(Color#BLACK);
+    line#setWireframeColor(colour);
     line#setWireframeWidth(2);
     line#setFaceDisplayed(false);
     scene#add(line);
@@ -95,22 +99,23 @@ plotSeries chart depth { start, step, values } is ~Chart -> number -> 'a -> () =
 
 plot structures =
    (chart = new Chart(Quality#Nicest);
-    var depth = 0;
+    var j = 0;
     for structures do s:
+        colour = distinctColour j;
         case s of
         Grid matrix:
-            plotMatrix chart matrix;
+            plotMatrix chart colour matrix;
         Curve curve:
-            plotCurve chart depth curve;
+            plotCurve chart colour j curve;
         Series series:
-            plotSeries chart depth series;
+            plotSeries chart colour j series;
         Vector vector:
-            plotSeries chart depth
+            plotSeries chart colour j
                 { start = 0, step = 1, values = vec.list vector };
         other:
             failWith "Unable to plot \(other)";
         esac;
-        depth := depth + 1;
+        j := j + 1;
     done;
     ChartLauncher#openChart(chart);
     chart);
