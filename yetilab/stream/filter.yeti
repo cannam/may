@@ -417,7 +417,7 @@ kaiserSincWindow zc n 𝛼 =
     kw = win.kaiserForAttenuation 𝛼 (vec.length sw);
     bf.multiply sw kw);
 
-spaced mult s = //!!! n must be an integer [how to enforce this??]
+spaced mult s = //!!! mult must be an integer [how to enforce this??]
    (var pos = 0;
     s with
     {
@@ -439,7 +439,7 @@ spaced mult s = //!!! n must be an integer [how to enforce this??]
             mat.newRowVector (vec.fromList (map \(readOne ()) [1..n]))),
     });
 
-interpolated mult s = //!!! n must be an integer [how to enforce this??]
+interpolated mult s = //!!! mult must be an integer [how to enforce this??]
    (nzc = 13;
     attenuation = 80;
     filter = kaiserSincWindow nzc mult attenuation;
@@ -447,6 +447,31 @@ interpolated mult s = //!!! n must be an integer [how to enforce this??]
        (convolvedWith []
            (mat.newMatrix (RowMajor ()) (map \filter [1..s.channels]))
            (spaced mult s)));
+
+picked frac s =
+    s with
+    {
+        get position () = int (s.position / frac),
+        get available () =
+            case s.available of Known n: Known (int (n/frac)); other: other esac,
+        read n =
+           (m = s.read (n*frac);
+println "read \(mat.width m) frames";
+            obtained = int ((mat.width m) / frac);
+            mat.flipped
+               (mat.newMatrix (ColumnMajor ())
+                   (map do c: mat.getColumn (c*frac) m done [0..obtained-1])))
+    };
+
+decimated frac s = //!!! frac must be an integer [how to enforce this??]
+   (nzc = 13;
+    attenuation = 80;
+    filter = kaiserSincWindow nzc frac attenuation;
+    filtered =
+//        delayedBy (- (nzc * frac))
+           (convolvedWith []
+               (mat.newMatrix (RowMajor ()) (map \filter [1..s.channels])) s);
+    picked frac filtered);
 
 {
     withDuration is number -> stream -> stream,
@@ -458,6 +483,6 @@ interpolated mult s = //!!! n must be an integer [how to enforce this??]
     repeated is stream -> stream,
     duplicated is number -> stream -> list<stream>,
     convolvedWith is list<Fast boolean | Framesize number> -> matrix -> stream -> stream,
-    kaiserSincWindow, spaced, interpolated
+    kaiserSincWindow, spaced, interpolated, decimated, picked
 }
 
