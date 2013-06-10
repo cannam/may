@@ -269,14 +269,18 @@ duplicated copies s =
             done [1..copies];
     fi;
 
-zeroPaddedFreqFrames framesize =
-//!!! mono only for now
-   (f = fft.realForward (framesize * 2);
+zeroPaddedFreqFrames framesize channels =
+    // take a multi-channel stream, convert to a series of list of
+    // complex frequency-domain frames calculated from input padded to
+    // framesize*2, in which each frame contains all channels one
+    // after another (not interleaved) [because we lack a complex
+    // matrix type]
+   (forwardTransform = fft.realForward (framesize * 2);
     do stream:
         padded = 
-           (map (vec.resizedTo (framesize * 2))
-               (fr.monoFrames { framesize, hop = framesize } stream));
-        map f padded;
+           (map (mat.resizedTo { rows = channels, columns = framesize * 2 })
+               (fr.frames { framesize, hop = framesize } stream));
+        map do fr: concat (map forwardTransform (mat.asRows fr)) done padded;
     done);
 
 doFastConvolve irframes sigframes =
@@ -292,25 +296,35 @@ doFastConvolve irframes sigframes =
             done irframes history);
         done sigframes);
 
+splitInto n fr =
+   (parts = splitAt n fr;
+    if empty? parts.snd then [parts.fst]
+    else parts.fst :: splitInto n parts.snd;
+    fi);
+
 fastConvolvedWith ir framesize s =
-   (framer = zeroPaddedFreqFrames framesize;
-    irfr = framer (syn.precalculatedMono (s.sampleRate) ir);
+    // prerequisite: ir and s have same number of channels
+   (framer = zeroPaddedFreqFrames framesize (mat.height ir);
+    irfr = framer (syn.precalculated 1 ir); // rate arg is irrelevant here
     sigfr = framer s;
-    fs1 = framesize + 1;
-    cframes = doFastConvolve irfr
-       (sigfr ++ (map \(cplx.zeros fs1) [1..length irfr-1]));
-    rframes = (vec.zeros (framesize * 2)) ::
-        map (fft.realInverse (framesize * 2)) cframes;
+    ch = s.channels;
+    inverseTransform = fft.realInverse (framesize * 2);
+    extended = sigfr ++
+        map do _: list (cplx.zeros (ch * (framesize + 1))) done [1..length irfr-1];
+    cframes = doFastConvolve irfr extended; 
+    rframes = (mat.zeroMatrix { rows = ch, columns = framesize * 2}) ::
+        map do fr:
+            mat.newMatrix (RowMajor ())
+               (map inverseTransform (splitInto (framesize+1) fr))
+            done cframes;
     fr.streamOverlapping s.sampleRate
-       { framesize = framesize * 2, hop = framesize, window = win.boxcar }
-       (map mat.newRowVector rframes)
+        { framesize = framesize * 2, hop = framesize, window = win.boxcar }
+        rframes
 );
 
 plainConvolvedWith ir s =
-   (if mat.height ir != s.channels then
-        failWith "Signal stream and IR must have same number of channels (\(s.channels) != \(mat.height ir))"
-    fi;
-    var history = mat.toRowMajor
+    // prerequisite: ir and s have same number of channels
+   (var history = mat.toRowMajor
        (mat.zeroMatrix { rows = s.channels, columns = mat.width ir - 1 });
     s with 
     {
@@ -370,7 +384,10 @@ nextPowerOfTwo n =
 
 //!!! todo: partial application so as to preprocess ir (in fast convolution case)
 convolvedWith options ir s = //!!! cheap mono thing here
-   (var type = Fast ();
+   (if mat.height ir != s.channels then
+        failWith "Signal stream and IR must have same number of channels (\(s.channels) != \(mat.height ir))"
+    fi;
+    var type = Fast ();
     var framesize = nextPowerOfTwo (mat.width ir);
     for options \case of
     //!!! todo: test these options
@@ -379,7 +396,7 @@ convolvedWith options ir s = //!!! cheap mono thing here
         esac;
     case type of
     Fast ():
-        fastConvolvedWith (mat.getRow 0 ir) framesize s;
+        fastConvolvedWith ir framesize s;
     Plain ():
         plainConvolvedWith ir s;
     esac);
