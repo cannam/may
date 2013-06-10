@@ -100,21 +100,21 @@ streamContiguous rate framesize frames =
     });
 
 overlapAdd overlap frames =
-   (ola fr acc =
+   (ola fr pending acc =
         case fr of
         first::rest:
-           (w = mat.width acc;
-            pre = mat.columnSlice acc 0 (w - overlap);
+           (w = mat.width pending;
+            pre = mat.columnSlice pending 0 (w - overlap);
             added = mat.sum first
                (mat.resizedTo (mat.size first)
-               (mat.columnSlice acc (w - overlap) w));
-            pre :: ola rest added);
+               (mat.columnSlice pending (w - overlap) w));
+            ola rest added (pre::acc));
          _:
-            [acc];
+            reverse (pending::acc);
         esac;
     case frames of
     first::rest:
-        mat.concat (Horizontal ()) (ola rest first);
+        mat.concat (Horizontal ()) (ola rest first []);
      _: 
         mat.zeroSizeMatrix ();
     esac);
