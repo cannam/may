@@ -103,6 +103,17 @@ kaiser 𝛽 n =
             bes0 (𝛽 * sqrt (1 - k*k)) / denominator;
             done [0..n-1]));
 
+/** 
+  Kaiser window with sidelobe attenuation of 𝛼 dB and window length n
+*/
+kaiserForAttenuation 𝛼 n =
+   (𝛽 =
+        if 𝛼 > 50 then 0.1102 * (𝛼 - 8.7)
+        elif 𝛼 > 21 then 0.5842 * Math#pow(𝛼 - 21, 0.4) + 0.07886 * (𝛼 - 21)
+        else 0
+        fi;
+    kaiser 𝛽 n);
+
 /**
   Kaiser window with sidelobe attenuation of 𝛼 dB and transition width
   of (tw * samplerate) / (2 * pi)
@@ -112,12 +123,7 @@ kaiserFor 𝛼 tw =
         then Math#ceil((𝛼 - 7.95) / (2.285 * tw))
         else Math#ceil(5.79 / tw)
         fi;
-    𝛽 =
-        if 𝛼 > 50 then 0.1102 * (𝛼 - 8.7)
-        elif 𝛼 > 21 then 0.5842 * Math#pow(𝛼 - 21, 0.4) + 0.07886 * (𝛼 - 21)
-        else 0
-        fi;
-    kaiser 𝛽 (m+1));
+    kaiserForAttenuation 𝛼 (m+1));
 
 windowFunction type options =
    (var sampling = Periodic ();
@@ -158,7 +164,7 @@ blackmanHarris = blackmanHarris (Periodic ()),
 boxcar,
 bartlett = bartlett (Periodic ()), 
 sinc,
-kaiser, kaiserFor,
+kaiser, kaiserForAttenuation, kaiserFor,
 windowFunction,
 windowed
 };

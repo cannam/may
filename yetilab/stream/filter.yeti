@@ -89,6 +89,12 @@ delayedBy nsamples s = //!!! doc: nsamples may be -ve
         close = s.close
     });
 
+scaledBy factor s =
+    s with
+    {
+        read count = mat.scaled factor (s.read count);
+    };
+
 //!!! poor name, confusion with mixed, but consistent with channels.yeti
 mixedTo targetChannels s =
     s with
@@ -401,14 +407,57 @@ convolvedWith options ir s = //!!! cheap mono thing here
         plainConvolvedWith ir s;
     esac);
 
+/**
+  Produce a sinc window of width equal to zc zero crossings per half,
+  with n samples from peak to first zero crossing, multiplied by a
+  Kaiser window with attenuation 𝛼 dB
+ */
+kaiserSincWindow zc n 𝛼 =
+   (sw = win.sinc (n*2) (n*zc*2 + 1);
+    kw = win.kaiserForAttenuation 𝛼 (vec.length sw);
+    bf.multiply sw kw);
+
+spaced mult s = //!!! n must be an integer [how to enforce this??]
+   (var pos = 0;
+    s with
+    {
+        get position () = pos,
+        get available () = 
+            case s.available of Known n: Known (n*mult); other: other esac,
+        read n = //!!! very, very slow
+           (readOne () =
+               (offset = pos % mult;
+                sample =
+                    if offset == 0 then
+                        m = s.read 1;
+                        mat.at m 0 0;
+                    else
+                        0
+                    fi; 
+                pos := pos + 1;
+                sample);
+            mat.newRowVector (vec.fromList (map \(readOne ()) [1..n]))),
+    });
+
+interpolated mult s = //!!! n must be an integer [how to enforce this??]
+   (nzc = 13;
+    attenuation = 80;
+    filter = kaiserSincWindow nzc mult attenuation;
+    delayedBy (- (nzc * mult))
+       (convolvedWith []
+           (mat.newMatrix (RowMajor ()) (map \filter [1..s.channels]))
+           (spaced mult s)));
+
 {
     withDuration is number -> stream -> stream,
     delayedBy is number -> stream -> stream,
+    scaledBy is number -> stream -> stream,
     mixedTo is number -> stream -> stream,
     mixed is list<stream> -> stream,
     multiplexed is list<stream> -> stream,
     repeated is stream -> stream,
     duplicated is number -> stream -> list<stream>,
     convolvedWith is list<Fast boolean | Framesize number> -> matrix -> stream -> stream,
+    kaiserSincWindow, spaced, interpolated
 }
 
