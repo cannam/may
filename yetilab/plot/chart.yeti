@@ -1,5 +1,7 @@
 module yetilab.plot.chart;
 
+{ distinctColour } = load yetilab.plot.colour;
+
 import org.jzy3d.plot3d.text.drawable: DrawableTextBillboard, DrawableTextBitmap;
 import org.jzy3d.maths: Range, Coord3d;
 import org.jzy3d.plot3d.primitives: Shape, HistogramBar, FlatLine2d, Polygon, Quad, Point;
@@ -14,25 +16,6 @@ import org.jzy3d.plot3d.rendering.view.modes: ViewPositionMode;
 import javax.imageio: ImageIO;
 
 import java.io: File;
-
-chartColours = array [
-    { r = 82,  g = 126, b = 154 }, // dark steel blue
-    { r = 161, g = 54,  b = 2   }, // red
-    { r = 207, g = 228, b = 148 }, // grey-green
-    { r = 21,  g = 183, b = 197 }, // light blue
-    { r = 251, g = 116, b = 43  }, // light red
-    { r = 200, g = 125, b = 234 }, // light purple
-    { r = 126, g = 33,  b = 28  }, // dried blood!
-    { r = 188, g = 13,  b = 207 }, // mid purple
-];    
-
-chartColour n =
-    if n < 0
-    then chartColour (-n)
-    else
-        rgb = chartColours[n % (length chartColours)];
-        new Color(rgb.r / 255.0, rgb.g / 255.0, rgb.b / 255.0);
-    fi;
 
 newPercentTickRenderer () =
    (f v = " \(int (v * 100))%";
@@ -111,7 +94,7 @@ plotBarChart options values =
         bar = new HistogramBar();
         v = if k in values then values[k] else 0 fi;
         v = if opts.normalised and total > 0 then v / total else v fi;
-        bar#setData(new Coord3d(x, 0, 0), v, 0.45, chartColour i);
+        bar#setData(new Coord3d(x, 0, 0), v, 0.45, distinctColour i);
         bar#setWireframeDisplayed(false);
         scene#add(bar);
         ticks[i] := i;
@@ -153,7 +136,7 @@ plotLines options values =
         done;
         line = new FlatLine2d(x, y, z);
         line#setWireframeDisplayed(true);
-        line#setWireframeColor(chartColour z);
+        line#setWireframeColor(distinctColour z);
         line#setWireframeWidth(2);
         line#setFaceDisplayed(false);
         scene#add(line);
@@ -219,7 +202,7 @@ plotStacked options values =
     done;
     for opts.keys do k:
         ranges = stacked[k];
-        c = chartColour z;
+        c = distinctColour z;
         for [0..nxk - 1] do x:
             xk = opts.xkeys[x];
             rect = newRect x ranges[xk].y0 ranges[xk].y1 z c;
