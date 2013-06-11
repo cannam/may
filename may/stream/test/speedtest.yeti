@@ -1,0 +1,27 @@
+
+program may.stream.test.speedtest;
+
+af = load may.stream.audiofile;
+vec = load may.vector;
+mat = load may.matrix;
+filt = load may.stream.filter;
+
+import java.lang: StackOverflowError;
+
+{ compare, compareUsing, time } = load may.test.test;
+
+before = System#currentTimeMillis();
+
+str = time "open audio file" \(af.openMono "shortish.wav");
+
+conv = time "prepare convolve" \(filt.convolvedWith [ Framesize 256 ] (mat.newRowVector (vec.fromList [ 1, 0.8, 0.5 ])) str);
+
+var len = 0;
+time "read convolve" \((not conv.finished?) loop len := len + mat.width (conv.read 65536));
+
+println "Done";
+
+after = System#currentTimeMillis();
+
+println "Total time: \(after - before)ms for \(len) audio sample frames [\(int (len / ((after - before) / 1000))) fps]";
+

@@ -1,0 +1,241 @@
+module may.plot.chart;
+
+{ distinctColour } = load may.plot.colour;
+
+import org.jzy3d.plot3d.text.drawable: DrawableTextBillboard, DrawableTextBitmap;
+import org.jzy3d.maths: Range, Coord3d;
+import org.jzy3d.plot3d.primitives: Shape, HistogramBar, FlatLine2d, Polygon, Quad, Point;
+import org.jzy3d.plot3d.primitives.axes.layout.providers: StaticTickProvider, RegularTickProvider;
+import org.jzy3d.plot3d.primitives.axes.layout.renderers: ITickRenderer, TickLabelMap, IntegerTickRenderer;
+import org.jzy3d.chart: Chart, ChartLauncher;
+import org.jzy3d.plot3d.builder: Builder;
+import org.jzy3d.colors: Color;
+import org.jzy3d.plot3d.rendering.canvas: Quality;
+import org.jzy3d.plot3d.rendering.view.modes: ViewPositionMode;
+
+import javax.imageio: ImageIO;
+
+import java.io: File;
+
+newPercentTickRenderer () =
+   (f v = " \(int (v * 100))%";
+    class PercentageTickRenderer extends ITickRenderer
+        String format(double value) f value,
+        String format(float value) f value
+    end;
+    new PercentageTickRenderer());
+
+newPaddedIntTickRenderer () =
+   (f v = "    \(int (v + 0.5))";
+    class PaddedIntTickRenderer extends ITickRenderer
+        String format(double value) f value,
+        String format(float value) f value
+    end;
+    new PaddedIntTickRenderer());
+
+parseOptions options defaultKeys defaultXKeys =
+   (parsed = {
+        var keys = array (sort defaultKeys),
+        var labels = [:],
+        var animated = false,
+        var normalised = false,
+        var unit = "",
+        var xkeys = array (sort defaultXKeys),
+        var saveTo = "",
+        var display = true,
+    };
+    for options
+       \case of
+        Keys kk: parsed.keys := array kk;
+        XKeys xk: parsed.xkeys := array xk;
+        Animated a: parsed.animated := a;
+        Normalised n: parsed.normalised := n;
+        Unit u: parsed.unit := u;
+        Labels ll: parsed.labels := ll;
+        SaveTo file: parsed.saveTo := file;
+        Display d: parsed.display := d;
+        esac;
+    if empty? parsed.labels then
+        parsed.labels := mapIntoHash id id parsed.keys
+    fi;
+    parsed);
+
+newChart opts =
+   (quality = Quality#Fastest;
+    quality#setAnimated(opts.animated);
+//    if opts.display then
+        new Chart(quality);
+//    else
+//        new Chart(quality, "offscreen,640,640");
+//    fi);
+    );
+
+showChart opts chart is 'a -> ~Chart -> () =
+   (if opts.display then
+        \() ChartLauncher#openChart(chart);
+    else
+        \() ChartLauncher#openStaticChart(chart);
+    fi;
+    if opts.saveTo != "" then
+        \() chart#screenshot(opts.saveTo);
+    fi);
+    
+plotBarChart options values =
+   (opts = parseOptions options (keys values) [];
+    chart = newChart opts;
+    var n = length opts.keys;
+    scene = chart#getScene();
+    ticks = new double[n];
+    tickLabels = new TickLabelMap();
+    var i = 0;
+    var x = n - i - 1;
+    total = sum (map do k: if k in values then values[k] else 0 fi done opts.keys);
+    for opts.keys do k:
+        bar = new HistogramBar();
+        v = if k in values then values[k] else 0 fi;
+        v = if opts.normalised and total > 0 then v / total else v fi;
+        bar#setData(new Coord3d(x, 0, 0), v, 0.45, distinctColour i);
+        bar#setWireframeDisplayed(false);
+        scene#add(bar);
+        ticks[i] := i;
+        tickLabels#register(x, opts.labels[k]);
+        i := i + 1;
+        x := x - 1;
+    done;
+    chart#getView()#setViewPoint(new Coord3d(pi/2, 0, 0));
+    axes = chart#getAxeLayout();
+    axes#setXAxeLabelDisplayed(false);
+    axes#setYAxeLabelDisplayed(false);
+    axes#setZAxeLabelDisplayed(true);
+    if opts.normalised then
+        axes#setZAxeLabel("");
+        axes#setZTickRenderer(newPercentTickRenderer ());
+    else
+        axes#setZAxeLabel(opts.unit);
+    fi;
+    axes#setXTickProvider(new StaticTickProvider(ticks));
+    axes#setXTickRenderer(tickLabels);
+    axes#setYTickLabelDisplayed(false);
+    showChart opts chart);
+
+plotLines options values =
+   (opts = parseOptions options (keys values) (keys values[head (keys values)]);
+    chart = newChart opts;
+    scene = chart#getScene();
+    n = length opts.xkeys;
+    var z = 0;
+    for opts.keys do k:
+        v = values[k];
+        x = new float[n];
+        y = new float[n];
+        var i = 0;
+        for opts.xkeys do xk:
+            x[i] := i;
+            y[i] := if xk in v then v[xk] else 0 fi;
+            i := i + 1;
+        done;
+        line = new FlatLine2d(x, y, z);
+        line#setWireframeDisplayed(true);
+        line#setWireframeColor(distinctColour z);
+        line#setWireframeWidth(2);
+        line#setFaceDisplayed(false);
+        scene#add(line);
+        z := z + 1;
+    done;
+    chart#getView()#setViewPoint(new Coord3d(0, 0, 0));
+    axes = chart#getAxeLayout();
+    axes#setXAxeLabelDisplayed(false);
+    axes#setYAxeLabelDisplayed(false);
+    axes#setZAxeLabelDisplayed(true);
+    axes#setZAxeLabel(opts.unit);
+    axes#setYTickLabelDisplayed(false);
+    showChart opts chart);
+
+stack keys xkeys values normalised =
+   (stacked = mapIntoHash id \(mapIntoHash id \{ y0 = 0, y1 = 0 } xkeys) keys;
+    prev = mapIntoHash id \0 xkeys;
+    valueOf k xk =
+        if k in values and xk in values[k] 
+        then values[k][xk] else 0 
+        fi;
+    for xkeys do xk:
+        total = sum (map do k: valueOf k xk done keys);
+        for keys do k:
+            value =
+                if normalised and total > 0
+                then (valueOf k xk) / total
+                else (valueOf k xk)
+                fi;
+            height = prev[xk] + value;
+            stacked[k][xk] := { y0 = prev[xk], y1 = height };
+            prev[xk] := height;
+        done;
+    done;
+    stacked);
+
+newRect x y0 y1 z colour is number -> number -> number -> number -> ~Color -> 'a =
+   (poly = new Quad();
+    poly#add(new Point(new Coord3d(x + 0.5, z, y0)));
+    poly#add(new Point(new Coord3d(x + 0.5, z, y1)));
+    poly#add(new Point(new Coord3d(x - 0.5, z, y1)));
+    poly#add(new Point(new Coord3d(x - 0.5, z, y0)));
+    poly#setWireframeDisplayed(true);
+    poly#setWireframeColor(colour);
+    poly#setFaceDisplayed(true);
+    poly#setColor(colour);
+    poly);
+
+plotStacked options values =
+   (opts = parseOptions options (keys values) (keys values[head (keys values)]);
+    chart = newChart opts;
+    scene = chart#getScene();
+    stacked = stack opts.keys opts.xkeys values opts.normalised;
+    var z = 0;
+    var ty = 0;
+    nxk = length opts.xkeys;
+    xticks = new double[nxk];
+    xtickLabels = new TickLabelMap();
+    for [0..nxk - 1] do x:
+        xticks[x] := x;
+        k = opts.xkeys[x];
+        xtickLabels#register(x, if k in opts.labels then opts.labels[k] else k fi);
+    done;
+    for opts.keys do k:
+        ranges = stacked[k];
+        c = distinctColour z;
+        for [0..nxk - 1] do x:
+            xk = opts.xkeys[x];
+            rect = newRect x ranges[xk].y0 ranges[xk].y1 z c;
+            scene#add(rect);
+        done;
+        text = new DrawableTextBitmap(opts.labels[k], new Coord3d(-(nxk/5 + 0.5), z, ty), c);
+        scene#add(text);
+        z := z - 1;
+        ty := ty + 0.1;
+    done;
+    chart#getView()#setViewPoint(new Coord3d(-pi/2, 0, 0));
+    axes = chart#getAxeLayout();
+    axes#setXAxeLabelDisplayed(false);
+    if nxk < 10 then
+        axes#setXTickProvider(new StaticTickProvider(xticks));
+    fi;
+    axes#setXTickRenderer(xtickLabels);
+    axes#setYAxeLabelDisplayed(false);
+    axes#setZAxeLabelDisplayed(true);
+    if opts.normalised then 
+        axes#setZAxeLabel("");
+        axes#setZTickRenderer(newPercentTickRenderer ());
+    else
+        axes#setZAxeLabel(opts.unit);
+        axes#setZTickRenderer(newPaddedIntTickRenderer ());
+    fi;
+    axes#setYTickLabelDisplayed(false);
+    showChart opts chart);
+
+{
+    plotBarChart,
+    plotLines,
+    stack,
+    plotStacked,
+}
+

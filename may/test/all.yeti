@@ -1,0 +1,31 @@
+
+program may.test.all;
+
+{ runTests } = load may.test.test;
+
+tests = [
+"vector"     : load may.vector.test.test_vector,
+"blockfuncs" : load may.vector.test.test_blockfuncs,
+"complex"    : load may.complex.test.test_complex,
+"framer"     : load may.stream.test.test_framer,
+"channels"   : load may.stream.test.test_channels,
+"audiofile"  : load may.stream.test.test_audiofile,
+"synstream"  : load may.stream.test.test_syntheticstream,
+"filter"     : load may.stream.test.test_filter,
+"fft"        : load may.transform.test.test_fft,
+"vamppost"   : load may.vamp.test.test_vamppost,
+"vamp"       : load may.vamp.test.test_vamp,
+"matrix"     : load may.matrix.test.test_matrix,
+"plot"       : load may.plot.test.test_plot,
+"signal"     : load may.signal.test.test_signal,
+"window"     : load may.signal.test.test_window,
+];
+
+bad = sum (mapHash do name testHash: runTests name testHash done tests);
+
+if (bad > 0) then
+    println "\n** \(bad) test(s) failed!";
+else
+    ()
+fi
+

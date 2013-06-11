@@ -1,0 +1,149 @@
+
+module may.vector;
+
+load may.vector.type;
+
+import java.util: Arrays;
+
+//!!! This is supposed to be 100% immutable and without copying when duplicating for read only
+
+zeros n =
+    new double[n];
+
+consts m n =
+   (a = zeros n;
+    for [0..n-1] do i:
+        a[i] := m;
+    done;
+    a);
+
+ones = consts 1.0;
+
+fromList l is list?<number> -> ~double[] =
+    l as ~double[];
+
+list' a is ~double[] -> list<number> =
+    list a;
+
+array' a is ~double[] -> array<number> =
+    array a;
+
+length' =
+    length . list';
+
+empty?' =
+    empty? . list';
+
+//!!! doc note: argument order chosen for consistency with std module function
+at' v n is ~double[] -> number -> number =
+    v[n];
+
+floats a is ~double[] -> ~float[] =
+   (len = length' a;
+    f = new float[len];
+    for [0..len-1] do i:
+        f[i] := a[i];
+    done;
+    f);
+
+fromFloats ff is ~float[] -> ~double[] =
+   (len = length (list ff);
+    a = new double[len];
+    for [0..len-1] do i:
+        a[i] := ff[i];
+    done;
+    a);
+
+equal v1 v2 =
+    list' v1 == list' v2;
+
+equalUnder comparator v1 v2 =
+    length' v1 == length' v2 and
+        all id (map2 comparator (list' v1) (list' v2));
+
+copyOf v is ~double[] -> ~double[] =
+    Arrays#copyOf(v, list' v |> length);
+
+//!!! doc note: argument order chosen for consistency with std module function
+slice v start end is ~double[] -> number -> number -> ~double[] =
+    if start < 0 then slice v 0 end
+    elif start > length' v then slice v (length' v) end
+    else
+        if end < start then slice v start start
+        elif end > length' v then slice v start (length' v)
+        else
+            Arrays#copyOfRange(v, start, end);
+        fi
+    fi;
+
+resizedTo n v is number -> ~double[] -> ~double[] =
+    Arrays#copyOf(v, n);
+
+reversed v is ~double[] -> ~double[] =
+   (len = length (list v);
+    a = new double[len];
+    for [0..len-1] do i:
+        a[len-i-1] := v[i];
+    done;
+    a);
+
+concat vv is list?<~double[]> -> ~double[] = //!!! doc: concat is obviously not lazy (unlike std module)
+   (len = sum (map length' vv);
+    vout = zeros len;
+    var base = 0;
+    for vv do v: 
+        vlen = length' v;
+        for [0..vlen-1] do i: vout[base + i] := v[i] done;
+        base := base + vlen;
+    done;
+    vout);
+
+repeated v n is ~double[] -> number -> ~double[] =
+    concat (map \(v) [1..n]);
+
+{
+    zeros,
+    consts,
+    ones,
+    vector v = v,
+    primitive = copyOf,
+    floats,
+    fromFloats,
+    fromList,
+    list = list',
+    array = array',
+    length = length',
+    empty? = empty?',
+    at = at',
+    equal,
+    equalUnder,
+    slice,
+    resizedTo,
+    reversed,
+    repeated,
+    concat,
+} as {
+    zeros is number -> vector,
+    consts is number -> number -> vector,
+    ones is number -> vector,
+    vector is ~double[] -> vector,
+    primitive is vector -> ~double[],
+    floats is vector -> ~float[],
+    fromFloats is ~float[] -> vector,
+    fromList is list?<number> -> vector,
+    list is vector -> list<number>,
+    array is vector -> array<number>,
+    length is vector -> number,
+    empty? is vector -> boolean,
+    at is vector -> number -> number,
+    equal is vector -> vector -> boolean,
+    equalUnder is (number -> number -> boolean) -> vector -> vector -> boolean,
+    slice is vector -> number -> number -> vector,
+    resizedTo is number -> vector -> vector,
+    reversed is vector -> vector,
+    repeated is vector -> number -> vector,
+    concat is list?<vector> -> vector,
+}
+
+
+

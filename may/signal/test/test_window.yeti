@@ -1,0 +1,186 @@
+
+module may.signal.test.test_window;
+
+win = load may.signal.window;
+vec = load may.vector;
+
+{ compare, compareUsing } = load may.test.test;
+
+functions = [
+    Hann () : win.hann,
+    Hamming () : win.hamming,
+    Blackman () : win.blackman,
+    Nuttall () : win.nuttall,
+    BlackmanNuttall () : win.blackmanNuttall,
+    BlackmanHarris () : win.blackmanHarris,
+    Boxcar () : win.boxcar,
+    Bartlett () : win.bartlett,
+];
+
+close aa bb = all id (map2 do a b: (abs (a - b) < 0.0001) done aa bb);
+
+isSymmetric a =
+   (len = (vec.length a);
+    b = if len % 2 == 0 then
+            half = vec.slice a 0 (len/2);
+            vec.concat [half, vec.reversed half];
+        else
+            half = vec.slice a 0 (int (len/2));
+            mid = vec.slice a (int (len/2)) (int (len/2) + 1);
+            vec.concat [half, mid, vec.reversed half];
+        fi;
+    compareUsing close (vec.list a) (vec.list b));
+
+[
+
+"windowFunction": \(
+    all id (map do type:
+        f = functions[type];
+        a = f 10;
+        b = win.windowFunction type [ Symmetric false ] 10;
+        compareUsing close (vec.list a) (vec.list b)
+            or (eprintln "** failed window type: \(type)"; false)
+    done (keys functions));
+),
+
+"symmetric-even": \(
+    len = 10;
+    all id (map do type:
+        f = win.windowFunction type [ Symmetric true ];
+        v = f len;
+        (compare (vec.length v) len and isSymmetric v) or
+            (eprintln "** failed window type: \(type)"; false);
+    done (keys functions));
+),
+
+"symmetric-odd": \(
+    len = 11;
+    all id (map do type:
+        f = win.windowFunction type [ Symmetric true ];
+        v = f len;
+        (compare (vec.length v) len and isSymmetric v) or
+            (eprintln "** failed window type: \(type)"; false);
+    done (keys functions));
+),
+      
+"periodic-even": \(
+    // We can't actually test whether a function is periodic, given
+    // only one cycle of it! But we can make sure that all but the
+    // first sample is symmetric, which is what a symmetric window
+    // becomes when generated in periodic mode
+    len = 10;
+    all id (map do type:
+        f = win.windowFunction type [ Symmetric false ];
+        v = f len;
+        (compare (vec.length v) len and isSymmetric (vec.slice v 1 len)) or
+            (eprintln "** failed window type: \(type)"; false);
+    done (keys functions));
+),
+
+"periodic-odd": \(
+    len = 11;
+    all id (map do type:
+        f = win.windowFunction type [ Symmetric false ];
+        v = f len;
+        (compare (vec.length v) len and isSymmetric (vec.slice v 1 len)) or
+            (eprintln "** failed window type: \(type)"; false);
+    done (keys functions));
+),
+
+"bartlett-periodic": \(
+    compare (vec.list (win.bartlett 1)) [1] and
+       compare (vec.list (win.bartlett 2)) [0,1] and
+       compare (vec.list (win.bartlett 3)) [0,2/3,2/3] and
+       compare (vec.list (win.bartlett 4)) [0,1/2,1,1/2]
+),
+
+"bartlett-symmetric": \(
+    b = win.windowFunction (Bartlett ()) [ Symmetric true ];
+    compare (vec.list (b 1)) [1] and
+       compare (vec.list (b 2)) [0,0] and
+       compare (vec.list (b 3)) [0,1,0] and
+       compare (vec.list (b 4)) [0,2/3,2/3,0] and
+       compare (vec.list (b 5)) [0,1/2,1,1/2,0]
+),
+
+"hann": \(
+    compareUsing close (vec.list (win.hann 10)) [
+        0, 0.0955, 0.3455, 0.6545, 0.9045,
+        1.0000, 0.9045, 0.6545, 0.3455, 0.0955,
+    ] and
+    compareUsing close 
+       (vec.list (win.windowFunction (Hann ()) [ Symmetric true ] 10)) [
+        0, 0.1170, 0.4132, 0.7500, 0.9698,
+        0.9698, 0.7500, 0.4132, 0.1170, 0,
+    ]
+),
+
+"hamming": \(
+    compareUsing close (vec.list (win.hamming 10)) [
+        0.0800, 0.1679, 0.3979, 0.6821, 0.9121,
+        1.0000, 0.9121, 0.6821, 0.3979, 0.1679,
+    ] and
+    compareUsing close 
+       (vec.list (win.windowFunction (Hamming ()) [ Symmetric true ] 10)) [
+        0.0800, 0.1876, 0.4601, 0.7700, 0.9723,
+        0.9723, 0.7700, 0.4601, 0.1876, 0.0800,
+    ]
+),
+
+"blackman": \(
+    compareUsing close (vec.list (win.blackman 10)) [
+        0, 0.0402, 0.2008, 0.5098, 0.8492,
+        1.0000, 0.8492, 0.5098, 0.2008, 0.0402,
+    ] and
+    compareUsing close 
+       (vec.list (win.windowFunction (Blackman ()) [ Symmetric true ] 10)) [
+        0, 0.0509, 0.2580, 0.6300, 0.9511,
+        0.9511, 0.6300, 0.2580, 0.0509, 0,
+    ]
+),
+
+"blackmanHarris": \(
+    compareUsing close (vec.list (win.blackmanHarris 10)) [
+        0.0001, 0.0110, 0.1030, 0.3859, 0.7938,
+        1.0000, 0.7938, 0.3859, 0.1030, 0.0110,
+    ] and
+    compareUsing close 
+       (vec.list (win.windowFunction (BlackmanHarris ()) [ Symmetric true ] 10)) [
+        0.0001, 0.0151, 0.1470, 0.5206, 0.9317,
+        0.9317, 0.5206, 0.1470, 0.0151, 0.0001,
+    ]
+),
+
+"sinc": \(
+    compareUsing close (vec.list (win.sinc 1 5)) [ 0, 0, 1, 0, 0 ] and
+        compareUsing close (vec.list (win.sinc 2 5)) [ 0, 0, 1, 0, 0 ] and
+        compareUsing close (vec.list (win.sinc 4 7)) [ -0.2122, 0, 0.6366, 1, 0.6366, 0, -0.2122 ] and
+        compareUsing close (vec.list (win.sinc 4 6)) [ -0.2122, 0, 0.6366, 1, 0.6366, 0 ]
+),
+
+"kaiser": \(
+    compareUsing close (vec.list (win.kaiser 4 10)) [
+        0.0885, 0.2943, 0.5644, 0.8216, 0.9789,
+        0.9789, 0.8216, 0.5644, 0.2943, 0.0885
+    ] and
+    compareUsing close (vec.list (win.kaiser 2.5 11)) [
+        0.3040, 0.5005, 0.6929, 0.8546, 0.9622,
+        1.0000, 0.9622, 0.8546, 0.6929, 0.5005, 0.3040
+    ]
+),
+
+"degenerate": \(
+    all id (map do type:
+        f = functions[type];
+        periodic = f;
+        symmetric = win.windowFunction type [ Symmetric true ];
+       (compare (vec.list (periodic 0)) [] and
+        compare (vec.list (periodic 1)) [1] and
+        compare (vec.list (symmetric 0)) [] and
+        compare (vec.list (symmetric 1)) [1])
+            or (eprintln "** failed window type: \(type)"; false)
+    done (keys functions));
+),
+
+] is hash<string, () -> boolean>;
+

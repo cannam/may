@@ -1,0 +1,166 @@
+module may.vamp.vamppost;
+
+mat = load may.matrix;
+vec = load may.vector;
+
+fillOneSamplePerStep config features =
+   (fill' n pending features =
+        // For OneSamplePerStep features, the time is incremented
+        // between process blocks (a process block is one element in
+        // the features list, which is then expanded into the complete
+        // pending list)
+        case pending of
+        feature::rest:
+            stamped = feature with
+            //!!! how do we ensure feature timestamps are rationals where possible?
+               { timestamp = Time ((n * config.stepSize) / config.sampleRate) };
+            stamped :. \(fill' n rest features);
+        _:
+            if empty? features then []
+            else fill' (n+1) (head features) (tail features);
+            fi;
+        esac;
+    fill' (-1) [] features);
+
+fillFixedSampleRate config rate features =
+   (fill' n pending features =
+        // For FixedSampleRate features without explicit timestamps,
+        // the time is incremented from the previous *feature* not the
+        // previous process block (i.e. between elements in the
+        // pending list)
+        case pending of
+        feature::rest:
+            n = case feature.timestamp of
+                Untimed (): n + 1;
+                Time t: int (t * rate + 0.5);
+                esac;
+            stamped = feature with { timestamp = Time (n / rate) };
+            stamped :. \(fill' n rest features);
+        _:
+            if empty? features then []
+            else fill' n (head features) (tail features);
+            fi;
+        esac;
+    fill' (-1) [] features);
+
+fillTimestamps { output, config, features } =
+    case output.sampleType of
+    OneSamplePerStep ():
+        fillOneSamplePerStep config features;
+    FixedSampleRate rate:
+        fillFixedSampleRate config rate features;
+    VariableSampleRate _:
+        concat features;
+    esac;
+
+structureGrid binCount features =
+//!!! need to return grid resolution as well -- or will caller read that from output elsewhere if they need it?
+    if empty? features then
+        mat.zeroMatrix { rows = binCount, columns = 0 };
+    else
+        mat.newMatrix (ColumnMajor ()) (map (.values) features);
+    fi;
+
+timeOf f =
+    case f.timestamp of
+    Time t: t;
+    _: failWith "Internal error: timestamps not filled";
+    esac;
+
+structureSeries features =
+    if empty? features then { start = 0, step = 0, values = [] }
+    else 
+        t0 = timeOf (head features);
+        t1 = if empty? (tail features) then t0
+             else timeOf (head (tail features)) fi;
+        {
+            start = t0,
+            step = t1 - t0,
+            values = map do f: vec.at f.values 0 done features;
+        }
+    fi;
+
+structureCurve features =
+    map do f: {
+        time = timeOf f,
+        value = vec.at f.values 0,
+        label = f.label
+    } done features;
+
+structureInstants features =
+    map do f: {
+        time = timeOf f,
+        label = f.label
+    } done features;
+
+structureSegmentation features =
+    map do f: {
+        time = timeOf f,
+        type = vec.at f.values 0,
+        label = f.label
+    } done features;
+
+structureNotes features =
+    map do f: {
+        time = timeOf f,
+        duration = f.duration,
+        pitch = vec.at f.values 0, //!!! no, might be empty
+        otherValues = array (tail (vec.list f.values)), //!!! no, might be empty
+        label = f.label
+    } done features;
+
+structureWithDuration features =
+    map do f: {
+        time = timeOf f,
+        duration = f.duration,
+        values = array (vec.list f.values),
+        label = f.label
+    } done features;
+
+structureWithoutDuration features =
+    map do f: {
+        time = timeOf f,
+        values = array (vec.list f.values),
+        label = f.label
+    } done features;
+
+structure data =
+   (type = data.output.inferredStructure;
+    features =
+        case type of
+        Grid (): concat data.features;
+        _: fillTimestamps data;
+        esac;
+    binCount = 
+        case data.output.binCount of
+        Fixed n: n;
+        _: 0;
+        esac;
+    case type of
+    Series ():              // No duration, one value, not variable rate
+        Series (structureSeries features);
+    Grid ():                // No duration, >1 value, not variable rate
+        Grid (structureGrid binCount features);
+    Curve ():               // No duration, one value, variable rate
+        Curve (structureCurve features);
+    Instants ():            // Zero-valued features
+        Instants (structureInstants features);
+    Notes ():               // Duration, at least one value (pitch or freq)
+        Notes (structureNotes features);
+    Regions ():             // Duration, zero or more values
+        Regions (structureWithDuration features);
+    Segmentation ():        // No duration, one value, segment type in RDF
+        Segmentation (structureSegmentation features);
+    Unknown ():             // Other
+        Unknown
+           ((if data.output.hasDuration then structureWithDuration
+             else structureWithoutDuration
+             fi) features);
+    esac);
+
+{
+fillTimestamps,
+postprocess = structure
+}
+
+

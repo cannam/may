@@ -1,0 +1,116 @@
+
+module may.stream.channels;
+
+vec = load may.vector;
+mat = load may.matrix;
+bf = load may.vector.blockfuncs;
+
+load may.vector.type;
+
+//!!! "internal" vector function to retrieve data for read-only
+// purposes without copying
+//!!! need to have this in some internal-use module 
+raw =
+   (raw' v is ~double[] -> ~double[] = v;
+    raw' as vector -> ~double[]);
+        
+interleaved m = 
+   ({ columns, rows } = (mat.size m);
+    if rows == 1 then
+        mat.getRow 0 m
+    else
+        v = new double[columns * rows];
+        for [0..rows-1] do row:
+            for [0..columns-1] do col:
+                v[col * rows + row] := mat.at m row col;
+            done;
+        done;
+        vec.vector v;
+    fi);
+
+deinterleaved channels b =
+    if channels == 1 then
+        mat.newRowVector b
+    else
+        rows = (vec.length b) / channels;
+        vv = array (map \(new double[rows]) [0..channels-1]);
+        v = raw b;
+        for [0..rows-1] do row:
+            for [0..channels-1] do col:
+                vv[col][row] := v[channels * row + col];
+            done
+        done;
+        mat.newMatrix (RowMajor ()) (map vec.vector vv);
+    fi;
+
+mixedDown m =  //!!! sum or average? at the moment we sum
+   ({ columns, rows } = (mat.size m);
+    if rows < 1 or columns < 1 then
+        vec.zeros 0
+    elif rows == 1 then
+        mat.getRow 0 m
+    else
+        bf.add (mat.asRows m);
+    fi);
+
+mixedDownFromInterleaved channels b =
+    if channels == 1 then
+        b;
+    else
+        columns = ((vec.length b) / channels);
+        v = raw b;
+        v' = new double[columns];
+        for [0..channels-1] do row:
+            for [0..columns-1] do col:
+                v'[col] := v'[col] + v[col * channels + row];
+            done;
+        done;
+        vec.vector v';
+    fi;
+
+mixedFromInterleavedTo targetChannels channels b = 
+    if targetChannels == channels then
+        b;
+    elif targetChannels == 1 then
+        mixedDownFromInterleaved channels b;
+    else
+        columns = ((vec.length b) / channels);
+        v = raw b;
+        v' = new double[columns * targetChannels];
+        for [0..targetChannels-1] do target:
+            for [0..columns-1] do col:
+                if target < channels then
+                    v'[col * targetChannels + target] := v[col * channels + target];
+                elif channels == 1 and target == 1 then
+                    v'[col * targetChannels + target] := v[col * channels];
+                fi
+            done
+        done;
+        vec.vector v';
+    fi;
+
+mixedTo targetChannels m = 
+    if targetChannels == mat.height m then   // n -> n: pass unmodified
+        m
+    elif targetChannels == 1 then            // n -> 1: mix down
+        deinterleaved 1 (mixedDown m)
+    elif mat.height m == 1 then              // 1 -> n: copy to all channels
+        mat.newMatrix (RowMajor ()) (map \(mat.getRow 0 m) [1..targetChannels])
+    else                                     // n -> m: truncate or add zeros
+        mat.resizedTo { rows = targetChannels, columns = mat.width m } m
+    fi;
+
+mixedAndInterleavedTo targetChannels m = 
+    if targetChannels == 1 then
+        mixedDown m
+    else
+        interleaved (mixedTo targetChannels m);
+    fi;
+
+//!!! some of these names are terrible
+{
+    interleaved, deinterleaved,
+    mixedDown, mixedDownFromInterleaved,
+    mixedFromInterleavedTo, mixedTo, mixedAndInterleavedTo
+}
+

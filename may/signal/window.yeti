@@ -1,0 +1,171 @@
+module may.signal.window;
+
+vec = load may.vector;
+bf = load may.vector.blockfuncs;
+
+cosineWindowSymmetric a0 a1 a2 a3 n =
+   (n1 = n - 1;
+    vec.fromList
+       (map do i:
+            a0
+            - a1 * cos(2 * pi * i / n1)
+            + a2 * cos(4 * pi * i / n1)
+            - a3 * cos(6 * pi * i / n1)
+            done [0..n1]));
+
+cosineWindowPeriodic a0 a1 a2 a3 n =
+   (vec.fromList
+       (map do i:
+            a0
+            - a1 * cos(2 * pi * i / n)
+            + a2 * cos(4 * pi * i / n)
+            - a3 * cos(6 * pi * i / n)
+            done [0..n-1]));
+                  
+cosineWindow a0 a1 a2 a3 sampling n =
+    if n < 2 then vec.ones n
+    else
+        case sampling of 
+        Symmetric (): cosineWindowSymmetric;
+        Periodic (): cosineWindowPeriodic;
+        esac a0 a1 a2 a3 n;
+    fi;
+
+bartlettSymmetric n =
+    if n < 2 then vec.ones n
+    else
+        vec.fromList
+           (n1 = n - 1;
+            h = int (n1 / 2);
+            concat [
+                map do i:
+                    2 * i / n1
+                    done [0..h],
+                map do i:
+                    2 - (2 * i / n1)
+                    done [h+1..n1]
+                ]);
+    fi;
+
+bartlettPeriodic n = 
+    if n < 2 then vec.ones n
+    else
+        vec.slice (bartlettSymmetric (n+1)) 0 n;
+    fi;
+
+bartlett sampling =
+    case sampling of
+    Symmetric (): bartlettSymmetric;
+    Periodic (): bartlettPeriodic;
+    esac;
+
+hann = cosineWindow 0.5 0.5 0.0 0.0;
+hamming = cosineWindow 0.54 0.46 0.0 0.0;
+blackman = cosineWindow 0.42 0.50 0.08 0.0;
+nuttall = cosineWindow 0.355768 0.487396 0.144232 0.012604;
+blackmanNuttall = cosineWindow 0.3635819 0.4891775 0.1365995 0.0106411;
+blackmanHarris = cosineWindow 0.35875 0.48829 0.14128 0.01168;
+
+boxcar n = vec.ones n;
+
+/**
+ * Make a vector of size n containing the values of sinc(x) with
+ * x=0 in the middle, i.e. at sample (n-1)/2 for odd n or n/2+1 for
+ * even n, such that the distance from -pi to pi (the point at
+ * which the sinc function first crosses zero, for negative and
+ * positive arguments respectively) is p samples.  p does not have
+ * to be an integer.
+ */
+sinc p n =
+    if n < 2 then vec.ones n
+    else 
+        n0 = if n % 2 == 0 then n/2 else (n-1)/2 fi;
+        n1 = if n % 2 == 0 then n/2 else (n+1)/2 fi;
+        half = 1 :: map do i: x = i * 2*pi / p; sin(x) / x done [1..n/2];
+        vec.fromList ((take n0 (reverse half)) ++ (take n1 half));
+    fi;
+
+kaiser 𝛽 n =
+   (bes0 x = 
+       (fact x = fold do x y: x*y done 1 [1..x];   // x!
+        ipow a b = fold do x _: x*a done 1 [1..b]; // a^b where b∈ℕ
+        square x = x*x;
+        term x i =
+            case i of
+             0: 1;
+             _: (ipow (x/2) (i*2)) / (square (fact i));
+            esac;
+        sum (map (term x) [0..20]));
+    denominator = bes0 𝛽;
+    vec.fromList
+       (map do i:
+            k = 2*i / (n-1) - 1;
+            bes0 (𝛽 * sqrt (1 - k*k)) / denominator;
+            done [0..n-1]));
+
+/** 
+  Kaiser window with sidelobe attenuation of 𝛼 dB and window length n
+*/
+kaiserForAttenuation 𝛼 n =
+   (𝛽 =
+        if 𝛼 > 50 then 0.1102 * (𝛼 - 8.7)
+        elif 𝛼 > 21 then 0.5842 * Math#pow(𝛼 - 21, 0.4) + 0.07886 * (𝛼 - 21)
+        else 0
+        fi;
+    kaiser 𝛽 n);
+
+/**
+  Kaiser window with sidelobe attenuation of 𝛼 dB and transition width
+  of (tw * samplerate) / (2 * pi)
+*/
+kaiserFor 𝛼 tw =
+   (m = if 𝛼 > 21 
+        then Math#ceil((𝛼 - 7.95) / (2.285 * tw))
+        else Math#ceil(5.79 / tw)
+        fi;
+    kaiserForAttenuation 𝛼 (m+1));
+
+windowFunction type options =
+   (var sampling = Periodic ();
+    var 𝛽 = 4;
+    for options \case of
+        Symmetric s: if s then sampling := Symmetric () fi;
+        Beta b: 𝛽 := b;
+        esac;
+    case type of
+    Hann (): hann sampling;
+    Hamming (): hamming sampling;
+    Blackman (): blackman sampling;
+    Nuttall (): nuttall sampling;
+    BlackmanNuttall (): blackmanNuttall sampling;
+    BlackmanHarris (): blackmanHarris sampling;
+    Boxcar (): boxcar;
+    Bartlett (): bartlett sampling;
+    Kaiser (): kaiser 𝛽;
+    esac);
+
+//!!! should use vector. but does anyone use this function anyway? would we use it in framer if it used vector?
+windowed windowFunc frames =
+    case frames of
+        []: frames;
+         _: (first = head frames;
+             window = windowFunc (vec.length first);
+             map (bf.multiply window) frames);
+    esac;
+
+{
+cosineWindow,
+hann = hann (Periodic ()),
+hamming = hamming (Periodic ()), 
+blackman = blackman (Periodic ()), 
+nuttall = nuttall (Periodic ()), 
+blackmanNuttall = blackmanNuttall (Periodic ()), 
+blackmanHarris = blackmanHarris (Periodic ()),
+boxcar,
+bartlett = bartlett (Periodic ()), 
+sinc,
+kaiser, kaiserForAttenuation, kaiserFor,
+windowFunction,
+windowed
+};
+

@@ -1,0 +1,18 @@
+
+module may.stream.type;
+
+load may.matrix.type;
+
+typedef stream =
+    {
+        position is number,
+        channels is number,
+        sampleRate is number,
+        available is Known number | Unknown () | Infinite (),
+        finished? is boolean,
+        read is number -> matrix,
+        close is () -> (),
+    };
+
+();
+

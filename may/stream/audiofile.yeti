@@ -1,0 +1,180 @@
+
+module may.stream.audiofile;
+
+load may.stream.type;
+
+import javax.sound.sampled:
+     AudioSystem, AudioInputStream, AudioFormat, AudioFormat$Encoding,
+     AudioFileFormat, AudioFileFormat$Type,
+     TargetDataLine, LineListener, Line, Line$Info, Control, Control$Type,
+     UnsupportedAudioFileException;
+
+import java.io: File, IOException;
+
+import java.nio: ByteBuffer, ByteOrder;
+
+ch = load may.stream.channels;
+vec = load may.vector;
+mat = load may.matrix;
+
+decode8u bytes doubles n is ~byte[] -> ~double[] -> number -> () =
+   (for [0..n-1] do i:
+       doubles[i] := (bytes[i] / 128.0) - 1.0;
+    done
+   );
+
+decode16s bytes doubles n is ~byte[] -> ~double[] -> number -> () =
+   (bb = ByteBuffer#wrap(bytes, 0, n * 2);
+    bb#order(ByteOrder#LITTLE_ENDIAN);
+    for [0..n-1] do i:
+       doubles[i] := bb#getShort(i*2) / 32768.0;
+    done
+   );
+
+decode32f bytes doubles n is ~byte[] -> ~double[] -> number -> () =
+   (bb = ByteBuffer#wrap(bytes, 0, n * 4);
+    bb#order(ByteOrder#LITTLE_ENDIAN);
+    for [0..n-1] do i:
+       doubles[i] := bb#getFloat(i*4);
+    done
+   );
+
+decodeFail () = 
+    throw new UnsupportedAudioFileException("File format not supported. Supported formats are 8-bit unsigned PCM, 16-bit signed little-endian PCM, or IEEE float");
+
+decode { format is ~AudioFormat } bytes doubles n = 
+   (if format#isBigEndian() then
+        decodeFail()
+    else
+        enc = format#getEncoding();
+        bits = format#getSampleSizeInBits();
+        if bits == 32 then
+            decode32f bytes doubles n;
+        elif bits == 16 and enc == AudioFormat$Encoding#PCM_SIGNED then
+            decode16s bytes doubles n;
+        elif bits == 8 and enc == AudioFormat$Encoding#PCM_UNSIGNED then
+            decode8u bytes doubles n;
+        else
+            decodeFail();
+        fi
+    fi);
+
+readInterleaved' { format is ~AudioFormat, aistream is ~AudioInputStream } nframes =
+   (channels = format#getChannels();
+    bytesPerSample = format#getSampleSizeInBits() / 8;
+    bytes = new byte[nframes * channels * bytesPerSample];
+    bytesRead = aistream#read(bytes);
+    if bytesRead <= 0 then vec.zeros 0;
+    else
+        n = int(bytesRead / bytesPerSample);
+        doubles = new double[n];
+        decode { format } bytes doubles n;
+        vec.vector doubles;
+    fi;
+   );
+
+read' { format is ~AudioFormat, aistream is ~AudioInputStream } n =
+   (b = readInterleaved' { format, aistream } n;
+    channels = format#getChannels();
+    ch.deinterleaved channels b;
+   );
+
+readMono' { format is ~AudioFormat, aistream is ~AudioInputStream } n =
+   (b = readInterleaved' { format, aistream } n;
+    channels = format#getChannels();
+    ch.deinterleaved 1 (ch.mixedDownFromInterleaved channels b);
+   );
+
+// Note, all this assumes aistream is non-blocking (i.e. available()
+// is to the end of file). Our stream interface does support
+// indefinite and infinite streams, but audiofile doesn't yet.
+
+available' { format is ~AudioFormat, aistream is ~AudioInputStream } =
+    aistream#available() / ((format#getSampleSizeInBits() / 8) * format#getChannels());
+
+close' { aistream is ~AudioInputStream } =
+    aistream#close();
+
+openWithReader reader ch name is 'a -> number -> string -> stream =
+   (f = new File(name);
+    aistream = AudioSystem#getAudioInputStream(f);
+    format = aistream#getFormat();
+    len = available' { format, aistream }; // at start of stream
+    syncd = synchronized aistream;
+    {
+        get position () = syncd \(len - available' { aistream, format }),
+        get channels () = if ch == 0 then format#getChannels() else ch fi,
+        get sampleRate () = format#getSampleRate(),
+        get available () = syncd \(Known (available' { aistream, format })),
+        get finished? () = syncd \(not (aistream#available() > 0)),
+        read = syncd \(reader { aistream, format }),
+        close () = syncd \(close' { aistream }),
+    });
+
+open = openWithReader read' 0;
+openMono = openWithReader readMono' 1;
+
+write str name is stream -> string -> number =
+   (var tot = 0;
+    class StreamAdapter extends TargetDataLine
+        int read(byte[] bytes, int off, int len)
+           (bb = ByteBuffer#wrap(bytes, off, len);
+            bb#order(ByteOrder#LITTLE_ENDIAN);
+            m = str.read (len / (str.channels * 2));
+            tot := mat.width m;
+            for [0..mat.width m - 1] do i:
+                for [0..str.channels - 1] do c:
+                    v = int (32767 * mat.at m c i);
+                    v = if v < -32768 then -32768
+                        elif v > 32767 then 32767
+                        else v fi;
+                    \() bb#putShort((i * str.channels + c) * 2, v);
+                done
+            done;
+            str.channels * 2 * mat.width m),
+        int available()
+            case str.available of
+            Known n: str.channels * n * 2;
+            other: str.channels * 1024; //!!!???
+            esac,
+        AudioFormat getFormat()
+            new AudioFormat(str.sampleRate, 16, str.channels, true, false),
+        void open(),
+        void open(AudioFormat format),
+        void open(AudioFormat format, int bufferSize),
+        void close(),
+        void drain(),
+        void flush(),
+        boolean isOpen() true,
+        boolean isActive() true,
+        boolean isRunning() true,
+        int getFramePosition() str.position,
+        long getLongFramePosition() str.position,
+        long getMicrosecondPosition() 0,
+        int getBufferSize() 0,
+        float getLevel() 1.0,
+        void start(),
+        void stop(),
+        void addLineListener(LineListener ll),
+        void removeLineListener(LineListener ll),
+        Control getControl(Control$Type c),
+        Control[] getControls(),
+        Line$Info getLineInfo(),
+        boolean isControlSupported(Control$Type c) false,
+    end;
+    f = new File(name);
+    n = AudioSystem#write(new AudioInputStream(new StreamAdapter()),
+                          AudioFileFormat$Type#WAVE, f);
+    str.close ();
+    n);
+
+{
+    open,
+    openMono,
+    write,
+} as {
+    open is string -> stream,
+    openMono is string -> stream,
+    write is stream -> string -> number,
+} 
+

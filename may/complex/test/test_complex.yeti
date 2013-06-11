@@ -1,0 +1,68 @@
+module may.complex.test.test_complex;
+
+{ real, imaginary, complex, magnitude, angle, sum, scale, zeros, magnitudes, angles }
+   = load may.complex;
+
+{ compare } = load may.test.test;
+
+vec = load may.vector;
+
+[
+
+"complex": \( 
+    compare (complex 1 2) (complex 1 2) and
+        complex (-1) 2 != complex 1 2
+),
+
+"real": \(
+    compare (real (complex 3 2)) 3 and
+        compare (real (complex 3.3 2.2)) 3.3
+),
+
+"imaginary": \(
+    compare (imaginary (complex 3 4)) 4 and
+        compare (imaginary (complex 3 (-4.1))) (-4.1)
+),
+
+"magnitude": \(
+    compare (magnitude (complex (-3) 4)) 5
+),
+
+"angle": \(
+    compare (angle (complex 1 0)) 0 and
+        compare (angle (complex 1 1)) (pi/4) and
+        compare (angle (complex 0 1)) (pi/2) and
+        compare (angle (complex (-1) 0)) pi and
+        compare (angle (complex 0 (-1))) (-pi/2)
+),
+
+"sum": \(
+    compare (sum [complex 2 3, complex (-4) 5]) (complex (-2) 8)
+),
+
+"scale": \(
+    compare (scale 4 (complex 2 3)) (complex 8 12)
+),
+
+"zeros": \(
+    compare (zeros 0) (array []) and
+        compare (zeros 3) (array [complex 0 0, complex 0 0, complex 0 0])
+),
+
+"magnitudes": \(
+    compare (vec.list (magnitudes [ complex (-3) 4, complex 4 3, complex 0 0 ]))
+            [ 5, 5, 0 ] and
+       compare (vec.list (magnitudes (array []))) []
+),
+
+"angles": \(
+    compare (vec.list (angles [ complex 1 0, complex (-1) 0, complex 0 (-1) ]))
+            [ 0, pi, -pi/2 ] and
+       compare (vec.list (angles (array []))) []
+),
+
+
+] is hash<string, () -> boolean>;
+
+
+

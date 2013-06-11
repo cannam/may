@@ -1,0 +1,98 @@
+
+module may.stream.test.test_audiofile;
+
+af = load may.stream.audiofile;
+vec = load may.vector;
+mat = load may.matrix;
+bf = load may.vector.blockfuncs;
+
+ref = load may.stream.test.audiofile_reference;
+
+{ compare, compareUsing } = load may.test.test;
+
+testfile name = "may/test/data/\(name).wav";
+
+float n is number -> number =
+    // round number to float precision (for comparison with floats)
+   (arr = new float[1];
+    arr[0] := n;
+    arr[0]);
+
+readAll stream =
+    case stream.available of
+    Known n: stream.read n;
+    _: failWith "Known-duration stream required";
+    esac;
+
+bitdepthComparator depth =
+   (slack = if depth == 8 then 0.015 else 0.001 fi;
+    do test ref: abs (test - ref) < slack done);
+
+maxOf m =
+    bf.max (vec.fromList (map bf.max (mat.asRows m)));
+
+testReferenceFile rate channels bitdepth =
+   (test = readAll (af.open (testfile "\(rate)-\(channels)-\(bitdepth)"));
+    ref = readAll (ref.afReference rate channels);
+    if mat.equalUnder (bitdepthComparator bitdepth) test ref then
+        true
+    else
+        println "** peak difference: \(maxOf (mat.difference ref test))";
+        for [0..mat.height test - 1] do ch:
+            if mat.equalUnder (bitdepthComparator bitdepth)
+               (mat.newRowVector (mat.getRow ch test))
+               (mat.newRowVector (mat.getRow ch ref)) then
+                println "   channel \(ch): ok";
+            else
+                println "   channel \(ch): not ok";
+// This isn't really simple enough!
+/*!!!
+                seriesFor m =
+                    Series {
+                        start = 0, 
+                        step = 1, 
+                        values = take 1000 (vec.list (mat.getRow ch m))
+                        };
+                \() (pl.plot (map seriesFor [ test, ref, mat.scaled 10000 (mat.difference test ref) ]));
+*/
+            fi;
+        done;
+        false
+    fi);
+
+[ 
+
+"20samples-open": \(
+    f = af.open (testfile "20samples");
+    compare f.position 0 and
+        compare f.channels 1 and
+        compare f.sampleRate 44100 and
+        compare f.available (Known 20) and
+        compare f.finished? false and
+        ( f.close () ; true )
+),
+
+"20samples-read": \(
+    all id (map do opener:
+        f = opener (testfile "20samples");
+        first15 = f.read 15;
+        last5 = f.read 10;
+        compare (mat.size first15) { rows = 1, columns = 15 } and
+            compare (mat.size last5) { rows = 1, columns = 5 } and
+            compare (vec.list (mat.getRow 0 first15))
+                [ float (32767/32768),0,0,0,0,0,0,0,0,0,0,0,0,0,0 ] and
+            compare (vec.list (mat.getRow 0 last5)) [ 0,0,0,0,-1 ] and
+            ( f.close () ; true )
+        done [ af.open, af.openMono ]);
+),
+
+"8000-1-8": \(
+    testReferenceFile 8000 1 8;
+),
+
+"44100-2-16": \(
+    testReferenceFile 44100 2 16;
+),
+
+] is hash<string, () -> boolean>
+

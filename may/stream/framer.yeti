@@ -1,0 +1,214 @@
+
+module may.stream.framer;
+
+/**
+ * Framer expresses a stream (or a file) as a lazy list of (possibly
+ * overlapping) frames of data.
+ */
+
+vec = load may.vector;
+bf = load may.vector.blockfuncs;
+af = load may.stream.audiofile;
+win = load may.signal.window;
+fft = load may.transform.fft;
+mat = load may.matrix;
+ch = load may.stream.channels;
+
+load may.stream.type;
+load may.matrix.type;
+load may.vector.type;
+load may.complex.type;
+
+//!!! todo: synchronized for everything with state assignment
+
+blockList framesize stream =
+    if stream.finished? then
+        stream.close ();
+        []
+    else
+        mat.resizedTo { rows = stream.channels, columns = framesize }
+           (stream.read framesize)
+            :. \(blockList framesize stream);
+    fi;
+
+overlappingBlockList size hop stream valid buffer =
+   (
+    m = stream.read hop;
+    obtained = mat.width m;
+
+    // Retain framesize - hop samples from old buffer, add hop samples
+    // (zero-padded if necessary) just read
+    buffer = map2
+        do buf row:
+            vec.concat
+               [vec.slice buf hop size,
+                vec.resizedTo hop (mat.getRow row m)];
+        done buffer [0..stream.channels-1];
+
+    // Number of "valid" elements (not tail-end zero-padding) left in buffer
+    remaining = valid - (hop - obtained);
+
+    if remaining <= 0 then
+        stream.close ();
+        [];
+    else
+        mat.newMatrix (RowMajor ()) buffer
+            :. \(overlappingBlockList size hop stream remaining buffer);
+    fi);
+
+frames { framesize, hop } stream =
+    if framesize == hop then
+        blockList framesize stream
+    else
+        overlappingBlockList framesize hop stream 
+            framesize (map \(vec.zeros framesize) [0..stream.channels-1]);
+    fi;
+
+streamContiguous rate framesize frames =
+   (var remaining = frames;
+    var buffered = mat.zeroSizeMatrix ();
+    var position = 0;
+    channels = mat.height (head frames); // so we don't need to keep a head ptr
+    {
+        get position () = position,
+        get channels () = channels,
+        get sampleRate () = rate,
+        get finished? () = empty? remaining and mat.empty? buffered,
+        get available () = 
+            // Don't take length of frames -- we don't want to lose laziness.
+            // If the caller cares that much, they can measure frames themselves
+            if empty? remaining then
+                Known (mat.width buffered) 
+            else
+                Unknown ()
+            fi,
+        read count =
+           (framesFor samples acc =
+                if samples <= 0 or empty? remaining then
+                    reverse acc
+                else
+                    this = head remaining;
+                    remaining := tail remaining;
+                    framesFor (samples - mat.width this) (this :: acc)
+                fi;
+            source = mat.concat (Horizontal ()) (framesFor count [buffered]);
+            toReturn = mat.columnSlice source 0 count;
+            position := position + mat.width toReturn;
+            buffered := mat.columnSlice source count (mat.width source);
+            toReturn),
+        close = \(),
+    });
+
+overlapAdd overlap frames =
+   (ola fr pending acc =
+        case fr of
+        first::rest:
+           (w = mat.width pending;
+            pre = mat.columnSlice pending 0 (w - overlap);
+            added = mat.sum first
+               (mat.resizedTo (mat.size first)
+               (mat.columnSlice pending (w - overlap) w));
+            ola rest added (pre::acc));
+         _:
+            reverse (pending::acc);
+        esac;
+    case frames of
+    first::rest:
+        mat.concat (Horizontal ()) (ola rest first []);
+     _: 
+        mat.zeroSizeMatrix ();
+    esac);
+
+streamOverlapping rate { framesize, hop, window } frames =
+   (var remaining = frames;
+    var buffered = mat.zeroSizeMatrix ();
+    var position = 0;
+
+    factor = hop / (framesize/2);
+    w = bf.scaled factor (window framesize);
+    channels = mat.height (head frames); // so we don't need to keep a head ptr
+
+    syncd = synchronized remaining;
+
+    finished' () = syncd \(empty? remaining and mat.empty? buffered);
+
+    read' count = 
+       (framesFor samples acc =
+            if samples <= 0 or empty? remaining then
+                reverse acc
+            else
+                this = mat.resizedTo { columns = framesize, rows = channels }
+                   (mat.newMatrix (RowMajor ())
+                       (map (bf.multiply w) (mat.asRows (head remaining))));
+                remaining := tail remaining;
+                framesFor (samples - hop) (this::acc)
+            fi;
+        source = overlapAdd (framesize - hop)
+           (framesFor count [buffered]);
+        buffered := mat.columnSlice source count (mat.width source);
+        mat.columnSlice source 0 count);
+
+    // lose initial padding
+    \() (read' (framesize - hop));
+    
+    {
+        get position () = syncd \(position),
+        get channels () = channels,
+        get sampleRate () = rate,
+        get finished? () = finished' (),
+        get available () = if finished' () then Known 0 else Unknown () fi,
+        read count = syncd
+          \(data = read' count;
+            position := position + mat.width data;
+            data),
+        close = \(),
+    });
+    
+//!!! doc: convert frames back to a stream
+streamed rate { framesize, hop } frames =
+    if framesize == hop then
+        streamContiguous rate framesize frames
+    else
+        streamOverlapping rate
+            { framesize, hop, window = win.hann } // periodic, not symmetric
+            frames
+    fi;
+
+monoFrames params stream =
+    map ch.mixedDown (frames params stream);
+
+windowedFrames { framesize, hop, window } stream =
+   (win = window framesize;
+    map (bf.multiply win) (monoFrames { framesize, hop } stream));
+
+frequencyDomainFrames parameters stream =
+   (f = fft.realForward parameters.framesize;
+    map f (windowedFrames parameters stream));
+
+typedef params = { framesize is number, hop is number };
+typedef winparams = { framesize is number, hop is number, window is number -> vector };
+
+{ 
+    frames is params -> stream -> list<matrix>,
+    monoFrames is params -> stream -> list<vector>,
+    windowedFrames is winparams -> stream -> list<vector>,
+    frequencyDomainFrames is winparams -> stream -> list<array<cplx> >,
+
+    framesOfFile parameters filename =
+        frames parameters (af.open filename),
+
+    monoFramesOfFile parameters filename =
+        monoFrames parameters (af.open filename),
+
+    windowedFramesOfFile parameters filename = 
+        windowedFrames parameters (af.open filename),
+
+    frequencyDomainFramesOfFile parameters filename = 
+        frequencyDomainFrames parameters (af.open filename),
+
+    overlapAdd is number -> list<matrix> -> matrix,
+
+    streamed is number -> params -> list<matrix> -> stream,
+    streamOverlapping is number -> winparams -> list<matrix> -> stream,
+}
+

@@ -1,0 +1,97 @@
+
+module may.stream.syntheticstream;
+
+ch = load may.stream.channels;
+vec = load may.vector;
+mat = load may.matrix;
+
+load may.vector.type;
+load may.matrix.type;
+load may.stream.type;
+
+generated sampleRate generator =
+   (// generator takes sample number as arg, returns number in -1,+1 range
+    var position = 0;
+    {
+        get position () = position,
+        get channels () = 1, 
+        get sampleRate () = sampleRate,
+        get available () = Infinite (),
+        get finished? () = false,
+        read count = ch.deinterleaved 1
+           (result = new double[count];
+            for [0..count-1] do i:
+                result[i] := generator (position + i)
+            done;
+            position := position + count;
+            vec.vector result),
+        close = \(),
+    });
+
+sinusoid rate freq =
+    generated rate (sin . (* (2 * pi * freq / rate)));
+
+whiteNoise rate =
+    generated rate \((Math#random() * 2.0) - 1.0);
+
+silent rate =
+    generated rate \0;
+
+precalculatedMono rate data =
+   (n = vec.length data;
+    var position = 0;
+    {
+        get position () = position,
+        get channels () = 1,
+        get sampleRate () = rate,
+        get available () = Known (n - position),
+        get finished? () = not (n > position),
+        read count = ch.deinterleaved 1
+           (rc = min count (n - position);
+            result = vec.slice data position (position + rc);
+            position := position + rc;
+            result),
+        close = \(),
+    });
+
+precalculated rate data =
+   (n = mat.width data;
+    c = mat.height data;
+    var position = 0;
+    {
+        get position () = position,
+        get channels () = c,
+        get sampleRate () = rate,
+        get available () = Known (n - position),
+        get finished? () = not (n > position),
+        read count = 
+           (rc = min count (n - position);
+            result = mat.columnSlice data position (position + rc);
+            position := position + rc;
+            result),
+        close = \(),
+    });
+
+empty rate channels = // degenerate stream with no data in it, occasionally useful
+    {
+        get position () = 0,
+        get channels () = channels,
+        get sampleRate () = rate,
+        get available () = Known 0,
+        get finished? () = true,
+        read count = mat.zeroSizeMatrix (),
+        close = \(),
+    };
+
+{
+    generated is number -> (number -> number) -> stream, 
+    precalculated is number -> matrix -> stream,
+    precalculatedMono is number -> vector -> stream,
+    sinusoid is number -> number -> stream, 
+    whiteNoise is number -> stream,
+    silent is number -> stream,
+    empty is number -> number -> stream,
+}
+
+
+

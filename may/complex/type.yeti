@@ -1,0 +1,7 @@
+
+module may.complex.type;
+
+typedef opaque cplx = ~may.Cplx;
+
+();
+

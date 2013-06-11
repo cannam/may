@@ -1,0 +1,20 @@
+
+module may.feature.specdiff;
+
+vec = load may.vector;
+fr = load may.stream.framer;
+cplx = load may.complex;
+
+load may.feature.feature;
+
+specdiff frames = 
+    features magdiff (map cplx.magnitudes frames);
+
+specdiffOfFile parameters filename =
+    specdiff (fr.frequencyDomainFramesOfFile parameters filename);
+
+{
+    specdiff,
+    specdiffOfFile,
+}
+

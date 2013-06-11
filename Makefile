@@ -1,17 +1,17 @@
-ALL_SOURCES := $(wildcard yetilab/*.yeti yetilab/*/*.yeti yetilab/*/*/*.yeti)
-TEST_SOURCES := $(wildcard yetilab/test/*.yeti yetilab/*/test/*.yeti yetilab/*/*/test/*.yeti)
+ALL_SOURCES := $(wildcard may/*.yeti may/*/*.yeti may/*/*/*.yeti)
+TEST_SOURCES := $(wildcard may/test/*.yeti may/*/test/*.yeti may/*/*/test/*.yeti)
 SOURCES := $(filter-out $(TEST_SOURCES), $(ALL_SOURCES))
 
-bin/.testrun:	yetilab.jar $(TEST_SOURCES)
-	./bin/yc yetilab/test/all.yeti | tee $@.out
+bin/.testrun:	may.jar $(TEST_SOURCES)
+	./bin/yc may/test/all.yeti | tee $@.out
 	@grep -qv passed $@.out || touch $@
 
-yetilab.jar:	$(SOURCES)
-	./bin/yc --no-yetilab-jar -d classes -doc doc $^
-	jar cf $@ -C classes yetilab 
+may.jar:	$(SOURCES)
+	./bin/yc --no-may-jar -d classes -doc doc $^
+	jar cf $@ -C classes may 
 
 clean:	
 	rm -rf com bin/.testrun classes
 
 distclean:	clean
-	rm -f yetilab.jar
+	rm -f may.jar
