@@ -117,10 +117,6 @@ openMono = openWithReader readMono' 1;
 write str name is stream -> string -> number =
    (var tot = 0;
     class StreamAdapter extends TargetDataLine
-        void open(),
-        void open(AudioFormat format),
-        void open(AudioFormat format, int bufferSize),
-        void close(),
         int read(byte[] bytes, int off, int len)
            (bb = ByteBuffer#wrap(bytes, off, len);
             bb#order(ByteOrder#LITTLE_ENDIAN);
@@ -143,6 +139,10 @@ write str name is stream -> string -> number =
             esac,
         AudioFormat getFormat()
             new AudioFormat(str.sampleRate, 16, str.channels, true, false),
+        void open(),
+        void open(AudioFormat format),
+        void open(AudioFormat format, int bufferSize),
+        void close(),
         void drain(),
         void flush(),
         boolean isOpen() true,
