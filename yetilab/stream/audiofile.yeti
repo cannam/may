@@ -5,6 +5,8 @@ load yetilab.stream.type;
 
 import javax.sound.sampled:
      AudioSystem, AudioInputStream, AudioFormat, AudioFormat$Encoding,
+     AudioFileFormat, AudioFileFormat$Type,
+     TargetDataLine, LineListener, Line, Line$Info, Control, Control$Type,
      UnsupportedAudioFileException;
 
 import java.io: File, IOException;
@@ -13,6 +15,7 @@ import java.nio: ByteBuffer, ByteOrder;
 
 ch = load yetilab.stream.channels;
 vec = load yetilab.vector;
+mat = load yetilab.matrix;
 
 decode8u bytes doubles n is ~byte[] -> ~double[] -> number -> () =
    (for [0..n-1] do i:
@@ -111,11 +114,67 @@ openWithReader reader ch name is 'a -> number -> string -> stream =
 open = openWithReader read' 0;
 openMono = openWithReader readMono' 1;
 
+write str name is stream -> string -> number =
+   (var tot = 0;
+    class StreamAdapter extends TargetDataLine
+        void open(),
+        void open(AudioFormat format),
+        void open(AudioFormat format, int bufferSize),
+        void close(),
+        int read(byte[] bytes, int off, int len)
+           (bb = ByteBuffer#wrap(bytes, off, len);
+            bb#order(ByteOrder#LITTLE_ENDIAN);
+            m = str.read (len / (str.channels * 2));
+            tot := mat.width m;
+            for [0..mat.width m - 1] do i:
+                for [0..str.channels - 1] do c:
+                    v = int (32767 * mat.at m c i);
+                    v = if v < -32768 then -32768
+                        elif v > 32767 then 32767
+                        else v fi;
+                    \() bb#putShort((i * str.channels + c) * 2, v);
+                done
+            done;
+            str.channels * 2 * mat.width m),
+        int available()
+            case str.available of
+            Known n: str.channels * n * 2;
+            other: str.channels * 1024; //!!!???
+            esac,
+        AudioFormat getFormat()
+            new AudioFormat(str.sampleRate, 16, str.channels, true, false),
+        void drain(),
+        void flush(),
+        boolean isOpen() true,
+        boolean isActive() true,
+        boolean isRunning() true,
+        int getFramePosition() str.position,
+        long getLongFramePosition() str.position,
+        long getMicrosecondPosition() 0,
+        int getBufferSize() 0,
+        float getLevel() 1.0,
+        void start(),
+        void stop(),
+        void addLineListener(LineListener ll),
+        void removeLineListener(LineListener ll),
+        Control getControl(Control$Type c),
+        Control[] getControls(),
+        Line$Info getLineInfo(),
+        boolean isControlSupported(Control$Type c) false,
+    end;
+    f = new File(name);
+    n = AudioSystem#write(new AudioInputStream(new StreamAdapter()),
+                          AudioFileFormat$Type#WAVE, f);
+    str.close ();
+    n);
+
 {
     open,
-    openMono
+    openMono,
+    write,
 } as {
     open is string -> stream,
-    openMono is string -> stream
+    openMono is string -> stream,
+    write is stream -> string -> number,
 } 
 
