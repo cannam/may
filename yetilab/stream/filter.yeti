@@ -443,10 +443,11 @@ interpolated mult s = //!!! mult must be an integer [how to enforce this??]
    (nzc = 13;
     attenuation = 80;
     filter = kaiserSincWindow nzc mult attenuation;
-    delayedBy (- (nzc * mult))
+    out = delayedBy (- (nzc * mult))
        (convolvedWith []
            (mat.newMatrix (RowMajor ()) (map \filter [1..s.channels]))
-           (spaced mult s)));
+           (spaced mult s));
+    out with { get sampleRate () = s.sampleRate * mult });
 
 picked frac s =
     s with
@@ -456,22 +457,23 @@ picked frac s =
             case s.available of Known n: Known (int (n/frac)); other: other esac,
         read n =
            (m = s.read (n*frac);
-println "read \(mat.width m) frames";
             obtained = int ((mat.width m) / frac);
             mat.flipped
                (mat.newMatrix (ColumnMajor ())
                    (map do c: mat.getColumn (c*frac) m done [0..obtained-1])))
     };
 
-decimated frac s = //!!! frac must be an integer [how to enforce this??]
+decimated factor s = //!!! factor must be an integer [how to enforce this??]
    (nzc = 13;
     attenuation = 80;
-    filter = kaiserSincWindow nzc frac attenuation;
+    filter = kaiserSincWindow nzc factor attenuation;
     filtered =
-//        delayedBy (- (nzc * frac))
            (convolvedWith []
                (mat.newMatrix (RowMajor ()) (map \filter [1..s.channels])) s);
-    picked frac filtered);
+    out = scaledBy (1/factor)
+       (delayedBy (- nzc)
+           (picked factor filtered));
+    out with { get sampleRate () = s.sampleRate / factor });
 
 {
     withDuration is number -> stream -> stream,
