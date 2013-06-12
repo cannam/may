@@ -413,9 +413,7 @@ convolvedWith options ir s = //!!! cheap mono thing here
     fi;
     var type = Fast ();
     var framesize = nextPowerOfTwo (mat.width ir);
-println "convolvedWith: framesize = \(framesize) for ir width \(mat.width ir)";
     for options \case of
-    //!!! todo: test these options
         Fast s: if s then type := Fast () else type := Plain () fi;
         Framesize n: framesize := nextPowerOfTwo n;
         esac;
@@ -518,6 +516,7 @@ decimated factor s = //!!! factor must be an integer [how to enforce this??]
 
 gcd a b = (c = a % b; if c == 0 then b else gcd b c fi);
 
+//!!! slow -- can't in this form be used for e.g. 44100 -> 48000 conversion
 resampledTo rate s =
    (g = gcd rate s.sampleRate;
    println "orig = \(s.sampleRate), target = \(rate), g = \(g), up = \(rate/g), down = \(s.sampleRate/g)";
