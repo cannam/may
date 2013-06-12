@@ -298,8 +298,8 @@ makeTests name withUnknown =
         ( str.close (); true )
 ),
 
-"mixed-inf-inf-\(name)": \(
-    str = filt.mixed [syn.generated 2 (2*), syn.generated 2 (0-)];
+"sum-inf-inf-\(name)": \(
+    str = filt.sum [syn.generated 2 (2*), syn.generated 2 (0-)];
     compare str.position 0 and
         compare str.channels 1 and
         compare str.sampleRate 2 and
@@ -311,8 +311,8 @@ makeTests name withUnknown =
         ( str.close (); true )
 ),
 
-"mixed-inf-trunc-\(name)": \(
-    str = filt.mixed [syn.generated 2 (2*), maybeDuration 3 (syn.generated 2 (0-))];
+"sum-inf-trunc-\(name)": \(
+    str = filt.sum [syn.generated 2 (2*), maybeDuration 3 (syn.generated 2 (0-))];
     compare str.position 0 and
         compare str.channels 1 and
         compare str.sampleRate 2 and
@@ -325,8 +325,8 @@ makeTests name withUnknown =
         ( str.close (); true )
 ),
 
-"mixed-precalc-trunc-\(name)": \(
-    str = filt.mixed
+"sum-precalc-trunc-\(name)": \(
+    str = filt.sum
        [syn.precalculatedMono 2 (vec.fromList [1,2]),
         maybeDuration 3 (syn.generated 2 (0-))];
     compare str.position 0 and
@@ -341,8 +341,8 @@ makeTests name withUnknown =
         ( str.close (); true )
 ),
 
-"mixed-2-1-\(name)": \(
-    str = filt.mixed
+"sum-2-1-\(name)": \(
+    str = filt.sum
        [syn.precalculatedMono 2 (vec.fromList [1,2]),
         filt.multiplexed [syn.precalculatedMono 2 (vec.fromList [3,4]),
                           maybeDuration 3 (syn.generated 2 (0-))]];
@@ -358,8 +358,8 @@ makeTests name withUnknown =
         ( str.close (); true )
 ),
 
-"mixed-3-\(name)": \(
-    str = filt.mixed
+"sum-3-\(name)": \(
+    str = filt.sum
        [syn.precalculatedMono 2 (vec.fromList [1,2]),
         syn.precalculatedMono 2 (vec.fromList [3,4]),
         maybeDuration 3 (syn.generated 2 (0-))];

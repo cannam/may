@@ -109,7 +109,7 @@ mixedTo targetChannels s =
 //has duration equal to the shortest source stream and finishes as
 //soon as any one of them finishes
 
-mixed streams =
+sum' streams =
    (mix m1 m2 =
        (sz = { rows = max (mat.height m1) (mat.height m2),
                columns = min (mat.width m1) (mat.width m2) };
@@ -480,7 +480,7 @@ decimated factor s = //!!! factor must be an integer [how to enforce this??]
     delayedBy is number -> stream -> stream,
     scaledBy is number -> stream -> stream,
     mixedTo is number -> stream -> stream,
-    mixed is list<stream> -> stream,
+    sum is list<stream> -> stream = sum',
     multiplexed is list<stream> -> stream,
     repeated is stream -> stream,
     duplicated is number -> stream -> list<stream>,
