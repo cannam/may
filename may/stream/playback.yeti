@@ -2,6 +2,7 @@
 module may.stream.playback;
 
 vec = load may.vector;
+mat = load may.matrix;
 af = load may.stream.audiofile;
 ch = load may.stream.channels;
 
@@ -36,6 +37,12 @@ open { rate, channels } =
         close () = (line#drain(); line#close()),
     });
 
+playMatrix rate m =
+   (channels = mat.height m;
+    line = open { rate, channels };
+    line.play [ch.mixedAndInterleavedTo channels m];
+    line.close());
+
 playStream stream =
    (line = open { rate = stream.sampleRate, channels = stream.channels };
     blocksize = 10240;
@@ -49,6 +56,6 @@ playFile filename =
     playStream (af.open filename);
 
 {
-    open, play, playStream, playFile,
+    open, playMatrix, playStream, playFile,
 }
 
