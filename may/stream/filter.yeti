@@ -309,7 +309,9 @@ doFastConvolve irframes sigframes =
    (var history = [];
     irlen = length irframes;
     n = length (head irframes);
+//    println "irlen = \(irlen), siglen = \(length sigframes), n = \(n)";
     map do sigf:
+//    print ".";
         history := take irlen (sigf::history);
         fold do cc1 cc2: map2 cplx.add cc1 cc2 done
            (list (cplx.zeros n))
@@ -435,19 +437,25 @@ kaiserSincWindow zc n 𝛼 =
     bf.multiply sw kw);
 
 spaced mult s = //!!! mult must be an integer [how to enforce this??]
+ //!!! very, very slow
+//!!! test, then rewrite to be faster
    (var pos = 0;
     s with
     {
         get position () = pos,
         get available () = 
             case s.available of Known n: Known (n*mult); other: other esac,
-        read n = //!!! very, very slow
+        read n =
            (readOne () =
                (offset = pos % mult;
                 sample =
                     if offset == 0 then
                         m = s.read 1;
-                        mat.at m 0 0;
+                        if mat.width m == 1 then
+                            mat.at m 0 0;
+                        else
+                            0
+                        fi;
                     else
                         0
                     fi; 
@@ -455,16 +463,29 @@ spaced mult s = //!!! mult must be an integer [how to enforce this??]
                 sample);
             mat.newRowVector (vec.fromList (map \(readOne ()) [1..n]))),
     });
+                
+            
+/*
+   (samples () =
+        if s.finished? then []
+        else s.read 1 :. samples
+        fi;
+    fr.streamed s.sampleRate { framesize = mult, hop = mult } 
+       (map (mat.resizedTo { rows = s.channels, columns = mult }) (samples ())));
+*/        
 
-interpolated mult s = //!!! mult must be an integer [how to enforce this??]
-   (nzc = 13;
-    attenuation = 80;
-    filter = kaiserSincWindow nzc mult attenuation;
-    out = delayedBy (- (nzc * mult))
-       (convolvedWith []
-           (mat.newMatrix (RowMajor ()) (map \filter [1..s.channels]))
-           (spaced mult s));
-    out with { get sampleRate () = s.sampleRate * mult });
+interpolated factor s = //!!! factor must be an integer [how to enforce this??]
+    if factor == 1 then s
+    else
+        nzc = 13;
+        attenuation = 80;
+        filter = kaiserSincWindow nzc factor attenuation;
+        out = delayedBy (- (nzc * factor))
+           (convolvedWith [Framesize 1024]
+               (mat.newMatrix (RowMajor ()) (map \filter [1..s.channels]))
+               (spaced factor s));
+        out with { get sampleRate () = s.sampleRate * factor };
+    fi;
 
 picked frac s =
     s with
@@ -481,22 +502,25 @@ picked frac s =
     };
 
 decimated factor s = //!!! factor must be an integer [how to enforce this??]
-   (nzc = 13;
-    attenuation = 80;
-    filter = kaiserSincWindow nzc factor attenuation;
-    filtered =
-           (convolvedWith []
+    if factor == 1 then s
+    else
+        nzc = 13;
+        attenuation = 80;
+        filter = kaiserSincWindow nzc factor attenuation;
+        filtered =
+           (convolvedWith [Framesize 1024]
                (mat.newMatrix (RowMajor ()) (map \filter [1..s.channels])) s);
-    out = scaledBy (1/factor)
-       (delayedBy (- nzc)
-           (picked factor filtered));
-    out with { get sampleRate () = s.sampleRate / factor });
+        out = scaledBy (1/factor)
+           (delayedBy (- nzc)
+               (picked factor filtered));
+        out with { get sampleRate () = s.sampleRate / factor };
+    fi;
 
 gcd a b = (c = a % b; if c == 0 then b else gcd b c fi);
 
 resampledTo rate s =
    (g = gcd rate s.sampleRate;
-   println "g = \(g), up = \(rate/g), down = \(s.sampleRate/g)";
+   println "orig = \(s.sampleRate), target = \(rate), g = \(g), up = \(rate/g), down = \(s.sampleRate/g)";
     decimated (s.sampleRate / g) (interpolated (rate/g) s));
 
 {
