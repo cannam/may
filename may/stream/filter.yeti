@@ -95,6 +95,16 @@ scaledBy factor s =
         read count = mat.scaled factor (s.read count);
     };
 
+inverted s = //!!! todo: test
+    s with
+    {
+        read count = 
+           (m = s.read count;
+            if mat.empty? m then m
+            else mat.difference (mat.zeroMatrix (mat.size m)) m
+            fi)
+    };
+
 //!!! poor name, confusion with mixed, but consistent with channels.yeti
 mixedTo targetChannels s =
     s with
@@ -144,6 +154,12 @@ sum' streams =
             esac),
         close () = for streams do s: s.close() done,
     });
+
+mean streams = //!!! todo: test
+    scaledBy (1 / (length streams)) (sum' streams);
+
+difference s1 s2 = //!!! todo: test
+    sum' [ s1, inverted s2 ];
 
 multiplexed streams = 
     {
@@ -395,6 +411,7 @@ convolvedWith options ir s = //!!! cheap mono thing here
     fi;
     var type = Fast ();
     var framesize = nextPowerOfTwo (mat.width ir);
+println "convolvedWith: framesize = \(framesize) for ir width \(mat.width ir)";
     for options \case of
     //!!! todo: test these options
         Fast s: if s then type := Fast () else type := Plain () fi;
@@ -475,16 +492,27 @@ decimated factor s = //!!! factor must be an integer [how to enforce this??]
            (picked factor filtered));
     out with { get sampleRate () = s.sampleRate / factor });
 
+gcd a b = (c = a % b; if c == 0 then b else gcd b c fi);
+
+resampledTo rate s =
+   (g = gcd rate s.sampleRate;
+   println "g = \(g), up = \(rate/g), down = \(s.sampleRate/g)";
+    decimated (s.sampleRate / g) (interpolated (rate/g) s));
+
 {
     withDuration is number -> stream -> stream,
     delayedBy is number -> stream -> stream,
     scaledBy is number -> stream -> stream,
+    inverted is stream -> stream,
     mixedTo is number -> stream -> stream,
     sum is list<stream> -> stream = sum',
+    mean is list<stream> -> stream,
+    difference is stream -> stream -> stream,
     multiplexed is list<stream> -> stream,
     repeated is stream -> stream,
     duplicated is number -> stream -> list<stream>,
     convolvedWith is list<Fast boolean | Framesize number> -> matrix -> stream -> stream,
-    kaiserSincWindow, spaced, interpolated, decimated, picked
+    kaiserSincWindow, spaced, interpolated, decimated, picked,
+    resampledTo,
 }
 

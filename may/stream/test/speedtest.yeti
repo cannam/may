@@ -19,6 +19,26 @@ conv = time "prepare convolve" \(filt.convolvedWith [ Framesize 256 ] (mat.newRo
 var len = 0;
 time "read convolve" \((not conv.finished?) loop len := len + mat.width (conv.read 65536));
 
+str.close ();
+
+println "Done";
+
+after = System#currentTimeMillis();
+
+println "Total time: \(after - before)ms for \(len) audio sample frames [\(int (len / ((after - before) / 1000))) fps]";
+
+
+before = System#currentTimeMillis();
+
+str = time "open audio file" \(af.openMono "shortish.wav");
+
+res = time "prepare resample" \(filt.resampledTo 48000 str);
+
+len := 0;
+time "read resampled" \((not res.finished?) loop len := len + mat.width (res.read 65536));
+
+str.close ();
+
 println "Done";
 
 after = System#currentTimeMillis();
