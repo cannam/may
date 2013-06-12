@@ -116,6 +116,10 @@ openMono = openWithReader readMono' 1;
 
 write str name is stream -> string -> number =
    (var tot = 0;
+    case str.available of
+    Infinite (): failWith "Cannot write infinite stream to file";
+    _: ()
+    esac;
     class StreamAdapter extends TargetDataLine
         int read(byte[] bytes, int off, int len)
            (bb = ByteBuffer#wrap(bytes, off, len);
