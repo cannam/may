@@ -309,9 +309,7 @@ doFastConvolve irframes sigframes =
    (var history = [];
     irlen = length irframes;
     n = length (head irframes);
-//    println "irlen = \(irlen), siglen = \(length sigframes), n = \(n)";
     map do sigf:
-//    print ".";
         history := take irlen (sigf::history);
         fold do cc1 cc2: map2 cplx.add cc1 cc2 done
            (list (cplx.zeros n))
@@ -329,12 +327,13 @@ splitInto n fr =
 fastConvolvedWith ir framesize s =
     // prerequisite: ir and s have same number of channels
    (framer = zeroPaddedFreqFrames framesize (mat.height ir);
+    ch = s.channels;
     irfr = framer (syn.precalculated 1 ir); // rate arg is irrelevant here
     sigfr = framer s;
-    ch = s.channels;
     inverseTransform = fft.realInverse (framesize * 2);
     extended = sigfr ++
-        map do _: list (cplx.zeros (ch * (framesize + 1))) done [1..length irfr-1];
+        map do _: list (cplx.zeros (ch * (framesize + 1))) done
+           [1..length irfr-1];
     cframes = doFastConvolve irfr extended; 
     rframes = (mat.zeroMatrix { rows = ch, columns = framesize * 2}) ::
         map do fr:
@@ -343,7 +342,7 @@ fastConvolvedWith ir framesize s =
             done cframes;
     fr.streamOverlapping s.sampleRate
         { framesize = framesize * 2, hop = framesize, window = win.boxcar }
-        rframes
+        rframes;
 );
 
 plainConvolvedWith ir s =
@@ -461,17 +460,7 @@ spaced mult s = //!!! mult must be an integer [how to enforce this??]
                 sample);
             mat.newRowVector (vec.fromList (map \(readOne ()) [1..n]))),
     });
-                
-            
-/*
-   (samples () =
-        if s.finished? then []
-        else s.read 1 :. samples
-        fi;
-    fr.streamed s.sampleRate { framesize = mult, hop = mult } 
-       (map (mat.resizedTo { rows = s.channels, columns = mult }) (samples ())));
-*/        
-
+   
 interpolated factor s = //!!! factor must be an integer [how to enforce this??]
     if factor == 1 then s
     else
@@ -499,6 +488,7 @@ picked frac s =
                    (map do c: mat.getColumn (c*frac) m done [0..obtained-1])))
     };
 
+//!!! test
 decimated factor s = //!!! factor must be an integer [how to enforce this??]
     if factor == 1 then s
     else
