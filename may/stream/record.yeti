@@ -1,0 +1,65 @@
+
+module may.stream.record;
+
+vec = load may.vector;
+mat = load may.matrix;
+af = load may.stream.audiofile;
+ch = load may.stream.channels;
+
+import javax.sound.sampled:
+    AudioSystem, AudioFormat, AudioFormat$Encoding, 
+    TargetDataLine, DataLine, DataLine$Info;
+
+{ decode } = load may.stream.format;
+
+recordInterleaved seconds line is number -> ~TargetDataLine -> 'a =
+   (format = line#getFormat();
+    channels = format#getChannels();
+    nframes = seconds * format#getSampleRate();
+    bytesPerSample = format#getSampleSizeInBits() / 8;
+    bytes = new byte[nframes * channels * bytesPerSample];
+    bytesRead = line#read(bytes, 0, length bytes);
+    if bytesRead <= 0 then vec.zeros 0;
+    else
+        n = int(bytesRead / bytesPerSample);
+        doubles = new double[n];
+        decode { format } bytes doubles n;
+        vec.vector doubles;
+    fi;
+   );
+
+recordFor seconds line is number -> ~TargetDataLine -> 'a =
+    ch.deinterleaved line#getFormat()#getChannels() 
+       (recordInterleaved seconds line);
+
+open { rate, channels } =
+   (format = new AudioFormat(AudioFormat$Encoding#PCM_SIGNED, rate, 16,
+                             channels, channels * 2, rate, false);
+    info = new DataLine$Info
+       (Class#forName("javax.sound.sampled.TargetDataLine"), format);
+    if not AudioSystem#isLineSupported(info) then
+        failWith "Unable to open 16-bit PCM line at rate \(rate), \(channels) channels";
+    fi;
+    line = AudioSystem#getLine(info) unsafely_as ~TargetDataLine;
+    line#open(format);
+    line#start();
+    {
+        line,
+        rate,
+        channels,
+        norec recordFor t = recordFor t line,
+        close () = (line#drain(); line#close()),
+    });
+
+recordFor seconds =
+   (line = open { rate = 44100, channels = 2 }; //!!! or system defaults?
+    data = line.recordFor seconds;
+    line.close ();
+    data);
+
+{
+    open,
+    recordFor
+}
+
+

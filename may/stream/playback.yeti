@@ -32,8 +32,9 @@ open { rate, channels } =
     line#start();
     {
         line,
+        rate,
+        channels,
         play = play line,
-        channels = line#getFormat()#getChannels(),
         close () = (line#drain(); line#close()),
     });
 

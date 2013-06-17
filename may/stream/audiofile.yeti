@@ -17,47 +17,7 @@ ch = load may.stream.channels;
 vec = load may.vector;
 mat = load may.matrix;
 
-decode8u bytes doubles n is ~byte[] -> ~double[] -> number -> () =
-   (for [0..n-1] do i:
-       doubles[i] := (bytes[i] / 128.0) - 1.0;
-    done
-   );
-
-decode16s bytes doubles n is ~byte[] -> ~double[] -> number -> () =
-   (bb = ByteBuffer#wrap(bytes, 0, n * 2);
-    bb#order(ByteOrder#LITTLE_ENDIAN);
-    for [0..n-1] do i:
-       doubles[i] := bb#getShort(i*2) / 32768.0;
-    done
-   );
-
-decode32f bytes doubles n is ~byte[] -> ~double[] -> number -> () =
-   (bb = ByteBuffer#wrap(bytes, 0, n * 4);
-    bb#order(ByteOrder#LITTLE_ENDIAN);
-    for [0..n-1] do i:
-       doubles[i] := bb#getFloat(i*4);
-    done
-   );
-
-decodeFail () = 
-    throw new UnsupportedAudioFileException("File format not supported. Supported formats are 8-bit unsigned PCM, 16-bit signed little-endian PCM, or IEEE float");
-
-decode { format is ~AudioFormat } bytes doubles n = 
-   (if format#isBigEndian() then
-        decodeFail()
-    else
-        enc = format#getEncoding();
-        bits = format#getSampleSizeInBits();
-        if bits == 32 then
-            decode32f bytes doubles n;
-        elif bits == 16 and enc == AudioFormat$Encoding#PCM_SIGNED then
-            decode16s bytes doubles n;
-        elif bits == 8 and enc == AudioFormat$Encoding#PCM_UNSIGNED then
-            decode8u bytes doubles n;
-        else
-            decodeFail();
-        fi
-    fi);
+{ decode } = load may.stream.format;
 
 readInterleaved' { format is ~AudioFormat, aistream is ~AudioInputStream } nframes =
    (channels = format#getChannels();
