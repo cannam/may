@@ -76,11 +76,11 @@ multiply b1 b2 =
     done;
     vec.vector out);
 
-divideBy n v =
-    vec.fromList (map (/ n) (vec.list v));
-
 scaled n v =
     vec.fromList (map (* n) (vec.list v));
+
+divideBy n v =  // Not just "scaled (1/n)" -- this way we get exact rationals
+    vec.fromList (map (/ n) (vec.list v));
 
 sqr v =
     multiply v v;
@@ -93,6 +93,14 @@ abs' =
 
 sqrt' =
     vec.fromList . (map sqrt) . vec.list;
+
+unityNormalised v = 
+   (m = max' (abs' v);
+    if m != 0 then
+        divideBy m v;
+    else
+        v;
+    fi);
 
 fftshift v =
    (len = vec.length v;
@@ -118,6 +126,7 @@ sqrt is vector -> vector = sqrt',
 rms is vector -> number,
 max is vector -> number = max',
 min is vector -> number = min',
+unityNormalised is vector -> vector,
 fftshift is vector -> vector,
 ifftshift is vector -> vector,
 }

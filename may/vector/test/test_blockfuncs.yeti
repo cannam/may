@@ -4,7 +4,7 @@ module may.vector.test.test_blockfuncs;
 stdSqrt = sqrt;
 
 { zeros, consts, ones, fromList, list } = load may.vector;
-{ sum, max, min, mean, add, subtract, multiply, divideBy, scaled, abs, sqr, sqrt, rms, fftshift, ifftshift } = load may.vector.blockfuncs;
+{ sum, max, min, mean, add, subtract, multiply, divideBy, scaled, abs, sqr, sqrt, rms, unityNormalised, fftshift, ifftshift } = load may.vector.blockfuncs;
 { compare } = load may.test.test;
 
 [
@@ -85,6 +85,13 @@ stdSqrt = sqrt;
     compare ((rms . zeros) 0) 0 and
         compare ((rms . ones) 5) 1 and
         compare ((rms . fromList) [-1,2,2]) (stdSqrt 3)
+),
+
+"unityNormalised": \(
+    compare ((list . unityNormalised . fromList) [1,-2,3,0]) [1/3,-2/3,1,0] and
+        compare ((list . unityNormalised . fromList) [-1,-2,-3]) [-1/3,-2/3,-1] and
+        compare ((list . unityNormalised . fromList) [4,1]) [1,1/4] and
+        compare ((list . unityNormalised . fromList) []) []
 ),
 
 "fftshift": \(
