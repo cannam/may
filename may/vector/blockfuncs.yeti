@@ -29,6 +29,18 @@ max' v =
     done;
     mx);
 
+maxindex v =
+   (dat = raw v;
+    var mx = 0;
+    var mi = -1;
+    for [0..length dat - 1] do i:
+        if i == 0 or dat[i] > mx then
+            mx := dat[i];
+            mi := i;
+        fi
+    done;
+    mi);
+
 min' v = 
    (dat = raw v;
     var mn = 0;
@@ -38,6 +50,18 @@ min' v =
         fi
     done;
     mn);
+
+minindex v =
+   (dat = raw v;
+    var mn = 0;
+    var mi = -1;
+    for [0..length dat - 1] do i:
+        if i == 0 or dat[i] < mn then
+            mn := dat[i];
+            mi := i;
+        fi
+    done;
+    mi);
 
 mean v =
     case vec.length v of
@@ -126,6 +150,8 @@ sqrt is vector -> vector = sqrt',
 rms is vector -> number,
 max is vector -> number = max',
 min is vector -> number = min',
+maxindex is vector -> number,
+minindex is vector -> number,
 unityNormalised is vector -> vector,
 fftshift is vector -> vector,
 ifftshift is vector -> vector,
