@@ -233,22 +233,7 @@ loadPlugin rate key =
         Error "Failed to load Vamp plugin with key \(key)"
     yrt;
 
-//!!! bring vector typedef into scope -- this shouldn't be necessary,
-//but see comment in processed below
-load may.vector.type;
-
-processed { p, sampleRate, hop } frames count 
-    // I don't know why this type declaration is necessary. Without
-    // it, yeti records the return type as 'a and can't do anything
-    // useful with it (giving IncompatibleClassChangeError when
-    // e.g. accessing the values array)
-    is 'a -> 'b -> 'c ->
-        list<hash<number,
-                  list<{ timestamp is Time number | Untimed (), 
-                         duration  is Time number | Untimed (),
-                         label is string,
-                         values is vector
-                       }>>> =
+processed { p, sampleRate, hop } frames count =
     case frames of
     frame::rest:
         p.process frame RealTime#frame2RealTime(count, sampleRate)
