@@ -21,6 +21,8 @@ EXTDIR=$YLDIR/ext
 JARDIR=$EXTDIR/jar
 SODIR=$EXTDIR/native/$ARCH
 
+JAVA_OPTS="-Xmx2048m -XX:MaxPermSize=256m"
+
 YETI_LIBDIR=${YETI_LIBDIR:=$YLDIR/../yeti}
 if [ ! -d "$YETI_LIBDIR" ]; then 
     YETI_LIBDIR=$YLDIR/../other/yeti
@@ -34,5 +36,5 @@ CLASSPATH=$YLDIR/may.jar:$AYR_DIR/ayr.jar:$YETI_LIBDIR/yeti.jar:$YETI_LIBDIR/yet
 
 YETI_MODULE_SOURCE_PATH=${YETI_LIBDIR}/modules \
     LD_LIBRARY_PATH=$AYR_DIR:$JVAMP_DIR:$SODIR:$LD_LIBRARY_PATH \
-    $JAVA_HOME/bin/java -classpath "$CLASSPATH" com.particularprograms.ayr "$@"
+    $JAVA_HOME/bin/java $JAVA_OPTS -classpath "$CLASSPATH" com.particularprograms.ayr "$@"
 
