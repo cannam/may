@@ -45,7 +45,7 @@ open { rate, channels } =
     line#start();
     {
         line,
-        rate,
+        sampleRate = rate,
         channels,
         norec recordFor t = recordFor t line,
         close () = (line#drain(); line#close()),
@@ -55,7 +55,11 @@ recordFor seconds =
    (line = open { rate = 44100, channels = 2 }; //!!! or system defaults?
     data = line.recordFor seconds;
     line.close ();
-    data);
+    {
+        sampleRate = line.sampleRate,
+        channels = line.channels,
+        data
+    });
 
 {
     open,

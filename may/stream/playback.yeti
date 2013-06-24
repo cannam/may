@@ -32,7 +32,7 @@ open { rate, channels } =
     line#start();
     {
         line,
-        rate,
+        sampleRate = rate,
         channels,
         play = play line,
         close () = (line#drain(); line#close()),
@@ -47,7 +47,7 @@ playMatrix rate m =
 playStream stream =
    (line = open { rate = stream.sampleRate, channels = stream.channels };
     blocksize = 10240;
-    not stream.finished? loop
+    not stream.finished? loop 
         line.play [(ch.mixedAndInterleavedTo line.channels 
                     (stream.read blocksize))];
     line.close();
