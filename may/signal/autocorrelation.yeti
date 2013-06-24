@@ -11,7 +11,8 @@ acf len series =
 
 acfNormalised len series =
    (n = length series;
-    map2 do v i: v / (n - i) done (acf len series) [0..len-1]);
+    map2 do v i: if n == i then 0 else v / (n - i) fi done
+       (acf len series) [0..len-1]);
 
 acfUnityNormalised len series =
    (a = acfNormalised len series;
