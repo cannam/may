@@ -1,11 +1,13 @@
 
+/**
+ * Vectors. A May vector is a typesafe, immutable wrapper around a Java
+ * primitive array of doubles.
+ */
 module may.vector;
 
 load may.vector.type;
 
 import java.util: Arrays;
-
-//!!! This is supposed to be 100% immutable and without copying when duplicating for read only
 
 /// Return a vector of n zeros.
 zeros n =
