@@ -7,9 +7,11 @@ import java.util: Arrays;
 
 //!!! This is supposed to be 100% immutable and without copying when duplicating for read only
 
+/// Return a vector of n zeros.
 zeros n =
     new double[n];
 
+/// Return a vector of length n, containing all m.
 consts m n =
    (a = zeros n;
     for [0..n-1] do i:
@@ -17,27 +19,36 @@ consts m n =
     done;
     a);
 
-ones = consts 1.0;
+/// Return a vector of length n, containing all ones.
+ones n = consts 1.0 n;
 
+/// Return a vector of the values in the given list.
 fromList l is list?<number> -> ~double[] =
     l as ~double[];
 
+/// Return the given vector as a list.
 list' a is ~double[] -> list<number> =
     list a;
 
+/// Return the given vector as a Yeti array.
 array' a is ~double[] -> array<number> =
     array a;
 
+/// Return the length of the given vector.
 length' =
     length . list';
 
+/// Return true if the given vector is empty (has length 0).
 empty?' =
     empty? . list';
 
-//!!! doc note: argument order chosen for consistency with std module function
+/// Return element n in the given vector v. (The function name and
+/// argument order are chosen for symmetry with the similar standard
+/// library array function.)
 at' v n is ~double[] -> number -> number =
     v[n];
 
+/// Return the given vector as a Java primitive float array.
 floats a is ~double[] -> ~float[] =
    (len = length' a;
     f = new float[len];
@@ -46,6 +57,7 @@ floats a is ~double[] -> ~float[] =
     done;
     f);
 
+/// Return a vector of the values in the given Java primitive float array.
 fromFloats ff is ~float[] -> ~double[] =
    (len = length (list ff);
     a = new double[len];
@@ -54,17 +66,25 @@ fromFloats ff is ~float[] -> ~double[] =
     done;
     a);
 
+/// Return true if the given vectors are equal, using the standard ==
+/// comparator on their elements.
 equal v1 v2 =
     list' v1 == list' v2;
 
+/// Return true if the given vectors are equal, when applying the
+/// given numerical comparator to each element.
 equalUnder comparator v1 v2 =
     length' v1 == length' v2 and
         all id (map2 comparator (list' v1) (list' v2));
 
+/// Return another copy of the given vector.
 copyOf v is ~double[] -> ~double[] =
     Arrays#copyOf(v, list' v |> length);
 
-//!!! doc note: argument order chosen for consistency with std module function
+/// Return a new vector containing a subset of the elements of the
+/// given vector, from index start (inclusive) to index end
+/// (exclusive). (The function name and argument order are chosen for
+/// symmetry with the standard library slice and strSlice functions.)
 slice v start end is ~double[] -> number -> number -> ~double[] =
     if start < 0 then slice v 0 end
     elif start > length' v then slice v (length' v) end
@@ -76,9 +96,13 @@ slice v start end is ~double[] -> number -> number -> ~double[] =
         fi
     fi;
 
+/// Return a new vector of length n, containing the contents of the
+/// given vector v. If v is longer than n, the contents will be
+/// truncated; if shorter, they will be padded with zeros.
 resizedTo n v is number -> ~double[] -> ~double[] =
     Arrays#copyOf(v, n);
 
+/// Return a new vector that is the reverse of the given vector.
 reversed v is ~double[] -> ~double[] =
    (len = length (list v);
     a = new double[len];
@@ -87,7 +111,10 @@ reversed v is ~double[] -> ~double[] =
     done;
     a);
 
-concat vv is list?<~double[]> -> ~double[] = //!!! doc: concat is obviously not lazy (unlike std module)
+/// Return a single new vector that contains the contents of all the
+/// given vectors, in order. (Unlike the standard module list concat
+/// function, this one cannot be lazy.)
+concat vv is list?<~double[]> -> ~double[] =
    (len = sum (map length' vv);
     vout = zeros len;
     var base = 0;
@@ -98,6 +125,9 @@ concat vv is list?<~double[]> -> ~double[] = //!!! doc: concat is obviously not 
     done;
     vout);
 
+/// Return a single new vector that contains the contents of the given
+/// vector, repeated n times. The vector will therefore have length n
+/// times the length of v.
 repeated v n is ~double[] -> number -> ~double[] =
     concat (map \(v) [1..n]);
 
