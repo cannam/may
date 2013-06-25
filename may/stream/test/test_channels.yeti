@@ -30,21 +30,21 @@ compareBlocks b1 b2 =
 
 "mixedDown": \(
     compareBlocks (ch.mixedDown (newMatrix [[1,4],[2,5],[3,6]]))
-       (vec.fromList [5,7,9]) and
+       (vec.fromList [5/2,7/2,9/2]) and
         compareBlocks (ch.mixedDown (newMatrix []))
            (vec.fromList [])
 ),
 
 "mixedDownFromInterleaved": \(
     compareBlocks (ch.mixedDownFromInterleaved 2 (vec.fromList [1,4,2,5,3,6]))
-       (vec.fromList [5,7,9]) and
+       (vec.fromList [5/2,7/2,9/2]) and
         compareBlocks (ch.mixedDownFromInterleaved 1 (vec.fromList [1,2,3]))
            (vec.fromList [1,2,3])
 ),
 
 "mixedFromInterleavedTo": \(
     compareBlocks (ch.mixedFromInterleavedTo 1 2 (vec.fromList [1,4,2,5,3,6]))
-       (vec.fromList [5,7,9]) and
+       (vec.fromList [5/2,7/2,9/2]) and
         compareBlocks (ch.mixedFromInterleavedTo 2 2 (vec.fromList [1,4,2,5,3,6]))
            (vec.fromList [1,4,2,5,3,6]) and
         compareBlocks (ch.mixedFromInterleavedTo 3 2 (vec.fromList [1,4,2,5,3,6]))
@@ -59,7 +59,7 @@ compareBlocks b1 b2 =
 
 "mixedAndInterleavedTo": \(
     compareBlocks (ch.mixedAndInterleavedTo 1 (newMatrix [[1,4],[2,5],[3,6]]))
-       (vec.fromList [5,7,9]) and
+       (vec.fromList [5/2,7/2,9/2]) and
         compareBlocks (ch.mixedAndInterleavedTo 2 (newMatrix [[1,4],[2,5],[3,6]]))
            (vec.fromList [1,4,2,5,3,6]) and
         compareBlocks (ch.mixedAndInterleavedTo 3 (newMatrix [[1,4],[2,5],[3,6]]))

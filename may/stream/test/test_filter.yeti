@@ -260,7 +260,7 @@ makeTests name withUnknown =
         compare str.sampleRate 2 and
         compare str.available (maybeKnown 3) and
         compare str.finished? false and
-        compare (map vec.list (mat.asRows (str.read 4))) [[0,2,4]] and
+        compare (map vec.list (mat.asRows (str.read 4))) [[0,1,2]] and
         compare str.position 3 and
         compare str.available (Known 0) and
         compare str.finished? true and
