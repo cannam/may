@@ -2,7 +2,13 @@
 /**
  * Vectors. A May vector is a typesafe, immutable wrapper around a Java
  * primitive array of doubles.
+ *
+ * Although not as convenient and flexible as a Yeti array<number> or
+ * list<number>, a vector can be faster and more compact when dealing
+ * with dense data of suitable range and precision such as sampled
+ * sequences.
  */
+
 module may.vector;
 
 load may.vector.type;
