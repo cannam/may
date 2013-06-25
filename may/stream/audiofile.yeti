@@ -71,9 +71,30 @@ openWithReader reader ch name is 'a -> number -> string -> stream =
         close () = syncd \(close' { aistream }),
     });
 
+/**
+ * Open the named audio file and return a stream object for
+ * reading from it. May throw UnsupportedAudioFileException
+ * or IOException.
+ */
 open = openWithReader read' 0;
+
+/**
+ * Open the named audio file and return a stream object that
+ * reads mono samples from it, using
+ * may.stream.channels.mixedDown to mix channels as necessary. 
+ * May throw UnsupportedAudioFileException or IOException.
+ */
 openMono = openWithReader readMono' 1;
 
+/**
+ * Open an audio file with the given name and write all available
+ * samples to it from the given stream, returning the number of
+ * sample frames written. The stream must have finite length.
+ * 
+ * Example:
+ * : str = audiofile.open "in.wav";
+ * : n = audiofile.write str "out.wav";
+ */
 write str name is stream -> string -> number =
    (var tot = 0;
     case str.available of
@@ -130,7 +151,7 @@ write str name is stream -> string -> number =
     n = AudioSystem#write(new AudioInputStream(new StreamAdapter()),
                           AudioFileFormat$Type#WAVE, f);
     str.close ();
-    n);
+    n); //!!! this is wrong, should be number of frames (is number of bytes?)
 
 {
     open,
