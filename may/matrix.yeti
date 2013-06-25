@@ -1,18 +1,45 @@
 
+/**
+ * Matrices. A matrix is a two-dimensional (NxM) container of
+ * double-precision floating point values.
+ *
+ * A matrix may be dense or sparse.
+ * 
+ * A dense matrix (the default) is just a series of vectors, making up
+ * the matrix "grid". The values may be stored in either column-major
+ * order, in which case the series consists of one vector for each
+ * column in the matrix, or row-major order, in which case the series
+ * consists of one vector for each row. The default is column-major.
+ * 
+ * A sparse matrix has a more complex representation in which only the
+ * non-zero values are stored. This is typically used for matrices
+ * containing sparse data, that is, data in which most of the values
+ * are zero: using a sparse representation is more efficient than a
+ * dense one (in both time and memory) if the matrix is very large but
+ * contains a relatively low proportion of non-zero values. Like dense
+ * matrices, sparse ones may be column-major or row-major.
+ * 
+ * The choice of dense or sparse, row- or column-major is a question
+ * of efficiency alone. All functions in this module should return the
+ * same results regardless of how the matrices they operate on are
+ * represented. However, differences in performance can be very large
+ * and it is often worth converting matrices to a different storage
+ * format if you know they can be more efficiently manipulated that
+ * way. For example, multiplying two matrices is fastest if the first
+ * is in column-major and the second in row-major order.
+ * 
+ * Use the isRowMajor? and isSparse? functions to query the storage
+ * format of a matrix; use the flipped function to convert between
+ * column-major and row-major storage; and use toSparse and toDense to
+ * convert between sparse and dense storage.
+ *
+ * Note that the matrix representation does not take into account
+ * different forms of zero-width or zero-height matrix. All matrices
+ * of zero width or height are equal to each other, and all are equal
+ * to the zero-sized matrix.
+ */
+
 module may.matrix;
-
-// A matrix is an array of vectors.
-
-// A matrix can be stored in either column-major (the default) or
-// row-major format. Storage order is an efficiency concern only:
-// every API function operating on matrix objects will return the same
-// result regardless of storage order.  (The transpose function just
-// switches the row/column order without moving the elements.)
-
-// The matrix representation does not take into account different
-// forms of zero-width or zero-height matrix. That is, all matrices of
-// zero width or height are equal to each other and to the zero-size
-// matrix -- they can't be distinguished.
 
 vec = load may.vector;
 bf = load may.vector.blockfuncs;
