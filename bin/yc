@@ -21,7 +21,7 @@ EXTDIR=$YLDIR/ext
 JARDIR=$EXTDIR/jar
 SODIR=$EXTDIR/native/$ARCH
 
-JAVA_OPTS="-Xmx2048m -XX:MaxPermSize=256m"
+JAVA_OPTS="-Xmx1024m -XX:MaxPermSize=256m"
 
 YETI_LIBDIR=${YETI_LIBDIR:=$YLDIR/../yeti}
 if [ ! -d "$YETI_LIBDIR" ]; then 
