@@ -110,8 +110,10 @@ slice v start end is ~double[] -> number -> number -> ~double[] =
 resizedTo n v is number -> ~double[] -> ~double[] =
     Arrays#copyOf(v, n);
 
-/// Return a new vector that is the reverse of the given vector.
-reversed v is ~double[] -> ~double[] =
+/// Return a new vector that is the reverse of the given vector.  Name
+/// chosen (in preference to passive "reversed") for symmetry with the
+/// standard library list reverse function.
+reverse v is ~double[] -> ~double[] =
    (len = length (list v);
     a = new double[len];
     for [0..len-1] do i:
@@ -157,7 +159,7 @@ repeated v n is ~double[] -> number -> ~double[] =
     equalUnder,
     slice,
     resizedTo,
-    reversed,
+    reverse,
     repeated,
     concat,
 } as {
@@ -178,7 +180,7 @@ repeated v n is ~double[] -> number -> ~double[] =
     equalUnder is (number -> number -> boolean) -> vector -> vector -> boolean,
     slice is vector -> number -> number -> vector,
     resizedTo is number -> vector -> vector,
-    reversed is vector -> vector,
+    reverse is vector -> vector,
     repeated is vector -> number -> vector,
     concat is list?<vector> -> vector,
 }

@@ -23,11 +23,11 @@ isSymmetric a =
    (len = (vec.length a);
     b = if len % 2 == 0 then
             half = vec.slice a 0 (len/2);
-            vec.concat [half, vec.reversed half];
+            vec.concat [half, vec.reverse half];
         else
             half = vec.slice a 0 (int (len/2));
             mid = vec.slice a (int (len/2)) (int (len/2) + 1);
-            vec.concat [half, mid, vec.reversed half];
+            vec.concat [half, mid, vec.reverse half];
         fi;
     compareUsing close (vec.list a) (vec.list b));
 
