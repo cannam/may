@@ -434,36 +434,36 @@ kaiserSincWindow zc n 𝛼 =
     bf.multiply sw kw);
 
 spaced mult s = //!!! mult must be an integer [how to enforce this??]
- //!!! very, very slow
-//!!! test, then rewrite to be faster
-   (var pos = 0;
+   (spaceToNext pos = case (pos % mult) of 0: 0; n: (mult - n) esac;
+    readWithoutPadding n =
+       (toRead = int Math#ceil(n / mult);
+        source = s.read toRead;
+        targetWidth = min n (mult * mat.width source);
+        mat.newMatrix (ColumnMajor ())
+           (map do i:
+                if i % mult == 0 then
+                    mat.getColumn (int (i / mult)) source
+                else
+                    vec.zeros s.channels
+                fi
+                done [0..targetWidth-1]));
+    var pos = 0;
     s with
     {
         get position () = pos,
         get available () = 
             case s.available of
-            Known n:
-               (pending = case (pos % mult) of 0: 0; n: (mult - n) esac;
-                Known (pending + (n * mult)));
+            Known n: Known ((spaceToNext pos) + (n * mult));
             other: other 
             esac,
         read n =
-           (readOne () =
-               (offset = pos % mult;
-                sample =
-                    if offset == 0 then
-                        m = s.read 1;
-                        if mat.width m == 1 then
-                            mat.at m 0 0;
-                        else
-                            0
-                        fi;
-                    else
-                        0
-                    fi; 
-                pos := pos + 1;
-                sample);
-            mat.newRowVector (vec.fromList (map \(readOne ()) [1..n]))),
+           (sp = spaceToNext pos;
+            result = mat.toRowMajor
+               (mat.concat (Horizontal ())
+                   [mat.zeroMatrix { rows = s.channels, columns = min sp n },
+                    readWithoutPadding (max (n - sp) 0)]);
+            pos := pos + mat.width result;
+            result),
     });
    
 interpolated factor s = //!!! factor must be an integer [how to enforce this??]
@@ -479,7 +479,7 @@ interpolated factor s = //!!! factor must be an integer [how to enforce this??]
         out with { get sampleRate () = s.sampleRate * factor };
     fi;
 
-picked frac s =
+picked frac s = //!!! frac must be an integer [how to enforce this??]
     s with
     {
         get position () = int Math#ceil(s.position / frac),
