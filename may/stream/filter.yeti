@@ -496,7 +496,6 @@ picked frac s = //!!! frac must be an integer [how to enforce this??]
                    (map do c: mat.getColumn (c*frac) m done [0..obtained-1])))
     };
 
-//!!! test
 decimated factor s = //!!! factor must be an integer [how to enforce this??]
     if factor == 1 then s
     else

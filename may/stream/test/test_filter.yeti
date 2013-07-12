@@ -7,9 +7,9 @@ mat = load may.matrix;
 syn = load may.stream.syntheticstream;
 filt = load may.stream.filter;
 
-//pl = load may.plot;//!!!
+pl = load may.plot;//!!!
 
-pl = { plot things = true; };
+//pl = { plot things = true; };
 
 { compare, compareUsing } = load may.test.test;
 
@@ -598,23 +598,23 @@ makeTests name withUnknown =
             fast = not (opts == [ Fast false ]);
             ir = mat.newRowVector (vec.fromList [1,2,3,4,5]);
             signal = maybeDuration 3
-               (syn.precalculatedMono 2 (vec.fromList [1,2,3]));
+               (syn.precalculatedMono 2 (vec.fromList [10,20,30]));
             c = filt.convolvedWith opts ir signal;
             compare c.position 0 and
                 compare c.channels 1 and
                 compare c.sampleRate 2 and
                 (fast or compare c.available (maybeKnown 7)) and
                 compareClose (map vec.list (mat.asRows (c.read 3)))
-                    [[ 1*1,
-                       2*1 + 1*2,
-                       3*1 + 2*2 + 1*3 ]] and
+                    [[ 10*1,
+                       20*1 + 10*2,
+                       30*1 + 20*2 + 10*3 ]] and
                 (fast or compare c.available (Known 4)) and
                 compare c.finished? false and
                 compareClose (map vec.list (mat.asRows (c.read 4)))
-                    [[       3*2 + 2*3 + 1*4,
-                                   3*3 + 2*4 + 1*5,
-                                         3*4 + 2*5,
-                                               3*5 ]] and
+                    [[        30*2 + 20*3 + 10*4,
+                                     30*3 + 20*4 + 10*5,
+                                            30*4 + 20*5,
+                                                   30*5 ]] and
                 (fast or (compare c.available (Known 0) and
                           compare c.finished? true)) and
                 ( c.close (); true )
