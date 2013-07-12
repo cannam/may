@@ -482,12 +482,15 @@ interpolated factor s = //!!! factor must be an integer [how to enforce this??]
 picked frac s =
     s with
     {
-        get position () = int (s.position / frac),
+        get position () = int Math#ceil(s.position / frac),
         get available () =
-            case s.available of Known n: Known (int (n/frac)); other: other esac,
+            case s.available of 
+            Known n: Known (int Math#ceil(n / frac)); 
+            other: other 
+            esac,
         read n =
            (m = s.read (n*frac);
-            obtained = int ((mat.width m) / frac);
+            obtained = int Math#ceil((mat.width m) / frac);
             mat.flipped
                (mat.newMatrix (ColumnMajor ())
                    (map do c: mat.getColumn (c*frac) m done [0..obtained-1])))
