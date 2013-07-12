@@ -619,7 +619,7 @@ makeTests name withUnknown =
         done convolutionOptions);
 ),
 
-"interpolated-\(name)": \(
+"interpolated-sine-\(name)": \(
     // Interpolating a sinusoid should give us a sinusoid
     sinusoid = syn.sinusoid 8 2; // 2Hz sine sampled at 8Hz: [ 0, 1, 0, -1 ] etc
     input = maybeDuration 16 sinusoid;
@@ -635,7 +635,7 @@ makeTests name withUnknown =
     else true fi;
 ),
 
-"decimated-\(name)": \(
+"decimated-sine-\(name)": \(
     // Decimating a sinusoid should give us a sinusoid
     sinusoid = syn.sinusoid 32 2; // 2Hz sine sampled at 16Hz
     input = maybeDuration 64 sinusoid;
@@ -651,9 +651,29 @@ makeTests name withUnknown =
     else true fi;
 ),
 
+"interpolated-misc-\(name)": \(
+    // Interpolating any signal by N should give a signal in which
+    // every Nth sample is the original signal
+    data = vec.fromList [ 0, 0.1, -0.3, -0.4, -0.3, 0, 0.5, 0.2, 0.8, -0.1 ];
+    data = vec.concat [ data, bf.scaled (5/4) data, bf.scaled (3/4) data, data ];
+    data = vec.concat [ data, data ];
+    input = maybeDuration (vec.length data) (syn.precalculatedMono 4 data);
+    factor = 3;
+    up = filt.interpolated factor input;
+    result = mat.getRow 0 (up.read (factor * vec.length data));
+    phase = 0;
+    a = vec.list data;
+    b = map do i: vec.at result (i*factor + phase) done [0..vec.length data - 1];
+    if not compareClose [a] [b] then
+        \() (pl.plot [Vector (vec.fromList b), Vector data]);
+        false
+    else true fi;
+),
+
 "int-dec-\(name)": \(
     // Interpolating any signal then decimating by the same factor
     // should get us the original back again
+    //!!! no, this is phase dependent
     data = vec.fromList [ 0, 0.1, -0.3, -0.4, -0.3, 0, 0.5, 0.2, 0.8, -0.1 ];
     data = vec.concat [ data, bf.scaled (5/4) data, bf.scaled (3/4) data, data ];
     data = vec.concat [ data, data ];
