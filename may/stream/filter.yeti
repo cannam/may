@@ -441,7 +441,12 @@ spaced mult s = //!!! mult must be an integer [how to enforce this??]
     {
         get position () = pos,
         get available () = 
-            case s.available of Known n: Known (n*mult); other: other esac,
+            case s.available of
+            Known n:
+               (pending = case (pos % mult) of 0: 0; n: (mult - n) esac;
+                Known (pending + (n * mult)));
+            other: other 
+            esac,
         read n =
            (readOne () =
                (offset = pos % mult;
