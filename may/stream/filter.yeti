@@ -238,7 +238,7 @@ repeated s =
 duplicated copies s = 
 //!!! doc fact that original s cannot be used independently of this afterward
 // (so maybe name is misleading?)
-    if copies < 2 then map \s [1..copies];
+    array if copies < 2 then map \s [1..copies];
     else
         pos = [:];
         lowtide () = head (sort (map (at pos) (keys pos)));
@@ -433,6 +433,36 @@ kaiserSincWindow zc n 𝛼 =
     kw = win.kaiserForAttenuation 𝛼 (vec.length sw);
     bf.multiply sw kw);
 
+bandpassed f0 f1 attenuation bandwidth s =
+   (rate = s.sampleRate;
+    kw = win.kaiserForBandwidth attenuation bandwidth rate;
+    filterLength = vec.length kw;
+println "filterLength = \(filterLength)";
+    idealFor freq =
+        bf.scaled (freq / rate)
+           (win.sinc ((rate / freq) * 2) filterLength);
+    idealBandpass =
+         if f1 < rate/2 then
+             if f0 > 0 then bf.subtract (idealFor f1) (idealFor f0)
+             else idealFor f1
+             fi
+         else
+             if f0 > 0 then bf.subtract (win.dirac filterLength) (idealFor f0)
+             else win.dirac filterLength;
+             fi;
+         fi;
+    filter = bf.multiply idealBandpass kw;
+    filtered = convolvedWith [Framesize 1024]
+       (mat.newMatrix (RowMajor ()) (map \filter [1..s.channels]))
+        s;
+    delayedBy (- (int (filterLength / 2))) filtered);
+
+lowpassed f attenuation bandwidth s = 
+    bandpassed 0 f attenuation bandwidth s;
+
+highpassed f attenuation bandwidth s = 
+    bandpassed f (s.sampleRate/2) attenuation bandwidth s;
+
 spaced mult s = //!!! mult must be an integer [how to enforce this??]
    (spaceToNext pos = case (pos % mult) of 0: 0; n: (mult - n) esac;
     readWithoutPadding n =
@@ -530,9 +560,11 @@ resampledTo rate s =
     difference is stream -> stream -> stream,
     multiplexed is list<stream> -> stream,
     repeated is stream -> stream,
-    duplicated is number -> stream -> list<stream>,
+    duplicated is number -> stream -> array<stream>,
     convolvedWith is list<Fast boolean | Framesize number> -> matrix -> stream -> stream,
-    kaiserSincWindow, spaced, interpolated, decimated, picked,
+    kaiserSincWindow,
+    lowpassed, bandpassed, highpassed,
+    spaced, interpolated, decimated, picked,
     resampledTo,
 }
 
