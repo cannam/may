@@ -7,9 +7,9 @@ mat = load may.matrix;
 syn = load may.stream.syntheticstream;
 filt = load may.stream.filter;
 
-pl = load may.plot;//!!!
+//pl = load may.plot;//!!!
 
-//pl = { plot things = true; };
+pl = { plot things = true; };
 
 { compare, compareUsing } = load may.test.test;
 
@@ -665,6 +665,7 @@ makeTests name withUnknown =
 
 "interpolated-sine-\(name)": \(
     // Interpolating a sinusoid should give us a sinusoid
+    //!!! only beyond half the filter length
     sinusoid = syn.sinusoid 8 2; // 2Hz sine sampled at 8Hz: [ 0, 1, 0, -1 ] etc
     input = maybeDuration 16 sinusoid;
     output = filt.interpolated 2 input;
@@ -673,14 +674,12 @@ makeTests name withUnknown =
     expected = reference.read 32;
     compareOutputs a b = compareClose
        (map vec.list (mat.asRows a)) (map vec.list (mat.asRows b));
-    if not compareOutputs result expected then
-        \() (pl.plot [Vector (mat.getRow 0 result), Vector (mat.getRow 0 expected)]);
-        false
-    else true fi;
+    compareOutputs result expected;
 ),
 
 "decimated-sine-\(name)": \(
     // Decimating a sinusoid should give us a sinusoid
+    //!!! only beyond half the filter length
     sinusoid = syn.sinusoid 32 2; // 2Hz sine sampled at 16Hz
     input = maybeDuration 64 sinusoid;
     output = filt.decimated 2 input;
@@ -689,10 +688,7 @@ makeTests name withUnknown =
     expected = reference.read 32;
     compareOutputs a b = compareClose
        (map vec.list (mat.asRows a)) (map vec.list (mat.asRows b));
-    if not compareOutputs result expected then
-        \() (pl.plot [Vector (mat.getRow 0 result), Vector (mat.getRow 0 expected)]);
-        false
-    else true fi;
+    compareOutputs result expected;
 ),
 
 "interpolated-misc-\(name)": \(
@@ -708,25 +704,32 @@ makeTests name withUnknown =
     phase = 0;
     a = vec.list data;
     b = map do i: vec.at result (i*factor + phase) done [0..vec.length data - 1];
-    if not compareClose [a] [b] then
-        \() (pl.plot [Vector (vec.fromList b), Vector data]);
-        false
-    else true fi;
+    compareClose [a] [b];
 ),
 
 "int-dec-\(name)": \(
     // Interpolating any signal then decimating by the same factor
     // should get us the original back again
     //!!! no, this is phase dependent
-    data = vec.fromList [ 0, 0.1, -0.3, -0.4, -0.3, 0, 0.5, 0.2, 0.8, -0.1 ];
-    data = vec.concat [ data, bf.scaled (5/4) data, bf.scaled (3/4) data, data ];
+//    data = vec.fromList [ 0, 0.1, -0.3, -0.4, -0.3, 0, 0.5, 0.2, 0.8, -0.1 ];
+//    data = vec.concat [ data, bf.scaled (5/4) data, bf.scaled (3/4) data, data ];
+    data = vec.fromList [ 0, 1, 2, 3 ];
     data = vec.concat [ data, data ];
-    input = maybeDuration (vec.length data) (syn.precalculatedMono 4 data);
-    intermediate = filt.interpolated 2 input;
-    output = filt.decimated 2 intermediate;
-    result = output.read (vec.length data);
+
+    factor = 3;
+
+    updown prepad =
+       (input = maybeDuration (vec.length data) (syn.precalculatedMono 4 data);
+        intermediate = filt.interpolated factor input;
+        output = filt.decimated factor (filt.delayedBy prepad intermediate);
+        output.read (vec.length data));
+
+    result = updown 0;
     if not compareClose [vec.list (mat.getRow 0 result)] [vec.list data] then
-        \() (pl.plot [Vector (mat.getRow 0 result), Vector data]);
+        \() (pl.plot [Vector data, 
+                      Vector (mat.getRow 0 result), 
+                      Vector (mat.getRow 0 (updown 1)),
+                      Vector (mat.getRow 0 (updown 2))]);
         up = (filt.interpolated 2 (syn.precalculatedMono 4 data)).read 80;
         \() (pl.plot [Vector (mat.getRow 0 up)]);
         false
