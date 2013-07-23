@@ -37,7 +37,7 @@ if [ "$1" == "--no-may-jar" ]; then
     shift
 fi
 
-CLASSPATH=${YLJAR_WITH_COLON}$YETI_LIBDIR/yeti.jar:$YETI_LIBDIR/yeti-lib.jar:$JVAMP_DIR/jvamp.jar:$YERTLE_DIR/yertle.jar:$JARDIR/jtransforms-2.4.jar:$JARDIR/org.jzy3d-0.9.jar:$JARDIR/jogl-all.jar:$JARDIR/gluegen.jar:$JARDIR/gluegen-rt.jar:$JARDIR/misc/opencsv-2.1.jar:$JARDIR/misc/org.convexhull.jar:$JARDIR/misc/swt.jar
+CLASSPATH=${YLJAR_WITH_COLON}$YETI_LIBDIR/yeti.jar:$YETI_LIBDIR/yeti-lib.jar:$JVAMP_DIR/jvamp.jar:$YERTLE_DIR/yertle.jar:$JARDIR/jtransforms-2.4.jar:$JARDIR/org.jzy3d-0.9.jar:$JARDIR/jogl-all.jar:$JARDIR/gluegen.jar:$JARDIR/gluegen-rt.jar:$JARDIR/misc/opencsv-2.1.jar:$JARDIR/misc/org.convexhull.jar:$JARDIR/misc/swt.jar:$CLASSPATH
 
 LD_LIBRARY_PATH=$JVAMP_DIR:$SODIR:$LD_LIBRARY_PATH \
     $JAVA_HOME/bin/java $JAVA_OPTS -classpath "$CLASSPATH" yeti.lang.compiler.yeti "$@"
