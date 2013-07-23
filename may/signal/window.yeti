@@ -69,6 +69,18 @@ blackmanHarris = cosineWindow 0.35875 0.48829 0.14128 0.01168;
 boxcar n = vec.ones n;
 
 /**
+ * Vector of size n with the "middle" sample equal to 1 and all others
+ * equal to 0. The middle sample is sample (n-1)/2 for odd n or n/2+1
+ * for even n.
+ */
+dirac n =
+    if n < 2 then vec.ones n
+    else 
+        n0 = if n % 2 == 0 then n/2 else (n-1)/2 fi;
+        vec.concat [ vec.zeros n0, vec.ones 1, vec.zeros n0 ]
+    fi;
+
+/**
  * Make a vector of size n containing the values of sinc(x) with
  * x=0 in the middle, i.e. at sample (n-1)/2 for odd n or n/2+1 for
  * even n, such that the distance from -pi to pi (the point at
@@ -115,15 +127,22 @@ kaiserForAttenuation 𝛼 n =
     kaiser 𝛽 n);
 
 /**
-  Kaiser window with sidelobe attenuation of 𝛼 dB and transition width
-  of (tw * samplerate) / (2 * pi)
+  Kaiser window with sidelobe attenuation of 𝛼 dB and transition 
+  bandwidth of (tw * samplerate) / (2 * pi)
 */
-kaiserFor 𝛼 tw =
+kaiserForTransitionLength 𝛼 tw =
    (m = if 𝛼 > 21 
         then Math#ceil((𝛼 - 7.95) / (2.285 * tw))
         else Math#ceil(5.79 / tw)
         fi;
     kaiserForAttenuation 𝛼 (m+1));
+
+/**
+  Kaiser window with sidelobe attenuation of 𝛼 dB and transition
+  bandwidth of tbw Hz at the given sampleRate
+*/
+kaiserForBandwidth 𝛼 tbw samplerate =
+    kaiserForTransitionLength 𝛼 ((tbw * 2 * pi) / samplerate);
 
 windowFunction type options =
    (var sampling = Periodic ();
@@ -163,8 +182,9 @@ blackmanNuttall = blackmanNuttall (Periodic ()),
 blackmanHarris = blackmanHarris (Periodic ()),
 boxcar,
 bartlett = bartlett (Periodic ()), 
+dirac,
 sinc,
-kaiser, kaiserForAttenuation, kaiserFor,
+kaiser, kaiserForAttenuation, kaiserForTransitionLength, kaiserForBandwidth,
 windowFunction,
 windowed
 };
