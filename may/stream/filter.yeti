@@ -437,9 +437,10 @@ bandpassed f0 f1 attenuation bandwidth s =
    (rate = s.sampleRate;
     kw = win.kaiserForBandwidth attenuation bandwidth rate;
     filterLength = vec.length kw;
+    // First arg to sinc is the complete cycle length for the cutoff frequency
     idealFor freq =
-        bf.scaled (freq / rate)
-           (win.sinc ((rate / freq) * 2) filterLength);
+        bf.scaled (2 * freq / rate)
+           (win.sinc (rate / freq) filterLength);
     idealBandpass =
          if f1 < rate/2 then
              if f0 > 0 then bf.subtract (idealFor f1) (idealFor f0)
