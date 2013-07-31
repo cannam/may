@@ -437,7 +437,6 @@ bandpassed f0 f1 attenuation bandwidth s =
    (rate = s.sampleRate;
     kw = win.kaiserForBandwidth attenuation bandwidth rate;
     filterLength = vec.length kw;
-println "filterLength = \(filterLength)";
     idealFor freq =
         bf.scaled (freq / rate)
            (win.sinc ((rate / freq) * 2) filterLength);

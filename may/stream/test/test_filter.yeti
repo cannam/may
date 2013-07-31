@@ -4,6 +4,8 @@ module may.stream.test.test_filter;
 vec = load may.vector;
 bf = load may.vector.blockfuncs;
 mat = load may.matrix;
+cplx = load may.complex;
+fft = load may.transform.fft;
 syn = load may.stream.syntheticstream;
 filt = load may.stream.filter;
 
@@ -735,6 +737,32 @@ makeTests name withUnknown =
         false
     else true fi;
 ),
+
+"lowpassed-dirac-\(name)": \(
+    n = 1000;
+    rate = 800;
+    input = syn.generated rate do x: if x == int(n/2) then 1 else 0 fi done;
+    cutoff = 200;
+    attenuation = 80;
+    bandwidth = 10;
+    output = filt.lowpassed cutoff attenuation bandwidth input;
+    outdata = mat.getRow 0 (output.read n);
+    spectrum = cplx.magnitudes (fft.realForward n outdata);
+    logspec = array (map do v: 20 * Math#log10(v) done (vec.list spectrum));
+    acceptances = map do bin:
+        freq = (rate / n) * bin;
+        db = logspec[bin];
+        good = 
+        if freq < cutoff - bandwidth/2 then (db < 0.1 and db > -0.1)
+        elif freq > cutoff + bandwidth/2 then (db < -attenuation)
+        else (db < 0.1 and db > -attenuation)
+        fi;
+        println "\(freq) Hz: \(db) dB - \(good)";
+        good
+    done [0..n/2];
+    compare acceptances (map \true [0..n/2]);
+),
+    
 
 //!!! still no tests for filters with multi-channel inputs
 
