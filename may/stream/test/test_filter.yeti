@@ -665,11 +665,28 @@ makeTests name withUnknown =
         ( str.close (); true )
 ),
 
-"interpolated-sine-\(name)": \(
+//!!! still no tests for filters with multi-channel inputs
+
+]);
+
+knowns = makeTests "known" false;
+unknowns = makeTests "unknown" true;
+
+logSpectrumFrom output n =
+   (outdata = mat.getRow 0 (output.read n);
+    spectrum = cplx.magnitudes (fft.realForward n outdata);
+    array (map do v: 20 * Math#log10(v) done (vec.list spectrum)));
+
+makeDiracStream rate n =
+    syn.generated rate do x: if x == int(n/2) then 1 else 0 fi done;
+
+filtering = [
+
+"interpolated-sine": \(
     // Interpolating a sinusoid should give us a sinusoid
     //!!! only beyond half the filter length
     sinusoid = syn.sinusoid 8 2; // 2Hz sine sampled at 8Hz: [ 0, 1, 0, -1 ] etc
-    input = maybeDuration 16 sinusoid;
+    input = filt.withDuration 16 sinusoid;
     output = filt.interpolated 2 input;
     result = output.read 32;
     reference = syn.sinusoid 16 2;
@@ -679,11 +696,11 @@ makeTests name withUnknown =
     compareOutputs result expected;
 ),
 
-"decimated-sine-\(name)": \(
+"decimated-sine": \(
     // Decimating a sinusoid should give us a sinusoid
     //!!! only beyond half the filter length
     sinusoid = syn.sinusoid 32 2; // 2Hz sine sampled at 16Hz
-    input = maybeDuration 64 sinusoid;
+    input = filt.withDuration 64 sinusoid;
     output = filt.decimated 2 input;
     result = output.read 32;
     reference = syn.sinusoid 16 2;
@@ -693,13 +710,13 @@ makeTests name withUnknown =
     compareOutputs result expected;
 ),
 
-"interpolated-misc-\(name)": \(
+"interpolated-misc": \(
     // Interpolating any signal by N should give a signal in which
     // every Nth sample is the original signal
     data = vec.fromList [ 0, 0.1, -0.3, -0.4, -0.3, 0, 0.5, 0.2, 0.8, -0.1 ];
     data = vec.concat [ data, bf.scaled (5/4) data, bf.scaled (3/4) data, data ];
     data = vec.concat [ data, data ];
-    input = maybeDuration (vec.length data) (syn.precalculatedMono 4 data);
+    input = filt.withDuration (vec.length data) (syn.precalculatedMono 4 data);
     factor = 3;
     up = filt.interpolated factor input;
     result = mat.getRow 0 (up.read (factor * vec.length data));
@@ -709,7 +726,7 @@ makeTests name withUnknown =
     compareClose [a] [b];
 ),
 
-"int-dec-\(name)": \(
+"int-dec": \(
     // Interpolating any signal then decimating by the same factor
     // should get us the original back again
     //!!! no, this is phase dependent
@@ -721,7 +738,7 @@ makeTests name withUnknown =
     factor = 3;
 
     updown prepad =
-       (input = maybeDuration (vec.length data) (syn.precalculatedMono 4 data);
+       (input = filt.withDuration (vec.length data) (syn.precalculatedMono 4 data);
         intermediate = filt.interpolated factor input;
         output = filt.decimated factor (filt.delayedBy prepad intermediate);
         output.read (vec.length data));
@@ -738,41 +755,77 @@ makeTests name withUnknown =
     else true fi;
 ),
 
-"lowpassed-dirac-\(name)": \(
-    n = 1000;
-    rate = 800;
-    input = syn.generated rate do x: if x == int(n/2) then 1 else 0 fi done;
-    cutoff = 200;
-    attenuation = 80;
-    bandwidth = 10;
-    output = filt.lowpassed cutoff attenuation bandwidth input;
-    outdata = mat.getRow 0 (output.read n);
-    spectrum = cplx.magnitudes (fft.realForward n outdata);
-    logspec = array (map do v: 20 * Math#log10(v) done (vec.list spectrum));
-    acceptances = map do bin:
-        freq = (rate / n) * bin;
-        db = logspec[bin];
-        good = 
-        if freq < cutoff - bandwidth/2 then (db < 0.1 and db > -0.1)
-        elif freq > cutoff + bandwidth/2 then (db < -attenuation)
-        else (db < 0.1 and db > -attenuation)
-        fi;
-        println "\(freq) Hz: \(db) dB - \(good)";
-        good
-    done [0..n/2];
-    compare acceptances (map \true [0..n/2]);
+"lowpassed-dirac": \(
+    test { rate, cutoff, attenuation, bandwidth, n } = 
+       (input = makeDiracStream rate n;
+        output = filt.lowpassed cutoff attenuation bandwidth input;
+        logspec = logSpectrumFrom output n;
+        acceptances = map do bin:
+            freq = (rate / n) * bin;
+            db = logspec[bin];
+            //!!! what should these 0.01 actually be?
+            if freq < cutoff - bandwidth/2 then (db < 0.01 and db > -0.01)
+            elif freq > cutoff + bandwidth/2 then (db < -attenuation)
+            else (db < 0.01 and db > -attenuation)
+            fi;
+        done [0..n/2];
+        compare acceptances (map \true [0..n/2]));
+    all id 
+       (map test [
+            { rate = 800, cutoff = 200, attenuation = 80, bandwidth = 10, n = 1000 },
+        ]);
 ),
-    
 
-//!!! still no tests for filters with multi-channel inputs
+"highpassed-dirac": \(
+    test { rate, cutoff, attenuation, bandwidth, n } = 
+       (input = makeDiracStream rate n;
+        output = filt.highpassed cutoff attenuation bandwidth input;
+        logspec = logSpectrumFrom output n;
+        acceptances = map do bin:
+            freq = (rate / n) * bin;
+            db = logspec[bin];
+            //!!! what should these 0.01 actually be?
+            if freq > cutoff + bandwidth/2 then (db < 0.01 and db > -0.01)
+            elif freq < cutoff - bandwidth/2 then (db < -attenuation)
+            else (db < 0.01 and db > -attenuation)
+            fi;
+        done [0..n/2];
+        compare acceptances (map \true [0..n/2]));
+    all id 
+       (map test [
+            { rate = 800, cutoff = 200, attenuation = 80, bandwidth = 10, n = 1000 },
+        ]);
+),
 
-]);
+"bandpassed-dirac": \(
+    test { rate, f0, f1, attenuation, bandwidth, n } = 
+       (input = makeDiracStream rate n;
+        output = filt.bandpassed f0 f1 attenuation bandwidth input;
+        logspec = logSpectrumFrom output n;
+        acceptances = map do bin:
+            freq = (rate / n) * bin;
+            db = logspec[bin];
+            //!!! what should these 0.01 actually be?
+            if freq < f0 - bandwidth/2 then (db < -attenuation)
+            elif freq < f0 + bandwidth/2 then (db < 0.01 and db > -attenuation)
+            elif freq < f1 - bandwidth/2 then (db < 0.01 and db > -0.01)
+            elif freq < f1 + bandwidth/2 then (db < 0.01 and db > -attenuation)
+            else (db < -attenuation)
+            fi;
+        done [0..n/2];
+        compare acceptances (map \true [0..n/2]));
+    all id 
+       (map test [
+            { rate = 800, f0 = 200, f1 = 300, attenuation = 80, bandwidth = 10, n = 1000 },
+        ]);
+),
 
-knowns = makeTests "known" false;
-unknowns = makeTests "unknown" true;
+];    
 
 all = [:];
-for [ knowns, unknowns ] do h: for (keys h) do k: all[k] := h[k] done done;
+for [ knowns, unknowns, filtering ] do h:
+    for (keys h) do k: all[k] := h[k] done
+done;
 
 all is hash<string, () -> boolean>;
 
