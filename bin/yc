@@ -10,7 +10,7 @@ CYG*) ARCH=win32;;
 MINGW*) ARCH=win32;;
 esac
 
-if [ "$ARCH" == "unknown" ]; then
+if [ "$ARCH" = "unknown" ]; then
     echo "Failed to guess architecture for native libraries, sorry!" 1>&2
     exit 2
 fi
@@ -28,17 +28,14 @@ if [ ! -d "$YETI_LIBDIR" ]; then
     YETI_LIBDIR=$YLDIR/../other/yeti
 fi
 
-JVAMP_DIR=${JVAMP_DIR:=$YLDIR/../jvamp}
-YERTLE_DIR=${YERTLE_DIR:=$YLDIR/../yertle}
-
 YLJAR_WITH_COLON=$YLDIR/may.jar:
-if [ "$1" == "--no-may-jar" ]; then
+if [ "$1" = "--no-may-jar" ]; then
     YLJAR_WITH_COLON=""
     shift
 fi
 
-CLASSPATH=${YLJAR_WITH_COLON}$YETI_LIBDIR/yeti.jar:$YETI_LIBDIR/yeti-lib.jar:$JVAMP_DIR/jvamp.jar:$YERTLE_DIR/yertle.jar:$JARDIR/jtransforms-2.4.jar:$JARDIR/org.jzy3d-0.9.jar:$JARDIR/jogl-all.jar:$JARDIR/gluegen.jar:$JARDIR/gluegen-rt.jar:$JARDIR/misc/opencsv-2.1.jar:$JARDIR/misc/org.convexhull.jar:$JARDIR/misc/swt.jar:$CLASSPATH
+CLASSPATH=${YLJAR_WITH_COLON}$YETI_LIBDIR/yeti.jar:$YETI_LIBDIR/yeti-lib.jar:$JARDIR/jvamp.jar:$JARDIR/yertle.jar:$JARDIR/jtransforms-2.4.jar:$JARDIR/org.jzy3d-0.9.jar:$JARDIR/jogl-all.jar:$JARDIR/gluegen.jar:$JARDIR/gluegen-rt.jar:$JARDIR/misc/opencsv-2.1.jar:$JARDIR/misc/org.convexhull.jar:$JARDIR/misc/swt.jar:$CLASSPATH
 
-LD_LIBRARY_PATH=$JVAMP_DIR:$SODIR:$LD_LIBRARY_PATH \
+LD_LIBRARY_PATH=$SODIR:$LD_LIBRARY_PATH \
     $JAVA_HOME/bin/java $JAVA_OPTS -classpath "$CLASSPATH" yeti.lang.compiler.yeti "$@"
 
