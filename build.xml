@@ -1,0 +1,32 @@
+<project name="may" default="test" basedir=".">
+
+  <property name="jardir" value="${basedir}/ext/jar"/>
+
+  <property name="extjars" value="${jardir}/jvamp.jar:${jardir}/yertle.jar:${jardir}/jtransforms-2.4.jar:${jardir}/org.jzy3d-0.9.jar"/>
+
+  <target name="taskdef">
+    <taskdef name="yetic" classname="yeti.lang.compiler.YetiTask"
+	     classpath="${basedir}/../yeti/yeti.jar:${extjars}" />
+  </target>
+
+  <target name="classes" depends="taskdef">
+    <yetic srcdir="${basedir}" destdir="${basedir}/classes"
+	   includes="may/**/*.yeti" excludes="**/test/*.yeti" preload="yeti/lang/std:yeti/lang/io"/>
+  </target>
+
+  <target name="jar" depends="classes,taskdef">
+    <jar jarfile="${basedir}/may.jar">
+      <fileset dir="${basedir}/classes"/>
+    </jar>
+  </target>
+
+  <target name="test" depends="jar,taskdef">
+    <java classpath="${basedir}/../yeti/yeti.jar:${basedir}/may.jar;${extjars}"
+	  classname="yeti.lang.compiler.yeti"
+	  fork="true">
+      <sysproperty key="java.library.path" path="${basedir}/ext/native/win64"/>
+      <arg value="may/test/all.yeti"/>
+    </java>
+  </target>
+
+</project>
