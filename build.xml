@@ -2,7 +2,7 @@
 
   <property name="jardir" value="${basedir}/ext/jar"/>
 
-  <property name="extjars" value="${jardir}/jvamp.jar:${jardir}/yertle.jar:${jardir}/jtransforms-2.4.jar:${jardir}/org.jzy3d-0.9.jar"/>
+  <property name="extjars" value="${jardir}/jvamp.jar:${jardir}/yertle.jar:${jardir}/jtransforms-2.4.jar:${jardir}/org.jzy3d-0.9.jar:${jardir}/jogl-all.jar:${jardir}/gluegen.jar:${jardir}/gluegen-rt.jar:${jardir}/opencsv-2.1.jar:${jardir}/org.convexhull.jar"/>
 
   <target name="taskdef">
     <taskdef name="yetic" classname="yeti.lang.compiler.YetiTask"
