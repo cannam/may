@@ -132,10 +132,17 @@ if contains? testPluginKey v.pluginKeys then
     tests
 else
     eprintln
-"** The test plugin is not installed, or the Vamp module is totally broken.
-   Ensure vamp-test-plugin is in the Vamp path or set $VAMP_PATH to point to it.
-   (The path is currently \(v.pluginPath).)
-   All Vamp plugin tests will fail until this is fixed.";
+"** Vamp test plugin not found!
+   Either the Vamp module is not working, or the test plugin is not installed.
+   Please ensure vamp-test-plugin.{so,dll,dylib} is in the path,
+   or set $VAMP_PATH to point to its location.
+
+   Current path: \(v.pluginPath)
+   Required plugin key: \"\(testPluginKey)\"
+   Plugin keys found: \(v.pluginKeys)
+
+   All of the Vamp plugin tests will fail until this is fixed.
+";
     mapIntoHash id \\false (keys tests)
 fi is hash<string, () -> boolean>;
 
