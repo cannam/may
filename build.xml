@@ -45,5 +45,9 @@
     </java>
   </target>
 
+  <target name="clean">
+    <delete dir="${basedir}/classes"/>
+  </target>
+
 </project>
 

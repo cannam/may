@@ -11,7 +11,7 @@ may.jar:	$(SOURCES)
 	jar cf $@ -C classes may 
 
 clean:	
-	rm -rf com bin/.testrun classes
+	rm -rf bin/.testrun classes
 
 distclean:	clean
 	rm -f may.jar
