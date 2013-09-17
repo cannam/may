@@ -699,15 +699,18 @@ filtering = [
 "decimated-sine": \(
     // Decimating a sinusoid should give us a sinusoid
     //!!! only beyond half the filter length
-    sinusoid = syn.sinusoid 32 2; // 2Hz sine sampled at 16Hz
-    input = filt.withDuration 64 sinusoid;
+    sinusoid = syn.sinusoid 32 1; // 1Hz sine sampled at 32Hz
+    input = filt.withDuration 400 sinusoid;
     output = filt.decimated 2 input;
-    result = output.read 32;
-    reference = syn.sinusoid 16 2;
-    expected = reference.read 32;
+    result = mat.columnSlice (output.read 200) 50 150;
+    reference = syn.sinusoid 16 1;
+    expected = mat.columnSlice (reference.read 200) 50 150;
     compareOutputs a b = compareClose
        (map vec.list (mat.asRows a)) (map vec.list (mat.asRows b));
-    compareOutputs result expected;
+    if not compareOutputs result expected then
+        println "diff: \(mat.difference result expected)";
+	false
+    else true fi
 ),
 
 "interpolated-misc": \(

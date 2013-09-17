@@ -499,9 +499,10 @@ spaced mult s = //!!! mult must be an integer [how to enforce this??]
 interpolated factor s = //!!! factor must be an integer [how to enforce this??]
     if factor == 1 then s
     else
-        nzc = 13;
+        nzc = 13; //!!! where does this magic come from?
         attenuation = 80;
         filter = kaiserSincWindow nzc factor attenuation;
+println "int: filter length for nzc \(nzc), attn \(attenuation), factor \(factor) is \(vec.length filter)";
         out = delayedBy (- (nzc * factor))
            (convolvedWith [Framesize 1024]
                (mat.newMatrix (RowMajor ()) (map \filter [1..s.channels]))
@@ -532,6 +533,7 @@ decimated factor s = //!!! factor must be an integer [how to enforce this??]
         nzc = 13;
         attenuation = 80;
         filter = kaiserSincWindow nzc factor attenuation;
+println "dec: filter length for nzc \(nzc), attn \(attenuation), factor \(factor) is \(vec.length filter)";
         filtered =
            (convolvedWith [Framesize 1024]
                (mat.newMatrix (RowMajor ()) (map \filter [1..s.channels])) s);
