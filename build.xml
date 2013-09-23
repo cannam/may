@@ -26,8 +26,8 @@
   </target>
 
   <target name="classes" depends="taskdef">
-    <yetic srcdir="${basedir}" destdir="${basedir}/classes"
-	   includes="may/**/*.yeti" excludes="**/test/*.yeti" preload="yeti/lang/std:yeti/lang/io"/>
+    <yetic srcdir="${basedir}/src" destdir="${basedir}/classes"
+	   includes="**/*.yeti" excludes="**/test/*.yeti" preload="yeti/lang/std:yeti/lang/io"/>
   </target>
 
   <target name="jar" depends="classes,taskdef">
@@ -41,7 +41,7 @@
 	  classname="yeti.lang.compiler.yeti"
 	  fork="true">
       <sysproperty key="java.library.path" path="${basedir}/ext/native/${archtag}"/>
-      <arg value="may/test/all.yeti"/>
+      <arg value="src/may/test/all.yeti"/>
     </java>
   </target>
 
