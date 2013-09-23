@@ -10,7 +10,7 @@ ref = load may.stream.test.audiofile_reference;
 
 { compare, compareUsing } = load may.test.test;
 
-testfile name = "may/test/data/\(name).wav";
+testfile name = "testdata/\(name).wav";
 
 float n is number -> number =
     // round number to float precision (for comparison with floats)
