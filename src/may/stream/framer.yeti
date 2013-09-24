@@ -185,8 +185,8 @@ frequencyDomainFrames parameters stream =
    (f = fft.realForward parameters.framesize;
     map f (windowedFrames parameters stream));
 
-typedef params = { framesize is number, hop is number };
-typedef winparams = { framesize is number, hop is number, window is number -> vector };
+typedef params = { .framesize is number, .hop is number };
+typedef winparams = { .framesize is number, .hop is number, .window is number -> vector };
 
 { 
     frames is params -> stream -> list<matrix>,
