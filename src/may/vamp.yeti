@@ -233,17 +233,18 @@ loadPlugin rate key =
         Error "Failed to load Vamp plugin with key \(key)"
     yrt;
 
-processed { p, sampleRate, hop } frames count =
+processed params frames count =
+   (p = params.p;
     case frames of
     frame::rest:
-        p.process frame RealTime#frame2RealTime(count, sampleRate)
+        p.process frame RealTime#frame2RealTime(count, params.sampleRate)
         :.
-        \(processed { p, sampleRate, hop } rest (count + hop));
+        \(processed params rest (count + params.hop));
     _: 
        (rf = p.getRemainingFeatures ();
         p.dispose ();
         [rf]);
-    esac;
+    esac);
 
 converted { p, sampleRate, hop } outputNo fl =
     map (featuresFromSet outputNo) fl;
@@ -261,12 +262,16 @@ processWith key p outputNo stream =
         else p.preferredStepSize fi;
     channels = 1;
     params = {
-        p, sampleRate = stream.sampleRate, channels = 1,
-        framesize = blockSize, blockSize, hop = stepSize
+        p,
+        sampleRate = stream.sampleRate, 
+        channels = 1,
+        blockSize, // We refer to blockSize throughout because so does Vamp...
+        framesize = blockSize, // ... but the framer uses framesize
+        hop = stepSize
     };
     if p.initialise params then
         {
-            key = key,
+            key,
             output = p.outputs[outputNo],
             parameters = mapIntoHash id p.parameterValue
                (map (.identifier) p.parameters),
