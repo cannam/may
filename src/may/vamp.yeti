@@ -171,7 +171,7 @@ outputDescriptor rdfOutputData od is 'a -> ~OutputDescriptor -> 'b = {
     binNames = array (map string od#binNames),
     sampleType = sampleType od#sampleType od#sampleRate,
     hasDuration = od#hasDuration,
-    get computes () = case rdfOutputData of Some data: data.computes; None (): Unknown () esac,
+    computes is Event string | Feature string | Signal string | Unknown () = case rdfOutputData of Some data: data.computes; None (): Unknown () esac,
     get inferredStructure () = structureOf rdfOutputData od,
     };
 
