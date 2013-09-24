@@ -76,6 +76,7 @@ iriTypes =
         case t of
         IRI iri: IRI iri;
         Blank n: Blank n;
+        Literal lit: failWith "Unexpected literal \"\(lit)\" in subject!";
         esac done;
 
 iriSubjects = iriTypes . subjects;
@@ -265,10 +266,7 @@ pluginDataByNode store pluginNode =
                                     p = Known (store.expand "vamp:output"), 
                                     o = Wildcard () };
             array (map do t:
-                       case t.o of
-                       IRI iri: outputDescriptor store (IRI iri);
-                       Blank n: outputDescriptor store (Blank n);
-                       esac
+                       outputDescriptor store t.o;
                        done matches)),
     });
 
