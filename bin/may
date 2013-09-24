@@ -1,6 +1,6 @@
 #!/bin/sh
 
-MAY_INIT_MODULES="may.vector:may.matrix:may.complex:may.plot:may.vamp"
+MAY_INIT_MODULES=${MAY_INIT_MODULES:=may.vector:may.matrix:may.complex:may.plot:may.vamp}
 
 ARCH=unknown
 
