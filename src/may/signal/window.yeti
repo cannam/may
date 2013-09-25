@@ -116,7 +116,7 @@ kaiser beta n =
             done [0..n-1]));
 
 /** 
-  Kaiser window with sidelobe attenuation of 𝛼 dB and window length n
+  Kaiser window with sidelobe attenuation of alpha dB and window length n
 */
 kaiserForAttenuation alpha n =
    (beta =
