@@ -97,7 +97,8 @@ sinc p n =
         vec.fromList ((take n0 (reverse half)) ++ (take n1 half));
     fi;
 
-kaiser beta n =
+//!!! if kaiser is going to take a structure, so I guess should sinc and cosineWindow
+kaiser { length, beta } =
    (bes0 x = 
        (fact x = fold do x y: x*y done 1 [1..x];   // x!
         ipow a b = fold do x _: x*a done 1 [1..b]; // a^b where b∈ℕ
@@ -109,40 +110,66 @@ kaiser beta n =
             esac;
         sum (map (term x) [0..20]));
     denominator = bes0 beta;
-    vec.fromList
+    kw = vec.fromList
        (map do i:
-            k = 2*i / (n-1) - 1;
+            k = 2*i / (length-1) - 1;
             bes0 (beta * sqrt (1 - k*k)) / denominator;
-            done [0..n-1]));
+            done [0..length-1]);
+    println "kaiser: peak is \(bf.max kw) at index \(bf.maxindex kw) of \(vec.length kw)";
+    kw);
+
+/**
+ * Calculate beta and length for a Kaiser window with the given
+ * sidelobe attentuation and either transition width (in samples) or
+ * samplerate plus transition bandwidth (in Hz).
+ */
+kaiserParameters options =
+    case options of
+    ByTransitionWidth { attenuation, transition }:
+       (m = if attenuation > 21 
+            then Math#ceil((attenuation - 7.95) / (2.285 * transition))
+            else Math#ceil(5.79 / transition)
+            fi;
+        beta =
+            if attenuation > 50 then 0.1102 * (attenuation - 8.7)
+            elif attenuation > 21 then
+                0.5842 * Math#pow(attenuation - 21, 0.4) +
+                0.07886 * (attenuation - 21)
+            else 0
+            fi;
+        { length = m + 1, beta });
+    ByFrequency { attenuation, bandwidth, samplerate }:
+        kaiserParameters
+           (ByTransitionWidth
+            { attenuation, transition = ((bandwidth * 2 * pi) / samplerate) }
+            );
+    esac;
 
 /** 
   Kaiser window with sidelobe attenuation of alpha dB and window length n
 */
 kaiserForAttenuation alpha n =
-   (beta =
-        if alpha > 50 then 0.1102 * (alpha - 8.7)
-        elif alpha > 21 then 0.5842 * Math#pow(alpha - 21, 0.4) + 0.07886 * (alpha - 21)
-        else 0
-        fi;
-    kaiser beta n);
+   (pp = kaiserParameters
+       (ByTransitionWidth { attenuation = alpha, transition = 1 });
+    kaiser (pp with { length = n }));
 
 /**
   Kaiser window with sidelobe attenuation of alpha dB and transition 
-  bandwidth of (tw * samplerate) / (2 * pi)
+  bandwidth of (tw * samplerate) / (2 * pi).
 */
-kaiserForTransitionLength alpha tw =
-   (m = if alpha > 21 
-        then Math#ceil((alpha - 7.95) / (2.285 * tw))
-        else Math#ceil(5.79 / tw)
-        fi;
-    kaiserForAttenuation alpha (m+1));
+kaiserForTransitionWidth alpha tw =
+    kaiser
+       (kaiserParameters
+           (ByTransitionWidth { attenuation = alpha, transition = tw }));
 
 /**
   Kaiser window with sidelobe attenuation of alpha dB and transition
   bandwidth of tbw Hz at the given sampleRate
 */
 kaiserForBandwidth alpha tbw samplerate =
-    kaiserForTransitionLength alpha ((tbw * 2 * pi) / samplerate);
+    kaiser
+       (kaiserParameters
+           (ByFrequency { attenuation = alpha, bandwidth = tbw, samplerate }));
 
 windowFunction type options =
    (var sampling = Periodic ();
@@ -160,7 +187,7 @@ windowFunction type options =
     BlackmanHarris (): blackmanHarris sampling;
     Boxcar (): boxcar;
     Bartlett (): bartlett sampling;
-    Kaiser (): kaiser beta;
+    Kaiser (): do length: kaiser { beta, length } done;
     esac);
 
 //!!! should use vector. but does anyone use this function anyway? would we use it in framer if it used vector?
@@ -184,7 +211,8 @@ boxcar,
 bartlett = bartlett (Periodic ()), 
 dirac,
 sinc,
-kaiser, kaiserForAttenuation, kaiserForTransitionLength, kaiserForBandwidth,
+kaiser, kaiserParameters,
+kaiserForAttenuation, kaiserForTransitionWidth, kaiserForBandwidth,
 windowFunction,
 windowed
 };
