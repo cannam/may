@@ -104,12 +104,11 @@ compareClose = compareUsing
         ( str.close (); true )
 ),
 
-/*!!!
 "interpolated-sine": \(
     // Interpolating a sinusoid should give us a sinusoid
     //!!! only beyond half the filter length
     sinusoid = syn.sinusoid 8 2; // 2Hz sine sampled at 8Hz: [ 0, 1, 0, -1 ] etc
-    input = resample.withDuration 16 sinusoid;
+    input = manip.withDuration 16 sinusoid;
     output = resample.interpolated 2 input;
     result = output.read 32;
     reference = syn.sinusoid 16 2;
@@ -123,7 +122,7 @@ compareClose = compareUsing
     // Decimating a sinusoid should give us a sinusoid
     //!!! only beyond half the filter length
     sinusoid = syn.sinusoid 32 1; // 1Hz sine sampled at 32Hz
-    input = resample.withDuration 400 sinusoid;
+    input = manip.withDuration 400 sinusoid;
     output = resample.decimated 2 input;
     result = mat.columnSlice (output.read 200) 50 150;
     reference = syn.sinusoid 16 1;
@@ -135,7 +134,7 @@ compareClose = compareUsing
 	false
     else true fi
 ),
-*/
+
 "interpolated-misc": \(
     // Interpolating any signal by N should give a signal in which
     // every Nth sample is the original signal
@@ -155,7 +154,7 @@ println "a = \(a)";
 println "b = \(b)";
     compareClose [b] [a];
 ),
-/*!!!
+
 "int-dec": \(
     // Interpolating any signal then decimating by the same factor
     // should get us the original back again
@@ -170,7 +169,7 @@ println "b = \(b)";
     updown prepad =
        (input = manip.withDuration (vec.length data) (syn.precalculatedMono 4 data);
         intermediate = resample.interpolated factor input;
-        output = resample.decimated factor (resample.delayedBy prepad intermediate);
+        output = resample.decimated factor (manip.delayedBy prepad intermediate);
         output.read (vec.length data));
 
     result = updown 0;
@@ -184,7 +183,6 @@ println "b = \(b)";
         false
     else true fi;
 ),
-*/
 
 ] is hash<string, () -> boolean>;
 
