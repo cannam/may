@@ -43,6 +43,10 @@ durationAdjusterFor factor s =
     Known n: manip.withDuration (int (n * factor));
     _: id;
     esac;
+
+//!!!doc: Resampled streams only have accurate duration when their inputs
+// have known duration (otherwise they may be rounded up to the
+// processing block size).
    
 interpolated factor s = //!!! factor must be an integer [how to enforce this??]
     if factor == 1 then s
@@ -59,6 +63,10 @@ interpolated factor s = //!!! factor must be an integer [how to enforce this??]
                    (manip.spaced factor s)));
         out with { get sampleRate () = s.sampleRate * factor };
     fi;
+
+//!!!doc: Resampled streams only have accurate duration when their inputs
+// have known duration (otherwise they may be rounded up to the
+// processing block size).
 
 decimated factor s = //!!! factor must be an integer [how to enforce this??]
     if factor == 1 then s
