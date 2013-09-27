@@ -2,7 +2,6 @@
 module may.feature.feature;
 
 vec = load may.vector;
-fr = load may.stream.framer;
 
 // Utility functions for feature extractors
 

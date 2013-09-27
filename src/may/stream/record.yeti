@@ -2,8 +2,6 @@
 module may.stream.record;
 
 vec = load may.vector;
-mat = load may.matrix;
-af = load may.stream.audiofile;
 ch = load may.stream.channels;
 
 import javax.sound.sampled:

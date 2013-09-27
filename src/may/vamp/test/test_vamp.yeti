@@ -2,7 +2,7 @@ module may.vamp.test.test_vamp;
 
 v = load may.vamp;
 synthetic = load may.stream.syntheticstream;
-filter = load may.stream.filter;
+manip = load may.stream.manipulate;
 mat = load may.matrix;
 vec = load may.vector;
 
@@ -12,7 +12,7 @@ testPluginKey = "vamp-test-plugin:vamp-test-plugin";
 
 rate = 44100;
 
-testStream () = filter.withDuration (rate * 20) (synthetic.whiteNoise rate);
+testStream () = manip.withDuration (rate * 20) (synthetic.whiteNoise rate);
 
 processTest output = 
     v.processStreamStructured testPluginKey output (testStream ());

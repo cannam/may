@@ -1,0 +1,154 @@
+
+module may.stream.convolve;
+
+mat = load may.matrix;
+vec = load may.vector;
+fr = load may.stream.framer;
+win = load may.signal.window;
+fft = load may.transform.fft;
+syn = load may.stream.syntheticstream;
+cplx = load may.complex;
+
+load may.stream.type;
+load may.vector.type;
+load may.matrix.type;
+
+//!!! todo: synchronized for everything with state assignment
+
+zeroPaddedFreqFrames framesize channels =
+    // take a multi-channel stream, convert to a series of list of
+    // complex frequency-domain frames calculated from input padded to
+    // framesize*2, in which each frame contains all channels one
+    // after another (not interleaved) [because we lack a complex
+    // matrix type]
+   (forwardTransform = fft.realForward (framesize * 2);
+    do stream:
+        padded = 
+           (map (mat.resizedTo { rows = channels, columns = framesize * 2 })
+               (fr.frames { framesize, hop = framesize } stream));
+        map do fr: concat (map forwardTransform (mat.asRows fr)) done padded;
+    done);
+
+doFastConvolve irframes sigframes =
+   (var history = [];
+    irlen = length irframes;
+    n = length (head irframes);
+    map do sigf:
+        history := take irlen (sigf::history);
+        fold do cc1 cc2: map2 cplx.add cc1 cc2 done
+           (list (cplx.zeros n))
+           (map2 do irf histf:
+                map2 cplx.multiply irf histf;
+            done irframes history);
+        done sigframes);
+
+splitInto n fr =
+   (parts = splitAt n fr;
+    if empty? parts.snd then [parts.fst]
+    else parts.fst :: splitInto n parts.snd;
+    fi);
+
+fastConvolvedWith ir framesize s =
+    // prerequisite: ir and s have same number of channels
+   (framer = zeroPaddedFreqFrames framesize (mat.height ir);
+    ch = s.channels;
+    irfr = framer (syn.precalculated 1 ir); // rate arg is irrelevant here
+    sigfr = framer s;
+    inverseTransform = fft.realInverse (framesize * 2);
+    extended = sigfr ++
+        map do _: list (cplx.zeros (ch * (framesize + 1))) done
+           [1..length irfr-1];
+    cframes = doFastConvolve irfr extended; 
+    rframes = (mat.zeroMatrix { rows = ch, columns = framesize * 2}) ::
+        map do fr:
+            mat.newMatrix (RowMajor ())
+               (map inverseTransform (splitInto (framesize+1) fr))
+            done cframes;
+    fr.streamOverlapping s.sampleRate
+        { framesize = framesize * 2, hop = framesize, window = win.boxcar }
+        rframes;
+);
+
+plainConvolvedWith ir s =
+    // prerequisite: ir and s have same number of channels
+   (var history = mat.toRowMajor
+       (mat.zeroMatrix { rows = s.channels, columns = mat.width ir - 1 });
+    s with 
+    {
+        get finished? () =
+            s.finished? and (mat.empty? history),
+        get available () = 
+            case s.available of
+            Known n: Known (n + mat.width history);
+            other: other;
+            esac,
+        read count = 
+           (// Example: The IR is four samples long; we have three
+            // samples in history; two samples are available to read
+            // before the stream runs out. That means we can return
+            // up to five samples. Caller requests 6.
+            signal = s.read count;                     // -> two samples
+            siglen = mat.width signal;                 // -> 2
+            histlen = mat.width history;               // -> 3
+            convlen = min count (siglen + histlen);    // -> 5
+            input = mat.resizedTo { rows = s.channels, columns = convlen }
+                signal;  // example input now 5 samples, of which 2 are signal
+            output = array (map \(new double[convlen]) [1..s.channels]);
+            for [0..s.channels - 1] do ch:
+                for [0..mat.width input - 1] do i:
+                    for [0..mat.width ir - 1] do j:
+                        v = 
+                            if i >= j then
+                                mat.at input ch (i - j)
+                            else
+                                ix = mat.width ir + i - j - 1;
+                                if ix >= histlen then 
+                                    0 
+                                else
+                                    mat.at history ch ix
+                                fi
+                            fi;
+                        output[ch][i] := output[ch][i] + v * (mat.at ir ch j);
+                    done;
+                done;
+            done;
+            // Remove from history a number of samples equal to the
+            // number returned; add to it a number equal to the number
+            // read from source
+            extended = mat.concat (Horizontal ()) [history, signal]; // -> 5
+            newlen = (histlen + siglen) - convlen; // -> 0
+            w = mat.width extended;
+            history := mat.columnSlice extended (w - newlen) w;
+            mat.newMatrix (RowMajor ()) (map vec.vector output)),
+    });
+
+nextPowerOfTwo n =
+   (nextPowerOfTwo' p n =
+        if p >= n then p
+        else nextPowerOfTwo' (p * 2) n
+        fi;
+    nextPowerOfTwo' 1 n);
+
+//!!! todo: partial application so as to preprocess ir (in fast convolution case)
+convolvedWith options ir s = //!!! cheap mono thing here
+//!!! doc note: fast convolution output is padded to next frame boundary
+   (if mat.height ir != s.channels then
+        failWith "Signal stream and IR must have same number of channels (\(s.channels) != \(mat.height ir))"
+    fi;
+    var type = Fast ();
+    var framesize = nextPowerOfTwo (mat.width ir);
+    for options \case of
+        Fast s: if s then type := Fast () else type := Plain () fi;
+        Framesize n: framesize := nextPowerOfTwo n;
+        esac;
+    case type of
+    Fast ():
+        fastConvolvedWith ir framesize s;
+    Plain ():
+        plainConvolvedWith ir s;
+    esac);
+
+{
+    convolvedWith is list<Fast boolean | Framesize number> -> matrix -> stream -> stream,
+}
+

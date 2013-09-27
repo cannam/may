@@ -1,0 +1,150 @@
+
+module may.stream.test.test_convolve;
+
+vec = load may.vector;
+mat = load may.matrix;
+syn = load may.stream.syntheticstream;
+manip = load may.stream.manipulate;
+convolve = load may.stream.convolve;
+
+//pl = load may.plot;//!!!
+
+pl = { plot things = true; };
+
+{ compare, compareUsing, assert } = load may.test.test;
+
+compareClose = compareUsing 
+    do m1 m2:
+        length m1 == length m2 and 
+            all id (map2 do v1 v2:
+                length v1 == length v2 and
+                    all id (map2 do a b: abs(a - b) < 1e-10 done v1 v2)
+                done m1 m2);
+    done;
+
+convolutionOptions = [
+    [ Fast false ],
+    [ Fast true ],
+    [ Fast true, Framesize 1 ],
+    [ Fast true, Framesize 2 ],
+    [ Fast true, Framesize 16 ],
+    [],
+];
+
+hasInExactOutputDuration opt = opt != [ Fast false ];
+
+makeTests name withUnknown =
+   (maybeDuration n str =
+        // Truncate a stream, but if withUnknown is true, return it
+        // with availability Unknown -- so as to test that other
+        // filter functions behave correctly even if availability is
+        // not known on their underlying streams
+       (ts = manip.withDuration n str;
+        if withUnknown then
+            ts with
+            { 
+                get available () = if ts.finished? then Known 0 else Unknown () fi;
+            }
+        else
+            ts
+        fi);
+    maybeKnown n =
+        if withUnknown then
+            Unknown ()
+        else
+            Known n
+        fi;
+[
+
+"convolvedImpulse-\(name)": \(
+    all id
+       (map do opts:
+            ir = mat.newRowVector (vec.fromList [1,0,-1,0]);
+            signal = maybeDuration 4
+               (syn.precalculatedMono 2 (vec.fromList [1,0,0,0]));
+            c = convolve.convolvedWith opts ir signal;
+            if compareClose (map vec.list (mat.asRows (c.read 7))) [[ 1,0,-1,0,0,0,0 ]] and
+               (hasInExactOutputDuration opts or assert c.finished? "c.finished?")
+            then c.close (); true;
+            else println "   with convolution options: \(opts)"; false;
+            fi
+        done convolutionOptions);
+),
+
+"convolvedImpulse2-\(name)": \(
+    all id
+       (map do opts:
+            ir = mat.newRowVector (vec.fromList [8,6,4,2]);
+            signal = maybeDuration 4
+               (syn.precalculatedMono 2 (vec.fromList [1,0,0,0]));
+            c = convolve.convolvedWith opts ir signal;
+            if compareClose (map vec.list (mat.asRows (c.read 7))) [[ 8,6,4,2,0,0,0 ]] and
+               (hasInExactOutputDuration opts or assert c.finished? "c.finished?")
+            then c.close (); true
+            else println "   with convolution options: \(opts)"; false;
+            fi
+        done convolutionOptions);
+),
+
+"convolvedImpulse-multichannel-\(name)": \(
+    all id
+       (map do opts:
+            ir = mat.newMatrix (RowMajor ())
+               (map vec.fromList [[0,0,0,1],[8,6,4,2],[1,0,-1,0]]);
+            signal = maybeDuration 4
+               (syn.precalculated 2 
+                   (mat.newMatrix (RowMajor ())
+                       (map vec.fromList [[1,1,0,0],[0,1,1,0],[0,0,1,1]])));
+            c = convolve.convolvedWith opts ir signal;
+            if compareClose (map vec.list (mat.asRows (c.read 7)))
+                [[0,0,0,1,1,0,0],[0,8,14,10,6,2,0],[0,0,1,1,-1,-1,0]] and
+               (hasInExactOutputDuration opts or assert c.finished? "c.finished?")
+            then c.close (); true;
+            else println "   with convolution options: \(opts)"; false;
+            fi
+        done convolutionOptions);
+),
+
+"convolvedWith-\(name)": \(
+    all id
+       (map do opts:
+            fast = not (opts == [ Fast false ]);
+            ir = mat.newRowVector (vec.fromList [1,2,3,4,5]);
+            signal = maybeDuration 3
+               (syn.precalculatedMono 2 (vec.fromList [10,20,30]));
+            c = convolve.convolvedWith opts ir signal;
+            if compare c.position 0 and
+                compare c.channels 1 and
+                compare c.sampleRate 2 and
+                (fast or compare c.available (maybeKnown 7)) and
+                compareClose (map vec.list (mat.asRows (c.read 3)))
+                    [[ 10*1,
+                       20*1 + 10*2,
+                       30*1 + 20*2 + 10*3 ]] and
+                (fast or compare c.available (Known 4)) and
+                compare c.finished? false and
+                compareClose (map vec.list (mat.asRows (c.read 4)))
+                    [[        30*2 + 20*3 + 10*4,
+                                     30*3 + 20*4 + 10*5,
+                                            30*4 + 20*5,
+                                                   30*5 ]] and
+                (fast or (compare c.available (Known 0) and
+                          compare c.finished? true))
+            then c.close (); true;
+            else println "   with convolution options: \(opts)"; false;
+            fi
+        done convolutionOptions);
+),
+
+]);
+
+knowns = makeTests "known" false;
+unknowns = makeTests "unknown" true;
+
+all = [:];
+for [ knowns, unknowns ] do h:
+    for (keys h) do k: all[k] := h[k] done
+done;
+
+all is hash<string, () -> boolean>;
+

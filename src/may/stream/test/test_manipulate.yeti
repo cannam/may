@@ -1,0 +1,589 @@
+
+module may.stream.test.test_manipulate;
+
+vec = load may.vector;
+mat = load may.matrix;
+syn = load may.stream.syntheticstream;
+manip = load may.stream.manipulate;
+
+{ compare, compareUsing, assert } = load may.test.test;
+
+makeTests name withUnknown =
+   (maybeDuration n str =
+        // Truncate a stream, but if withUnknown is true, return it
+        // with availability Unknown -- so as to test that other
+        // filter functions behave correctly even if availability is
+        // not known on their underlying streams
+       (ts = manip.withDuration n str;
+        if withUnknown then
+            ts with
+            { 
+                get available () = if ts.finished? then Known 0 else Unknown () fi;
+            }
+        else
+            ts
+        fi);
+    maybeKnown n =
+        if withUnknown then
+            Unknown ()
+        else
+            Known n
+        fi;
+[
+
+"truncatedTo-\(name)": \(
+    // not using withDuration wrapper above, because we're actually
+    // testing manip.withDuration here rather than just generating a
+    // stream for use in another test
+    str = manip.withDuration 3 (syn.generated 2 id);
+    compare str.position 0 and
+        compare str.channels 1 and
+        compare str.sampleRate 2 and
+        compare str.available (Known 3) and
+        compare str.finished? false and
+        compare (vec.list (mat.getRow 0 (str.read 4))) [ 0,1,2 ] and
+        compare str.position 3 and
+        compare str.available (Known 0) and
+        compare str.finished? true and
+        ( str.close (); true )
+),
+
+"truncatedTo-b-\(name)": \(
+    // as above
+    str = manip.withDuration 3 (syn.generated 2 id);
+    compare str.position 0 and
+        compare (vec.list (mat.getRow 0 (str.read 2))) [ 0,1 ] and
+        compare str.position 2 and
+        compare str.available (Known 1) and
+        compare str.finished? false and
+        compare (vec.list (mat.getRow 0 (str.read 2))) [ 2 ] and
+        compare str.position 3 and
+        compare str.available (Known 0) and
+        compare str.finished? true and
+        ( str.close (); true )
+),
+
+"extendedTo-\(name)": \(
+    // not using withDuration wrapper above for the outer call, because
+    // we're actually testing manip.withDuration here rather than just
+    // generating a stream for use in another test. The inner call
+    // does use the wrapper.
+    str = manip.withDuration 5 (maybeDuration 3 (syn.generated 2 id));
+    compare str.position 0 and
+        compare str.channels 1 and
+        compare str.sampleRate 2 and
+        compare str.available (Known 5) and
+        compare str.finished? false and
+        compare (vec.list (mat.getRow 0 (str.read 4))) [ 0,1,2,0 ] and
+        compare str.position 4 and
+        compare str.available (Known 1) and
+        compare str.finished? false and
+        compare (vec.list (mat.getRow 0 (str.read 2))) [ 0 ] and
+        compare str.position 5 and
+        compare str.available (Known 0) and
+        compare str.finished? true and
+        ( str.close (); true )
+),
+
+"delayedBy-0-3-\(name)": \(
+    str = manip.delayedBy 0 (maybeDuration 3 (syn.generated 2 id));
+    compare str.position 0 and
+        compare str.channels 1 and
+        compare str.sampleRate 2 and
+        compare str.available (maybeKnown 3) and
+        compare str.finished? false and
+        compare (vec.list (mat.getRow 0 (str.read 4))) [ 0,1,2 ] and
+        compare str.position 3 and
+        compare str.available (Known 0) and
+        compare str.finished? true and
+        ( str.close (); true )
+),
+
+"delayedBy-0-inf-\(name)": \(
+    str = manip.delayedBy 0 (syn.generated 2 id);
+    compare str.position 0 and
+        compare str.channels 1 and
+        compare str.sampleRate 2 and
+        compare str.available (Infinite ()) and
+        compare str.finished? false and
+        compare (vec.list (mat.getRow 0 (str.read 4))) [ 0,1,2,3 ] and
+        compare str.position 4 and
+        compare str.available (Infinite ()) and
+        compare str.finished? false and
+        ( str.close (); true )
+),
+
+"delayedBy-2-3-\(name)": \(
+    str = manip.delayedBy 2 (maybeDuration 3 (syn.generated 2 id));
+    compare str.position 0 and
+        compare str.channels 1 and
+        compare str.sampleRate 2 and
+        compare str.available (maybeKnown 5) and
+        compare str.finished? false and
+        compare (vec.list (mat.getRow 0 (str.read 4))) [ 0,0,0,1 ] and
+        compare str.position 4 and
+        compare str.available (maybeKnown 1) and
+        compare str.finished? false and
+        compare (vec.list (mat.getRow 0 (str.read 4))) [ 2 ] and
+        compare str.position 5 and
+        compare str.available (Known 0) and
+        compare str.finished? true and
+        ( str.close (); true )
+),
+
+"delayedBy-m2-3-\(name)": \(
+    str = manip.delayedBy (-2) (maybeDuration 3 (syn.generated 2 id));
+    compare str.position 0 and
+        compare str.channels 1 and
+        compare str.sampleRate 2 and
+        compare str.available (maybeKnown 1) and
+        compare str.finished? false and
+        compare (vec.list (mat.getRow 0 (str.read 4))) [ 2 ] and
+        compare str.position 1 and
+        compare str.available (Known 0) and
+        compare str.finished? true and
+        ( str.close (); true )
+),
+
+"delayedBy-m4-3-\(name)": \(
+    str = manip.delayedBy (-4) (maybeDuration 3 (syn.generated 2 id));
+    compare str.position 0 and
+        compare str.channels 1 and
+        compare str.sampleRate 2 and
+        compare str.available (Known 0) and
+        compare str.finished? true and 
+        //!!! with this and others, need to check that we read an empty matrix after finished (perhaps have a helper function that checks finished properties such as available count as well)
+        ( str.close (); true )
+),
+
+"delayedBy-2-3b-\(name)": \(
+    str = manip.delayedBy 2 (maybeDuration 3 (syn.generated 2 id));
+    compare str.position 0 and
+        compare str.channels 1 and
+        compare str.sampleRate 2 and
+        compare str.available (maybeKnown 5) and
+        compare str.finished? false and
+        compare (vec.list (mat.getRow 0 (str.read 1))) [ 0 ] and
+        compare str.position 1 and
+        compare str.available (maybeKnown 4) and
+        compare str.finished? false and
+        compare (vec.list (mat.getRow 0 (str.read 4))) [ 0,0,1,2 ] and
+        compare str.position 5 and
+        compare str.available (Known 0) and
+        compare str.finished? true and
+        ( str.close (); true )
+),
+
+"delayedBy-2-3c-\(name)": \(
+    str = manip.delayedBy 2 (maybeDuration 3 (syn.generated 2 id));
+    compare str.position 0 and
+        compare str.channels 1 and
+        compare str.sampleRate 2 and
+        compare str.available (maybeKnown 5) and
+        compare str.finished? false and
+        compare (vec.list (mat.getRow 0 (str.read 7))) [ 0,0,0,1,2 ] and
+        compare str.position 5 and
+        compare str.available (Known 0) and
+        compare str.finished? true and
+        ( str.close (); true )
+),
+
+"delayedBy-2-inf-\(name)": \(
+    str = manip.delayedBy 2 (syn.generated 2 id);
+    compare str.position 0 and
+        compare str.channels 1 and
+        compare str.sampleRate 2 and
+        compare str.available (Infinite ()) and
+        compare str.finished? false and
+        compare (vec.list (mat.getRow 0 (str.read 2))) [ 0,0 ] and
+        compare str.position 2 and
+        compare str.finished? false and
+        compare (vec.list (mat.getRow 0 (str.read 2))) [ 0,1 ] and
+        compare str.position 4 and
+        compare str.finished? false and
+        compare (vec.list (mat.getRow 0 (str.read 2))) [ 2,3 ] and
+        compare str.position 6 and
+        compare str.finished? false and
+        ( str.close (); true )
+),
+
+"delayedBy-m2-inf-\(name)": \(
+    str = manip.delayedBy (-2) (syn.generated 2 id);
+    compare str.position 0 and
+        compare str.channels 1 and
+        compare str.sampleRate 2 and
+        compare str.available (Infinite ()) and
+        compare str.finished? false and
+        compare (vec.list (mat.getRow 0 (str.read 2))) [ 2,3 ] and
+        compare str.position 2 and
+        compare str.finished? false and
+        ( str.close (); true )
+),
+
+"mixedTo-1-2-\(name)": \(
+    str = manip.mixedTo 2 (maybeDuration 3 (syn.generated 2 id));
+    compare str.position 0 and
+        compare str.channels 2 and
+        compare str.sampleRate 2 and
+        compare str.available (maybeKnown 3) and
+        compare str.finished? false and
+        compare (map vec.list (mat.asRows (str.read 4))) [[0,1,2],[0,1,2]] and
+        compare str.position 3 and
+        compare str.available (Known 0) and
+        compare str.finished? true and
+        ( str.close (); true )
+),
+
+"mixedTo-2-1-\(name)": \(
+    str = manip.mixedTo 1
+       (manip.multiplexed
+          [maybeDuration 3 (syn.generated 2 id),
+           maybeDuration 3 (syn.generated 2 id)]);
+    compare str.position 0 and
+        compare str.channels 1 and
+        compare str.sampleRate 2 and
+        compare str.available (maybeKnown 3) and
+        compare str.finished? false and
+        compare (map vec.list (mat.asRows (str.read 4))) [[0,1,2]] and
+        compare str.position 3 and
+        compare str.available (Known 0) and
+        compare str.finished? true and
+        ( str.close (); true )
+),
+
+"mixedTo-2-3-\(name)": \(
+    str = manip.mixedTo 3
+       (manip.multiplexed
+          [maybeDuration 3 (syn.generated 2 id),
+           maybeDuration 3 (syn.generated 2 (+1))]);
+    compare str.position 0 and
+        compare str.channels 3 and
+        compare str.sampleRate 2 and
+        compare str.available (maybeKnown 3) and
+        compare str.finished? false and
+        compare (map vec.list (mat.asRows (str.read 4))) [[0,1,2],[1,2,3],[0,0,0]] and
+        compare str.position 3 and
+        compare str.available (Known 0) and
+        compare str.finished? true and
+        ( str.close (); true )
+),
+
+"mixedTo-1-3-\(name)": \(
+    str = manip.mixedTo 3 (maybeDuration 3 (syn.generated 2 id));
+    compare str.position 0 and
+        compare str.channels 3 and
+        compare str.sampleRate 2 and
+        compare str.available (maybeKnown 3) and
+        compare str.finished? false and
+        compare (map vec.list (mat.asRows (str.read 4))) [[0,1,2],[0,1,2],[0,1,2]] and
+        compare str.position 3 and
+        compare str.available (Known 0) and
+        compare str.finished? true and
+        ( str.close (); true )
+),
+
+"sum-inf-inf-\(name)": \(
+    str = manip.sum [syn.generated 2 (2*), syn.generated 2 (0-)];
+    compare str.position 0 and
+        compare str.channels 1 and
+        compare str.sampleRate 2 and
+        compare str.available (Infinite ()) and
+        compare str.finished? false and
+        compare (map vec.list (mat.asRows (str.read 4))) [[0,1,2,3]] and
+        compare str.available (Infinite ()) and
+        compare str.position 4 and
+        ( str.close (); true )
+),
+
+"sum-inf-trunc-\(name)": \(
+    str = manip.sum [syn.generated 2 (2*), maybeDuration 3 (syn.generated 2 (0-))];
+    compare str.position 0 and
+        compare str.channels 1 and
+        compare str.sampleRate 2 and
+        compare str.available (maybeKnown 3) and
+        compare str.finished? false and
+        compare (map vec.list (mat.asRows (str.read 4))) [[0,1,2]] and
+        compare str.available (Known 0) and
+        compare str.finished? true and
+        compare str.position 3 and
+        ( str.close (); true )
+),
+
+"sum-precalc-trunc-\(name)": \(
+    str = manip.sum
+       [syn.precalculatedMono 2 (vec.fromList [1,2]),
+        maybeDuration 3 (syn.generated 2 (0-))];
+    compare str.position 0 and
+        compare str.channels 1 and
+        compare str.sampleRate 2 and
+        compare str.available (maybeKnown 2) and
+        compare str.finished? false and
+        compare (map vec.list (mat.asRows (str.read 4))) [[1,1]] and
+        compare str.available (Known 0) and
+        compare str.finished? true and
+        compare str.position 2 and
+        ( str.close (); true )
+),
+
+"sum-2-1-\(name)": \(
+    str = manip.sum
+       [syn.precalculatedMono 2 (vec.fromList [1,2]),
+        manip.multiplexed [syn.precalculatedMono 2 (vec.fromList [3,4]),
+                          maybeDuration 3 (syn.generated 2 (0-))]];
+    compare str.position 0 and
+        compare str.channels 2 and
+        compare str.sampleRate 2 and
+        compare str.available (maybeKnown 2) and
+        compare str.finished? false and
+        compare (map vec.list (mat.asRows (str.read 4))) [[4,6], [0,-1]] and
+        compare str.available (Known 0) and
+        compare str.finished? true and
+        compare str.position 2 and
+        ( str.close (); true )
+),
+
+"sum-3-\(name)": \(
+    str = manip.sum
+       [syn.precalculatedMono 2 (vec.fromList [1,2]),
+        syn.precalculatedMono 2 (vec.fromList [3,4]),
+        maybeDuration 3 (syn.generated 2 (0-))];
+    compare str.position 0 and
+        compare str.channels 1 and
+        compare str.sampleRate 2 and
+        compare str.available (maybeKnown 2) and
+        compare str.finished? false and
+        compare (map vec.list (mat.asRows (str.read 4))) [[4,5]] and
+        compare str.available (Known 0) and
+        compare str.finished? true and
+        compare str.position 2 and
+        ( str.close (); true )
+),
+
+"multiplexed-inf-inf-\(name)": \(
+    str = manip.multiplexed [syn.generated 2 id, syn.generated 2 (0-)];
+    compare str.position 0 and
+        compare str.channels 2 and
+        compare str.sampleRate 2 and
+        compare str.available (Infinite ()) and
+        compare str.finished? false and
+        compare (map vec.list (mat.asRows (str.read 4)))
+            [[0,1,2,3], [0,-1,-2,-3]] and
+        compare str.available (Infinite ()) and
+        compare str.position 4 and
+        ( str.close (); true )
+),
+
+"multiplexed-inf-trunc-\(name)": \(
+    str = manip.multiplexed [syn.generated 2 id, maybeDuration 3 (syn.generated 2 (0-))];
+    compare str.position 0 and
+        compare str.channels 2 and
+        compare str.sampleRate 2 and
+        compare str.available (maybeKnown 3) and
+        compare str.finished? false and
+        compare (map vec.list (mat.asRows (str.read 4))) [[0,1,2], [0,-1,-2]] and
+        compare str.available (Known 0) and
+        compare str.finished? true and
+        compare str.position 3 and
+        ( str.close (); true )
+),
+
+"multiplexed-precalc-trunc-\(name)": \(
+    str = manip.multiplexed
+       [syn.precalculatedMono 2 (vec.fromList [1,2]),
+        maybeDuration 3 (syn.generated 2 (0-))];
+    compare str.position 0 and
+        compare str.channels 2 and
+        compare str.sampleRate 2 and
+        compare str.available (maybeKnown 2) and
+        compare str.finished? false and
+        compare (map vec.list (mat.asRows (str.read 4))) [[1,2], [0,-1]] and
+        compare str.available (Known 0) and
+        compare str.finished? true and
+        compare str.position 2 and
+        ( str.close (); true )
+),
+
+"multiplexed-2-1-\(name)": \(
+    str = manip.multiplexed
+       [syn.precalculatedMono 2 (vec.fromList [1,2]),
+        manip.multiplexed [syn.precalculatedMono 2 (vec.fromList [3,4]),
+                          maybeDuration 3 (syn.generated 2 (0-))]];
+    compare str.position 0 and
+        compare str.channels 3 and
+        compare str.sampleRate 2 and
+        compare str.available (maybeKnown 2) and
+        compare str.finished? false and
+        compare (map vec.list (mat.asRows (str.read 4))) [[1,2], [3,4], [0,-1]] and
+        compare str.available (Known 0) and
+        compare str.finished? true and
+        compare str.position 2 and
+        ( str.close (); true )
+),
+
+"multiplexed-2-1b-\(name)": \(
+    str = manip.multiplexed
+       [syn.precalculatedMono 2 (vec.fromList [1,2]),
+        syn.precalculatedMono 2 (vec.fromList [3,4]),
+        maybeDuration 3 (syn.generated 2 (0-))];
+    compare str.position 0 and
+        compare str.channels 3 and
+        compare str.sampleRate 2 and
+        compare str.available (maybeKnown 2) and
+        compare str.finished? false and
+        compare (map vec.list (mat.asRows (str.read 4))) [[1,2], [3,4], [0,-1]] and
+        compare str.available (Known 0) and
+        compare str.finished? true and
+        compare str.position 2 and
+        ( str.close (); true )
+),
+
+"repeated-2-\(name)": \(
+    str = manip.repeated
+       (syn.precalculatedMono 2 (vec.fromList [1,2,3]));
+    compare str.position 0 and
+        compare str.channels 1 and
+        compare str.sampleRate 2 and
+        compare str.available (Infinite ()) and
+        compare str.finished? false and
+        compare (map vec.list (mat.asRows (str.read 1))) [[1]] and
+        compare str.position 1 and
+        compare (map vec.list (mat.asRows (str.read 2))) [[2,3]] and
+        compare str.position 3 and
+        compare (map vec.list (mat.asRows (str.read 3))) [[1,2,3]] and
+        compare str.position 6 and
+        compare (map vec.list (mat.asRows (str.read 5))) [[1,2,3,1,2]] and
+        compare (map vec.list (mat.asRows (str.read 9))) [[3,1,2,3,1,2,3,1,2]] and
+        compare (map vec.list (mat.asRows (str.read 2))) [[3,1]] and
+        compare str.available (Infinite ()) and
+        compare str.finished? false and
+        compare str.position 22 and
+        ( str.close (); true )
+),
+
+"duplicated-1-\(name)": \(
+    original = maybeDuration 3 (syn.precalculatedMono 2 (vec.fromList [1,2,3]));
+    sn = manip.duplicated 1 original;
+    str = (head sn);
+    compare (length sn) 1 and
+        compare str.position 0 and
+        compare str.channels 1 and
+        compare str.sampleRate 2 and
+        compare str.available (maybeKnown 3) and
+        compare str.finished? false and
+        compare (map vec.list (mat.asRows (str.read 1))) [[1]] and
+        compare str.position 1 and
+        compare str.available (maybeKnown 2) and
+        compare (map vec.list (mat.asRows (str.read 3))) [[2,3]] and
+        compare str.position 3 and
+        compare str.finished? true and
+        compare str.available (Known 0) and
+        ( str.close (); true )
+),
+
+"duplicated-2-\(name)": \(
+    original = maybeDuration 3 (syn.precalculatedMono 2 (vec.fromList [1,2,3]));
+    sn = manip.duplicated 2 original;
+    s1 = (head sn);
+    s2 = (head (tail sn));
+
+    compare (length sn) 2 and
+
+        compare s1.position 0 and
+        compare s1.channels 1 and
+        compare s1.sampleRate 2 and
+        compare s1.available (maybeKnown 3) and
+        compare s1.finished? false and
+
+        compare s2.position 0 and
+        compare s2.channels 1 and
+        compare s2.sampleRate 2 and
+        compare s2.available (maybeKnown 3) and
+        compare s2.finished? false and
+
+        compare (map vec.list (mat.asRows (s1.read 1))) [[1]] and
+        compare s1.position 1 and
+        compare s1.available (maybeKnown 2) and
+        compare s2.position 0 and
+        compare s2.available (maybeKnown 3) and
+
+        compare (map vec.list (mat.asRows (s2.read 2))) [[1,2]] and
+        compare s1.position 1 and
+        compare s1.available (maybeKnown 2) and
+        compare s2.position 2 and
+        compare s2.available (maybeKnown 1) and
+
+        compare (map vec.list (mat.asRows (s1.read 3))) [[2,3]] and
+        compare s1.position 3 and
+        compare s1.finished? true and
+        compare s1.available (Known 0) and
+        compare s2.position 2 and
+        compare s2.finished? false and
+        compare s2.available (Known 1) and // when one is known, so is the other
+
+        compare (map vec.list (mat.asRows (s1.read 3))) [] and
+
+        compare (map vec.list (mat.asRows (s2.read 1))) [[3]] and
+        compare s1.position 3 and
+        compare s1.finished? true and
+        compare s2.position 3 and
+        compare s2.finished? true and
+
+        ( s1.close (); s2.close() ; true )
+),
+
+"spaced-\(name)": \(
+    original = maybeDuration 3 (syn.precalculatedMono 2 (vec.fromList [1,2,3]));
+    str = manip.spaced 3 original;
+    compare str.position 0 and
+        compare str.channels 1 and
+        compare str.sampleRate 2 and
+        compare str.available (maybeKnown 9) and
+        compare str.finished? false and
+        compare (map vec.list (mat.asRows (str.read 4))) [[1,0,0,2]] and
+        compare str.position 4 and
+        compare str.available (maybeKnown 5) and
+        compare str.finished? false and
+        compare (map vec.list (mat.asRows (str.read 1))) [[0]] and
+        compare str.position 5 and
+        compare str.available (maybeKnown 4) and
+        compare str.finished? false and
+        compare (map vec.list (mat.asRows (str.read 10))) [[0,3,0,0]] and
+        compare str.position 9 and
+        compare str.available (Known 0) and
+        compare str.finished? true and
+        ( str.close (); true )
+),
+
+"picked-\(name)": \(
+    original = maybeDuration 8 (syn.precalculatedMono 2 (vec.fromList [1,2,3,4,5,6,7,8]));
+    str = manip.picked 3 original;
+    compare str.position 0 and
+        compare str.channels 1 and
+        compare str.sampleRate 2 and
+        compare str.available (maybeKnown 3) and
+        compare str.finished? false and
+        compare (map vec.list (mat.asRows (str.read 1))) [[1]] and
+        compare str.position 1 and
+        compare str.available (maybeKnown 2) and
+        compare str.finished? false and
+        compare (map vec.list (mat.asRows (str.read 3))) [[4,7]] and
+        compare str.position 3 and
+        compare str.available (Known 0) and
+        compare str.finished? true and
+        ( str.close (); true )
+),
+
+//!!! still no tests for multi-channel inputs
+
+]);
+
+knowns = makeTests "known" false;
+unknowns = makeTests "unknown" true;
+
+all = [:];
+for [ knowns, unknowns ] do h:
+    for (keys h) do k: all[k] := h[k] done
+done;
+
+all is hash<string, () -> boolean>;
+

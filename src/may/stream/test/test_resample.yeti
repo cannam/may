@@ -1,0 +1,212 @@
+
+module may.stream.test.test_resample;
+
+vec = load may.vector;
+bf = load may.vector.blockfuncs;
+mat = load may.matrix;
+syn = load may.stream.syntheticstream;
+manip = load may.stream.manipulate;
+resample = load may.stream.resample;
+
+//pl = load may.plot;//!!!
+
+pl = { plot things = true; };
+
+{ compare, compareUsing, assert } = load may.test.test;
+
+compareClose = compareUsing 
+    do m1 m2:
+        length m1 == length m2 and 
+            all id (map2 do v1 v2:
+                length v1 == length v2 and
+                    all id (map2 do a b: abs(a - b) < 1e-10 done v1 v2)
+                done m1 m2);
+    done;
+
+makeTests name withUnknown =
+   (maybeDuration n str =
+        // Truncate a stream, but if withUnknown is true, return it
+        // with availability Unknown -- so as to test that other
+        // filter functions behave correctly even if availability is
+        // not known on their underlying streams
+       (ts = manip.withDuration n str;
+        if withUnknown then
+            ts with
+            { 
+                get available () = if ts.finished? then Known 0 else Unknown () fi;
+            }
+        else
+            ts
+        fi);
+    maybeKnown n =
+        if withUnknown then
+            Unknown ()
+        else
+            Known n
+        fi;
+[
+
+// Test for duration of decimated stream (does not test contents, that
+// happens in the filters tests below)
+"dec-duration-\(name)": \(
+    original = maybeDuration 8 (syn.precalculatedMono 4 (vec.fromList [1,2,3,4,5,6,7,8]));
+    str = resample.decimated 2 original;
+    compare str.position 0 and
+        compare str.channels 1 and
+        compare str.sampleRate 2 and
+        compare str.available (maybeKnown 4) and
+        compare str.finished? false and
+       (r = str.read 3;
+        println "r = \(r)";
+        compare (mat.size r) { rows = 1, columns = 3 }) and
+        compare str.position 3 and
+        compare str.available (maybeKnown 1) and
+        compare str.finished? false and
+       (r = str.read 3;
+        println "r = \(r)";
+        compare (mat.size r) { rows = 1, columns = 1 }) and
+        compare str.position 4 and
+        compare str.available (Known 0) and
+        compare str.finished? true and
+        ( str.close (); true )
+),
+
+// Test for duration of interpolated stream (does not test contents,
+// that happens in the filters tests below)
+"int-duration-\(name)": \(
+    original = maybeDuration 8 (syn.precalculatedMono 4 (vec.fromList [1,2,3,4,5,6,7,8]));
+    str = resample.interpolated 2 original;
+    compare str.position 0 and
+        compare str.channels 1 and
+        compare str.sampleRate 8 and
+        compare str.available (maybeKnown 16) and
+        compare str.finished? false and
+        compare (mat.size (str.read 12)) { rows = 1, columns = 12 } and
+        compare str.position 12 and
+        compare str.available (maybeKnown 1) and
+        compare str.finished? false and
+        compare (mat.size (str.read 12)) { rows = 1, columns = 4 } and
+        compare str.position 16 and
+        compare str.available (Known 0) and
+        compare str.finished? true and
+        ( str.close (); true )
+),
+
+// Test for duration of resampled stream (does not test contents,
+// that happens in the filters tests below)
+"resamp-duration-\(name)": \(
+    original = maybeDuration 8 (syn.precalculatedMono 4 (vec.fromList [1,2,3,4,5,6,7,8]));
+    str = resample.resampledTo 6 original;
+    compare str.position 0 and
+        compare str.channels 1 and
+        compare str.sampleRate 6 and
+        compare str.available (maybeKnown 12) and
+        compare str.finished? false and
+        compare (mat.size (str.read 9)) { rows = 1, columns = 9 } and
+        compare str.position 9 and
+        compare str.available (maybeKnown 3) and
+        compare str.finished? false and
+        compare (mat.size (str.read 9)) { rows = 1, columns = 3 } and
+        compare str.position 12 and
+        compare str.available (Known 0) and
+        compare str.finished? true and
+        ( str.close (); true )
+),
+
+]);
+
+knowns = makeTests "known" false;
+unknowns = makeTests "unknown" true;
+
+filtering = [
+/*!!!
+"interpolated-sine": \(
+    // Interpolating a sinusoid should give us a sinusoid
+    //!!! only beyond half the filter length
+    sinusoid = syn.sinusoid 8 2; // 2Hz sine sampled at 8Hz: [ 0, 1, 0, -1 ] etc
+    input = resample.withDuration 16 sinusoid;
+    output = resample.interpolated 2 input;
+    result = output.read 32;
+    reference = syn.sinusoid 16 2;
+    expected = reference.read 32;
+    compareOutputs a b = compareClose
+       (map vec.list (mat.asRows a)) (map vec.list (mat.asRows b));
+    compareOutputs result expected;
+),
+
+"decimated-sine": \(
+    // Decimating a sinusoid should give us a sinusoid
+    //!!! only beyond half the filter length
+    sinusoid = syn.sinusoid 32 1; // 1Hz sine sampled at 32Hz
+    input = resample.withDuration 400 sinusoid;
+    output = resample.decimated 2 input;
+    result = mat.columnSlice (output.read 200) 50 150;
+    reference = syn.sinusoid 16 1;
+    expected = mat.columnSlice (reference.read 200) 50 150;
+    compareOutputs a b = compareClose
+       (map vec.list (mat.asRows a)) (map vec.list (mat.asRows b));
+    if not compareOutputs result expected then
+        println "diff: \(mat.difference result expected)";
+	false
+    else true fi
+),
+*/
+"interpolated-misc": \(
+    // Interpolating any signal by N should give a signal in which
+    // every Nth sample is the original signal
+    data = vec.fromList [ 0, 0.1, -0.3, -0.4, -0.3, 0, 0.5, 0.2, 0.8, -0.1 ];
+    data = vec.concat [ data, bf.scaled (5/4) data, bf.scaled (3/4) data, data ];
+    data = vec.concat [ data, data ];
+    input = manip.withDuration (vec.length data) (syn.precalculatedMono 4 data);
+    factor = 3;
+    up = resample.interpolated factor input;
+    result = mat.getRow 0 (up.read (factor * vec.length data));
+    phase = 0;
+    a = vec.list data;
+    b = map do i: vec.at result (i*factor + phase) done [0..vec.length data - 1];
+\() (    pl.plot [ Vector data, Vector (vec.fromList b) ] );
+\() (    pl.plot [ Vector result ] );
+println "a = \(a)";
+println "b = \(b)";
+    compareClose [b] [a];
+),
+/*!!!
+"int-dec": \(
+    // Interpolating any signal then decimating by the same factor
+    // should get us the original back again
+    //!!! no, this is phase dependent
+//    data = vec.fromList [ 0, 0.1, -0.3, -0.4, -0.3, 0, 0.5, 0.2, 0.8, -0.1 ];
+//    data = vec.concat [ data, bf.scaled (5/4) data, bf.scaled (3/4) data, data ];
+    data = vec.fromList [ 0, 1, 2, 3 ];
+    data = vec.concat [ data, data ];
+
+    factor = 3;
+
+    updown prepad =
+       (input = manip.withDuration (vec.length data) (syn.precalculatedMono 4 data);
+        intermediate = resample.interpolated factor input;
+        output = resample.decimated factor (resample.delayedBy prepad intermediate);
+        output.read (vec.length data));
+
+    result = updown 0;
+    if not compareClose [vec.list (mat.getRow 0 result)] [vec.list data] then
+        \() (pl.plot [Vector data, 
+                      Vector (mat.getRow 0 result), 
+                      Vector (mat.getRow 0 (updown 1)),
+                      Vector (mat.getRow 0 (updown 2))]);
+        up = (resample.interpolated 2 (syn.precalculatedMono 4 data)).read 80;
+        \() (pl.plot [Vector (mat.getRow 0 up)]);
+        false
+    else true fi;
+),
+*/
+
+];    
+
+all = [:];
+for [ knowns, unknowns, filtering ] do h:
+    for (keys h) do k: all[k] := h[k] done
+done;
+
+all is hash<string, () -> boolean>;
+
