@@ -13,23 +13,27 @@ filt = load may.stream.filter;
 
 pl = { plot things = true; };
 
-{ compare, compareUsing } = load may.test.test;
+{ compare, compareUsing, assert } = load may.test.test;
 
 compareClose = compareUsing 
     do m1 m2:
-        all id (map2 do v1 v2:
-            all id (map2 do a b: abs(a - b) < 1e-10 done v1 v2)
-        done m1 m2)
+        length m1 == length m2 and 
+            all id (map2 do v1 v2:
+                length v1 == length v2 and
+                    all id (map2 do a b: abs(a - b) < 1e-10 done v1 v2)
+                done m1 m2);
     done;
 
 convolutionOptions = [
-    [],
     [ Fast false ],
     [ Fast true ],
     [ Fast true, Framesize 1 ],
     [ Fast true, Framesize 2 ],
-    [ Fast true, Framesize 16 ]
+    [ Fast true, Framesize 16 ],
+    [],
 ];
+
+hasInExactOutputDuration opt = opt != [ Fast false ];
 
 makeTests name withUnknown =
    (maybeDuration n str =
@@ -561,8 +565,11 @@ makeTests name withUnknown =
             signal = maybeDuration 4
                (syn.precalculatedMono 2 (vec.fromList [1,0,0,0]));
             c = filt.convolvedWith opts ir signal;
-            compareClose (map vec.list (mat.asRows (c.read 4))) [[ 1,0,-1,0 ]] and
-               ( c.close (); true )
+            if compareClose (map vec.list (mat.asRows (c.read 7))) [[ 1,0,-1,0,0,0,0 ]] and
+               (hasInExactOutputDuration opts or assert c.finished? "c.finished?")
+            then c.close (); true;
+            else println "   with convolution options: \(opts)"; false;
+            fi
         done convolutionOptions);
 ),
 
@@ -573,8 +580,11 @@ makeTests name withUnknown =
             signal = maybeDuration 4
                (syn.precalculatedMono 2 (vec.fromList [1,0,0,0]));
             c = filt.convolvedWith opts ir signal;
-            compareClose (map vec.list (mat.asRows (c.read 4))) [[ 8,6,4,2 ]] and
-               ( c.close (); true )
+            if compareClose (map vec.list (mat.asRows (c.read 7))) [[ 8,6,4,2,0,0,0 ]] and
+               (hasInExactOutputDuration opts or assert c.finished? "c.finished?")
+            then c.close (); true
+            else println "   with convolution options: \(opts)"; false;
+            fi
         done convolutionOptions);
 ),
 
@@ -588,9 +598,12 @@ makeTests name withUnknown =
                    (mat.newMatrix (RowMajor ())
                        (map vec.fromList [[1,1,0,0],[0,1,1,0],[0,0,1,1]])));
             c = filt.convolvedWith opts ir signal;
-            compareClose (map vec.list (mat.asRows (c.read 4)))
-                [[0,0,0,1],[0,8,14,10],[0,0,1,1]] and
-               ( c.close (); true )
+            if compareClose (map vec.list (mat.asRows (c.read 7)))
+                [[0,0,0,1,1,0,0],[0,8,14,10,6,2,0],[0,0,1,1,-1,-1,0]] and
+               (hasInExactOutputDuration opts or assert c.finished? "c.finished?")
+            then c.close (); true;
+            else println "   with convolution options: \(opts)"; false;
+            fi
         done convolutionOptions);
 ),
 
@@ -602,7 +615,7 @@ makeTests name withUnknown =
             signal = maybeDuration 3
                (syn.precalculatedMono 2 (vec.fromList [10,20,30]));
             c = filt.convolvedWith opts ir signal;
-            compare c.position 0 and
+            if compare c.position 0 and
                 compare c.channels 1 and
                 compare c.sampleRate 2 and
                 (fast or compare c.available (maybeKnown 7)) and
@@ -618,8 +631,10 @@ makeTests name withUnknown =
                                             30*4 + 20*5,
                                                    30*5 ]] and
                 (fast or (compare c.available (Known 0) and
-                          compare c.finished? true)) and
-                ( c.close (); true )
+                          compare c.finished? true))
+            then c.close (); true;
+            else println "   with convolution options: \(opts)"; false;
+            fi
         done convolutionOptions);
 ),
 
@@ -665,6 +680,73 @@ makeTests name withUnknown =
         ( str.close (); true )
 ),
 
+// Test for duration of decimated stream (does not test contents, that
+// happens in the filters tests below)
+"dec-duration-\(name)": \(
+    original = maybeDuration 8 (syn.precalculatedMono 4 (vec.fromList [1,2,3,4,5,6,7,8]));
+    str = filt.decimated 2 original;
+    compare str.position 0 and
+        compare str.channels 1 and
+        compare str.sampleRate 2 and
+        compare str.available (maybeKnown 4) and
+        compare str.finished? false and
+       (r = str.read 3;
+        println "r = \(r)";
+        compare (mat.size r) { rows = 1, columns = 3 }) and
+        compare str.position 3 and
+        compare str.available (maybeKnown 1) and
+        compare str.finished? false and
+       (r = str.read 3;
+        println "r = \(r)";
+        compare (mat.size r) { rows = 1, columns = 1 }) and
+        compare str.position 4 and
+        compare str.available (Known 0) and
+        compare str.finished? true and
+        ( str.close (); true )
+),
+
+// Test for duration of interpolated stream (does not test contents,
+// that happens in the filters tests below)
+"int-duration-\(name)": \(
+    original = maybeDuration 8 (syn.precalculatedMono 4 (vec.fromList [1,2,3,4,5,6,7,8]));
+    str = filt.interpolated 2 original;
+    compare str.position 0 and
+        compare str.channels 1 and
+        compare str.sampleRate 8 and
+        compare str.available (maybeKnown 16) and
+        compare str.finished? false and
+        compare (mat.size (str.read 12)) { rows = 1, columns = 12 } and
+        compare str.position 12 and
+        compare str.available (maybeKnown 1) and
+        compare str.finished? false and
+        compare (mat.size (str.read 12)) { rows = 1, columns = 4 } and
+        compare str.position 16 and
+        compare str.available (Known 0) and
+        compare str.finished? true and
+        ( str.close (); true )
+),
+
+// Test for duration of resampled stream (does not test contents,
+// that happens in the filters tests below)
+"resamp-duration-\(name)": \(
+    original = maybeDuration 8 (syn.precalculatedMono 4 (vec.fromList [1,2,3,4,5,6,7,8]));
+    str = filt.resampledTo 6 original;
+    compare str.position 0 and
+        compare str.channels 1 and
+        compare str.sampleRate 6 and
+        compare str.available (maybeKnown 12) and
+        compare str.finished? false and
+        compare (mat.size (str.read 9)) { rows = 1, columns = 9 } and
+        compare str.position 9 and
+        compare str.available (maybeKnown 3) and
+        compare str.finished? false and
+        compare (mat.size (str.read 9)) { rows = 1, columns = 3 } and
+        compare str.position 12 and
+        compare str.available (Known 0) and
+        compare str.finished? true and
+        ( str.close (); true )
+),
+
 //!!! still no tests for filters with multi-channel inputs
 
 ]);
@@ -681,7 +763,7 @@ makeDiracStream rate n =
     syn.generated rate do x: if x == int(n/2) then 1 else 0 fi done;
 
 filtering = [
-
+/*!!!
 "interpolated-sine": \(
     // Interpolating a sinusoid should give us a sinusoid
     //!!! only beyond half the filter length
@@ -712,7 +794,7 @@ filtering = [
 	false
     else true fi
 ),
-
+*/
 "interpolated-misc": \(
     // Interpolating any signal by N should give a signal in which
     // every Nth sample is the original signal
@@ -726,9 +808,13 @@ filtering = [
     phase = 0;
     a = vec.list data;
     b = map do i: vec.at result (i*factor + phase) done [0..vec.length data - 1];
-    compareClose [a] [b];
+\() (    pl.plot [ Vector data, Vector (vec.fromList b) ] );
+\() (    pl.plot [ Vector result ] );
+println "a = \(a)";
+println "b = \(b)";
+    compareClose [b] [a];
 ),
-
+/*!!!
 "int-dec": \(
     // Interpolating any signal then decimating by the same factor
     // should get us the original back again
@@ -757,7 +843,7 @@ filtering = [
         false
     else true fi;
 ),
-
+*/
 "lowpassed-dirac": \(
     test { rate, cutoff, attenuation, bandwidth, n } = 
        (input = makeDiracStream rate n;
