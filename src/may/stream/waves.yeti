@@ -1,0 +1,34 @@
+
+// Simple (rather than efficient) definitions of bandlimited wave
+// shapes
+
+module may.stream.waves;
+
+{ sinusoid } = load may.stream.syntheticstream;
+{ sum, scaledBy } = load may.stream.manipulate;
+
+square rate freq = 
+    sum
+       (map do n: 
+            m = n*2 + 1;
+            scaledBy (1/m)
+               (sinusoid rate (m * freq))
+            done [0 .. int (rate/4 / freq) - 1]);
+
+saw rate freq =
+    sum
+       (map do n:
+            scaledBy if n % 2 == 0 then -1/n else 1/n fi
+               (sinusoid rate (n * freq))
+            done [1 .. int (rate/2 / freq)]);
+
+triangle rate freq = 
+    sum
+       (map do n: 
+            m = n*2 + 1;
+            scaledBy if n % 2 == 0 then -1/(m*m) else 1/(m*m) fi
+               (sinusoid rate (m * freq))
+            done [0 .. int (rate/4 / freq) - 1]);
+
+{ square, saw, triangle }
+
