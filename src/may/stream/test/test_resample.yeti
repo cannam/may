@@ -23,44 +23,27 @@ compareClose = compareUsing
                 done m1 m2);
     done;
 
-makeTests name withUnknown =
-   (maybeDuration n str =
-        // Truncate a stream, but if withUnknown is true, return it
-        // with availability Unknown -- so as to test that other
-        // filter functions behave correctly even if availability is
-        // not known on their underlying streams
-       (ts = manip.withDuration n str;
-        if withUnknown then
-            ts with
-            { 
-                get available () = if ts.finished? then Known 0 else Unknown () fi;
-            }
-        else
-            ts
-        fi);
-    maybeKnown n =
-        if withUnknown then
-            Unknown ()
-        else
-            Known n
-        fi;
 [
 
 // Test for duration of decimated stream (does not test contents, that
-// happens in the filters tests below)
-"dec-duration-\(name)": \(
-    original = maybeDuration 8 (syn.precalculatedMono 4 (vec.fromList [1,2,3,4,5,6,7,8]));
+// happens in the filters tests below).
+// Resampled streams only have accurate duration when their inputs
+// have known duration (otherwise they may be rounded up to the
+// processing block size).
+
+"dec-duration": \(
+    original = manip.withDuration 8 (syn.precalculatedMono 4 (vec.fromList [1,2,3,4,5,6,7,8]));
     str = resample.decimated 2 original;
     compare str.position 0 and
         compare str.channels 1 and
         compare str.sampleRate 2 and
-        compare str.available (maybeKnown 4) and
+        compare str.available (Known 4) and
         compare str.finished? false and
        (r = str.read 3;
         println "r = \(r)";
         compare (mat.size r) { rows = 1, columns = 3 }) and
         compare str.position 3 and
-        compare str.available (maybeKnown 1) and
+        compare str.available (Known 1) and
         compare str.finished? false and
        (r = str.read 3;
         println "r = \(r)";
@@ -73,17 +56,21 @@ makeTests name withUnknown =
 
 // Test for duration of interpolated stream (does not test contents,
 // that happens in the filters tests below)
-"int-duration-\(name)": \(
-    original = maybeDuration 8 (syn.precalculatedMono 4 (vec.fromList [1,2,3,4,5,6,7,8]));
+// Resampled streams only have accurate duration when their inputs
+// have known duration (otherwise they may be rounded up to the
+// processing block size).
+
+"int-duration": \(
+    original = manip.withDuration 8 (syn.precalculatedMono 4 (vec.fromList [1,2,3,4,5,6,7,8]));
     str = resample.interpolated 2 original;
     compare str.position 0 and
         compare str.channels 1 and
         compare str.sampleRate 8 and
-        compare str.available (maybeKnown 16) and
+        compare str.available (Known 16) and
         compare str.finished? false and
         compare (mat.size (str.read 12)) { rows = 1, columns = 12 } and
         compare str.position 12 and
-        compare str.available (maybeKnown 1) and
+        compare str.available (Known 4) and
         compare str.finished? false and
         compare (mat.size (str.read 12)) { rows = 1, columns = 4 } and
         compare str.position 16 and
@@ -94,17 +81,21 @@ makeTests name withUnknown =
 
 // Test for duration of resampled stream (does not test contents,
 // that happens in the filters tests below)
-"resamp-duration-\(name)": \(
-    original = maybeDuration 8 (syn.precalculatedMono 4 (vec.fromList [1,2,3,4,5,6,7,8]));
+// Resampled streams only have accurate duration when their inputs
+// have known duration (otherwise they may be rounded up to the
+// processing block size).
+
+"resamp-duration": \(
+    original = manip.withDuration 8 (syn.precalculatedMono 4 (vec.fromList [1,2,3,4,5,6,7,8]));
     str = resample.resampledTo 6 original;
     compare str.position 0 and
         compare str.channels 1 and
         compare str.sampleRate 6 and
-        compare str.available (maybeKnown 12) and
+        compare str.available (Known 12) and
         compare str.finished? false and
         compare (mat.size (str.read 9)) { rows = 1, columns = 9 } and
         compare str.position 9 and
-        compare str.available (maybeKnown 3) and
+        compare str.available (Known 3) and
         compare str.finished? false and
         compare (mat.size (str.read 9)) { rows = 1, columns = 3 } and
         compare str.position 12 and
@@ -113,12 +104,6 @@ makeTests name withUnknown =
         ( str.close (); true )
 ),
 
-]);
-
-knowns = makeTests "known" false;
-unknowns = makeTests "unknown" true;
-
-filtering = [
 /*!!!
 "interpolated-sine": \(
     // Interpolating a sinusoid should give us a sinusoid
@@ -201,12 +186,5 @@ println "b = \(b)";
 ),
 */
 
-];    
-
-all = [:];
-for [ knowns, unknowns, filtering ] do h:
-    for (keys h) do k: all[k] := h[k] done
-done;
-
-all is hash<string, () -> boolean>;
+] is hash<string, () -> boolean>;
 
