@@ -38,33 +38,42 @@ kaiserSincFilterFor { n, attenuation, bandwidth, samplerate } =
     println "kaiserSincFilterFor: filter length is \(vec.length sw)";
     bf.multiply sw kw);
 
+durationAdjusterFor factor s =
+    case s.available of
+    Known n: manip.withDuration (int (n * factor));
+    _: id;
+    esac;
    
 interpolated factor s = //!!! factor must be an integer [how to enforce this??]
     if factor == 1 then s
     else
+        adjuster = durationAdjusterFor factor s;
         nzc = 13;
         attenuation = 80;
         filter = kaiserSincWindow nzc factor attenuation;
 //        println "interpolated: filter length \(vec.length filter)";
-        out = manip.delayedBy (- (nzc * factor))
-           (convolve.convolvedWith [Framesize 1024]
-               (mat.newMatrix (RowMajor ()) (map \filter [1..s.channels]))
-               (manip.spaced factor s));
+        out = adjuster
+           (manip.delayedBy (- (nzc * factor))
+               (convolve.convolvedWith [Framesize 1024]
+                   (mat.newMatrix (RowMajor ()) (map \filter [1..s.channels]))
+                   (manip.spaced factor s)));
         out with { get sampleRate () = s.sampleRate * factor };
     fi;
 
 decimated factor s = //!!! factor must be an integer [how to enforce this??]
     if factor == 1 then s
     else
+        adjuster = durationAdjusterFor (1/factor) s;
         nzc = 13;
         attenuation = 80;
         filter = kaiserSincWindow nzc factor attenuation;
         filtered =
            (convolve.convolvedWith [Framesize 1024]
                (mat.newMatrix (RowMajor ()) (map \filter [1..s.channels])) s);
-        out = manip.scaledBy (1/factor)
-           (manip.delayedBy (- nzc)
-               (manip.picked factor filtered));
+        out = adjuster
+           (manip.scaledBy (1/factor)
+               (manip.delayedBy (- nzc)
+                   (manip.picked factor filtered)));
         out with { get sampleRate () = s.sampleRate / factor };
     fi;
 
