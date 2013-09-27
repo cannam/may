@@ -115,7 +115,6 @@ kaiser { length, beta } =
             k = 2*i / (length-1) - 1;
             bes0 (beta * sqrt (1 - k*k)) / denominator;
             done [0..length-1]);
-    println "kaiser: peak is \(bf.max kw) at index \(bf.maxindex kw) of \(vec.length kw)";
     kw);
 
 /**
