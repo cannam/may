@@ -409,6 +409,7 @@ nextPowerOfTwo n =
 
 //!!! todo: partial application so as to preprocess ir (in fast convolution case)
 convolvedWith options ir s = //!!! cheap mono thing here
+//!!! doc note: fast convolution output is padded to next frame boundary
    (if mat.height ir != s.channels then
         failWith "Signal stream and IR must have same number of channels (\(s.channels) != \(mat.height ir))"
     fi;
@@ -447,14 +448,7 @@ kaiserSincFilterFor { n, attenuation, bandwidth, samplerate } =
     kw = win.kaiser (pp with { length });
     sw = win.sinc (n*2) length;
     println "kaiserSincFilterFor: filter length is \(vec.length sw)";
-
-    f = bf.multiply sw kw;
-    
-    println "sinc peak is \(bf.max sw) at index \(bf.maxindex sw)";
-    println "kaiser peak is \(bf.max kw) at index \(bf.maxindex kw)";
-    println "filter peak is \(bf.max f) at index \(bf.maxindex f)";
-
-    f);
+    bf.multiply sw kw);
 
 bandpassed f0 f1 attenuation bandwidth s =
    (rate = s.sampleRate;
@@ -586,6 +580,13 @@ resampledSplendidlyTo targetRate s =
     lower = min sourceRate targetRate;
     g = gcd higher lower;
 
+    initialAvailable = s.available; // only so as to distinguish Known etc
+    var remaining = 
+        case initialAvailable of
+        Known n: int ((n * targetRate) / sourceRate + 0.5);
+        other: 0;
+        esac;
+
     // Example: ratio of 3:4 in sample periods, corresponding to
     // e.g. resampling from 48kHz to 36kHz. The lower rate has the
     // longer sample period. We need a filter with n=4 values from
@@ -594,20 +595,33 @@ resampledSplendidlyTo targetRate s =
     // the gcd (because the ratio of sample periods is the reciprocal
     // of the ratio of sample rates).
 
-    n = higher / g; // would be 4 in the above example
+    peakToPole = higher / g; // would be 4 in the above example
 
-    println "for target rate \(targetRate) and source rate \(sourceRate), gcd = \(g) and n = \(n), would be \(lower / g) if we used min";
+    println "for target rate \(targetRate) and source rate \(sourceRate), gcd = \(g) and peakToPole = \(peakToPole)";
 
-    // Our filter is a sinc function with peak-to-pole length n,
-    // multiplied by a Kaiser window of transition bandwidth narrow
-    // enough at the effective sample rate n to exclude... what?
+    // Our filter is a sinc function with peak-to-pole length
+    // peakToPole, multiplied by a Kaiser window of transition
+    // bandwidth narrow enough at the effective sample rate n to
+    // exclude... what?
 
     //!!! ponder
-//    filt = kaiserSincFilterFor { n, alpha = 80, bandwidth = 10, sampleRate = lower };
-    filt = kaiserSincFilterFor { n, attenuation = 80, bandwidth = 1, samplerate = higher };
 
-//\() (    plot.plot [Vector filt] );
+    filt = kaiserSincFilterFor {
+        n = peakToPole,
+        attenuation = 140,
+//        bandwidth = 10,
+        bandwidth = lower / 100,
+        samplerate = lower
+    };
 
+/*
+    filt = kaiserSincFilterFor {
+        n = peakToPole, 
+        attenuation = 80, 
+        bandwidth = 1, 
+        samplerate = higher
+    };
+*/
     // Now we have a filter of (odd) length flen in which the lower
     // sample rate corresponds to every n'th point and the higher rate
     // to every m'th where n and m are higher and lower rates divided
@@ -647,11 +661,22 @@ resampledSplendidlyTo targetRate s =
     flen = vec.length filt;
     halflen = int (flen/2); // actual filter length is halflen + halflen + 1
     spacedInput = spaced (targetRate / g) s;
+    
+    initialFill = spacedInput.read halflen;
+
+    println "initialFill = \(initialFill) (requested \(halflen))";
+
     var buffer = mat.toRowMajor
        (mat.concat (Horizontal ())
            [mat.zeroMatrix { rows = s.channels, columns = halflen + 1 },
-            spacedInput.read halflen]);
+            initialFill]);
     var pos = 0;
+
+    expired? () = 
+        case initialAvailable of
+        Known _: remaining <= 0;
+        _: mat.width buffer <= halflen;
+        esac;
 
     reconstructOne ch =
        (var out = 0;
@@ -665,26 +690,48 @@ resampledSplendidlyTo targetRate s =
         out);
 
     readOne () =
-       (result = mat.newColumnVector
-           (vec.fromList (map reconstructOne [0 .. s.channels-1]));
+        if expired? () then
+            mat.zeroSizeMatrix ()
+        else
+            result = mat.newColumnVector
+               (vec.fromList (map reconstructOne [0 .. s.channels-1]));
 //        println "result = \(result)";
-//print ".";
-        m = sourceRate / g;
-        buffer := mat.concat (Horizontal ())
-           [mat.columnSlice buffer m (flen - m),
-            spacedInput.read m];
-        result);
+print ".";
+            m = sourceRate / g;
+            next = spacedInput.read m;
+            buffer := mat.concat (Horizontal ())
+               [mat.columnSlice buffer m (flen - m), next];
+//println "dropped \(m), read \(mat.width next), buffer now \(mat.width buffer)";
+            remaining := if remaining > 0 then remaining - 1 else 0 fi;
+            pos := pos + 1;
+//println "returning \(result)";
+            result
+        fi;
     
     s with
     {
         get sampleRate () = targetRate,
         get position () = pos,
-        get available () = Unknown (), //!!! todo
-        read n = mat.toRowMajor
-           (mat.concat (Horizontal ()) (map do _: readOne () done [1..n])),
+        get available () = 
+            case initialAvailable of
+            Known n: Known remaining;
+            other: other;
+            esac,
+        get finished? () = expired? (),
+        read n = 
+           (result = 
+                mat.toRowMajor
+                   (mat.concat (Horizontal ()) (map do _: readOne () done [1..n]));
+            println "returning from read: \(result)";
+            result)
     });
 
-resampledTo = resampledSplendidlyTo;
+//resampledTo = resampledSplendidlyTo;
+
+//interpolated factor s = resampledTo (s.sampleRate * factor) s;
+//decimated factor s = resampledTo (s.sampleRate / factor) s;
+
+resampledTo = resampledSlowlyTo;
 
 {
     withDuration is number -> stream -> stream,
