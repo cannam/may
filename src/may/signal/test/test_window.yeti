@@ -165,11 +165,11 @@ isSymmetric a =
 ),
 
 "kaiser": \(
-    compareUsing close (vec.list (win.kaiser 4 10)) [
+    compareUsing close (vec.list (win.kaiser { beta = 4, length = 10 })) [
         0.0885, 0.2943, 0.5644, 0.8216, 0.9789,
         0.9789, 0.8216, 0.5644, 0.2943, 0.0885
     ] and
-    compareUsing close (vec.list (win.kaiser 2.5 11)) [
+    compareUsing close (vec.list (win.kaiser { beta = 2.5, length = 11 })) [
         0.3040, 0.5005, 0.6929, 0.8546, 0.9622,
         1.0000, 0.9622, 0.8546, 0.6929, 0.5005, 0.3040
     ]

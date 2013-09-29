@@ -4,6 +4,15 @@ import yeti.lang: FailureException;
 
 var goodCompares = 0;
 
+assert fact description = 
+    if fact then
+        goodCompares := goodCompares + 1;
+        true;
+    else
+        println "** assertion failed: \(description)";
+        false;
+    fi;
+
 compareUsing comparator obtained expected =
     if comparator obtained expected then
         goodCompares := goodCompares + 1;
@@ -49,7 +58,7 @@ runTests group testHash =
     bad);
 
 {
-    compare, compareUsing,
+    compare, compareUsing, assert,
     time,
     runTests, 
 }

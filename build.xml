@@ -39,7 +39,7 @@
   <target name="test" depends="jar,taskdef">
     <java classpath="${basedir}/../yeti/yeti.jar:${basedir}/may.jar;${extjars}"
 	  classname="yeti.lang.compiler.yeti"
-	  fork="true">
+	  fork="true" failonerror="true">
       <sysproperty key="java.library.path" path="${basedir}/ext/native/${archtag}"/>
       <arg value="src/may/test/all.yeti"/>
     </java>
@@ -48,6 +48,8 @@
   <target name="clean">
     <delete dir="${basedir}/classes"/>
   </target>
+
+  <target name="rebuild" depends="clean,test"/>
 
 </project>
 

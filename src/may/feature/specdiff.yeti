@@ -1,7 +1,6 @@
 
 module may.feature.specdiff;
 
-vec = load may.vector;
 fr = load may.stream.framer;
 cplx = load may.complex;
 

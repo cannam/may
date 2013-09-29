@@ -2,7 +2,7 @@
 module may.stream.test.audiofile_reference;
 
 syn = load may.stream.syntheticstream;
-filt = load may.stream.filter;
+manip = load may.stream.manipulate;
 
 //!!! docs from turbot
 
@@ -25,8 +25,8 @@ referenceChannels rate =
     syn.sinusoid rate 600 :: pulseChannel rate :: leftovers rate 2);
 
 afReference rate channels =
-    filt.withDuration (2 * rate)
-       (filt.multiplexed (take channels (referenceChannels rate)));
+    manip.withDuration (2 * rate)
+       (manip.multiplexed (take channels (referenceChannels rate)));
     
 {
     afReference

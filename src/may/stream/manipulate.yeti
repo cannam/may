@@ -1,0 +1,353 @@
+
+module may.stream.manipulate;
+
+mat = load may.matrix;
+ch = load may.stream.channels;
+vec = load may.vector;
+
+load may.stream.type;
+load may.vector.type;
+load may.matrix.type;
+
+//!!! todo: synchronized for everything with state assignment
+
+minDurationOf d1 d2 =
+    case d1 of 
+    Known a:
+        case d2 of 
+        Known b: Known (min a b);
+        Unknown (): Unknown ();
+        Infinite (): Known a;
+        esac;
+    Unknown ():
+        case d2 of 
+        Known b: Known b;
+        Unknown (): Unknown ();
+        Infinite (): Unknown ();
+        esac;
+    Infinite ():
+        d2;
+    esac;
+
+withDuration nsamples s = //!!! should nsamples be a time in seconds? (no)
+   (var pos = 0;
+    s with
+    {
+        get position () = pos,
+        get available () = Known (nsamples - pos),
+        get finished? () = not (nsamples > pos),
+        read count =
+           (n = min count (nsamples - pos);
+            pos := pos + n;
+            if not s.finished? then
+                mat.resizedTo { rows = s.channels, columns = n } (s.read n);
+            else 
+                mat.zeroMatrix { columns = n, rows = s.channels }
+            fi),
+    });
+
+delayedBy nsamples s = //!!! doc: nsamples may be -ve
+   (var prepos = 0;
+    zeros n = mat.toRowMajor
+       (prepos := prepos + n;
+        mat.zeroMatrix { rows = s.channels, columns = n });
+    delay = 
+        if nsamples < 0 then
+            \0 (s.read (-nsamples));
+        else
+            nsamples
+        fi;
+    {
+        get position () = 
+            if prepos < delay then prepos
+            elif s.position + nsamples < 0 then 0
+            else s.position + nsamples
+            fi,
+        get channels () = s.channels,
+        get sampleRate () = s.sampleRate,
+        get available () = 
+            case s.available of 
+            Known a: Known (a + delay - prepos); 
+            other: other 
+            esac,
+        get finished? () = (prepos >= delay) and s.finished?,
+        read count =
+            if prepos >= delay then s.read count
+            elif prepos + count < delay then zeros count
+            else
+                nleft = delay - prepos;
+                left = zeros nleft;
+                right = s.read (count - nleft);
+                mat.concat (Horizontal ()) [left, right];
+            fi,
+        close = s.close
+    });
+
+scaledBy factor s =
+    s with
+    {
+        read count = mat.scaled factor (s.read count);
+    };
+
+inverted s = //!!! todo: test
+    s with
+    {
+        read count = 
+           (m = s.read count;
+            if mat.empty? m then m
+            else mat.difference (mat.zeroMatrix (mat.size m)) m
+            fi)
+    };
+
+//!!! poor name, confusion with mixed, but consistent with channels.yeti
+mixedTo targetChannels s =
+    s with
+    {
+        get channels () = targetChannels,
+        read count = ch.mixedTo targetChannels (s.read count),
+    };
+
+//!!! what should happen if we mix or multiplex a finite-length and an
+//infinite-length stream? or even two streams with differing finite
+//lengths? write tests for this. At the moment the resulting stream
+//has duration equal to the shortest source stream and finishes as
+//soon as any one of them finishes
+
+sum' streams =
+   (mix m1 m2 =
+       (sz = { rows = max (mat.height m1) (mat.height m2),
+               columns = min (mat.width m1) (mat.width m2) };
+        if sz.columns == 0 then
+            mat.zeroSizeMatrix ()
+        else
+            mat.sum (mat.resizedTo sz m1) (mat.resizedTo sz m2);
+        fi);
+    {
+        get position () = head (sort (map (.position) streams)),
+        get channels () = head (sortBy (>) (map (.channels) streams)),
+        get sampleRate () = (head streams).sampleRate, //!!! document this
+        get available () =
+            fold do dur s: minDurationOf dur s.available done (Infinite ()) streams,
+        get finished? () = any id (map (.finished?) streams),
+        read count =
+           (readTo acc ss count =
+               case ss of
+               first::rest:
+                   part = first.read count;
+                   case acc of 
+                   Some m:
+                       readTo (Some (mix m part)) rest count;
+                   None ():
+                       readTo (Some part) rest count;
+                   esac;
+                _: acc;
+               esac;
+            case readTo (None ()) streams count of
+            None (): mat.zeroSizeMatrix ();
+            Some m: m;
+            esac),
+        close () = for streams do s: s.close() done,
+    });
+
+mean streams = //!!! todo: test
+    scaledBy (1 / (length streams)) (sum' streams);
+
+difference s1 s2 = //!!! todo: test
+    sum' [ s1, inverted s2 ];
+
+multiplexed streams = 
+    {
+        get position () = head (sort (map (.position) streams)), // can differ after EOS
+        get channels () = sum (map (.channels) streams),
+        get sampleRate () = (head streams).sampleRate, //!!! document this
+        get available () = 
+            fold do dur s: minDurationOf dur s.available done (Infinite ()) streams,
+        get finished? () = any id (map (.finished?) streams),
+        read count =
+           (outs = map do s: s.read count done streams;
+            minlen = head (sort (map mat.width outs));
+            outs = map do m:
+                mat.resizedTo { rows = mat.height m, columns = minlen } m
+                done outs;
+            mat.concat (Vertical ()) outs
+            ),
+        close () = for streams do s: s.close() done,
+    };
+
+repeated s =
+    // There is no way to reset a stream (as in principle, they might
+    // be "live") so we can't read from the same stream repeatedly --
+    // we have to cache its output and then repeat that. This is a
+    // little tricky to do efficiently without knowing how long the
+    // stream is (in general) or how much is going to be requested at
+    // a time.
+    if s.available == Infinite () then s
+    else
+        var pos = 0;
+        var cache = mat.zeroSizeMatrix ();
+        chunks = array [];
+        cachedPartsFor count =
+           (start = pos % (mat.width cache);
+            avail = (mat.width cache) - start;
+            if avail >= count then
+                pos := pos + count;
+                [mat.columnSlice cache start (start + count)]
+            else
+                pos := pos + avail;
+                mat.columnSlice cache start (start + avail) ::
+                    cachedPartsFor (count - avail);
+            fi);
+        readFromCache count =
+           (if (mat.width cache) == 0 then
+                cache := mat.concat (Horizontal ()) (list chunks);
+                clearArray chunks;
+            fi;
+            if (mat.width cache) == 0 then
+                cache
+            else
+                mat.concat (Horizontal ()) (cachedPartsFor count);
+            fi);
+        s with
+        {
+            get position () = pos,
+            get available () = Infinite (),
+            get finished? () = false,
+            read count =
+                if s.finished? then
+                    readFromCache count
+                else
+                    part = s.read count;
+                    len = (mat.width part);
+                    push chunks part;
+                    pos := pos + len;
+                    if len == count then part
+                    else
+                        mat.concat (Horizontal ())
+                           [part, readFromCache (count - len)];
+                    fi;
+                fi,
+        }
+    fi;
+
+duplicated copies s = 
+//!!! doc fact that original s cannot be used independently of this afterward
+// (so maybe name is misleading?)
+    array if copies < 2 then map \s [1..copies];
+    else
+        pos = [:];
+        lowtide () = head (sort (map (at pos) (keys pos)));
+        var hightide = 0;
+        var cache = mat.zeroSizeMatrix ();
+        syncd = synchronized pos;
+        advance i n =
+           (formerLow = lowtide ();
+            pos[i] := pos[i] + n;
+            encroachment = lowtide () - formerLow;
+            if encroachment > 0 then
+                cache := mat.columnSlice cache encroachment (mat.width cache);
+            fi);
+        map do instance:
+            pos[instance] := 0;
+            {
+                get position () = syncd \(pos[instance]),
+                get channels () = syncd \(s.channels),
+                get sampleRate () = syncd \(s.sampleRate),
+                get available () = syncd
+                  \(case s.available of
+                    Known av: Known (av + (hightide - pos[instance]));
+                    other: other;
+                    esac),
+                get finished? () = syncd
+                  \(if not s.finished? then false
+                    else pos[instance] >= hightide
+                    fi),
+                read count = syncd
+                  \(ready = hightide - pos[instance];
+                    if s.finished? and ready <= 0 
+                    then mat.zeroSizeMatrix ()
+                    else
+                        if count > ready then
+                            more = s.read (count - ready);
+                            cache := mat.concat (Horizontal ()) [cache, more];
+                            hightide := hightide + (mat.width more);
+                        fi;
+                        offset = pos[instance] - (lowtide ());
+                        chunk = mat.columnSlice cache offset (offset + count);
+                        advance instance (mat.width chunk);
+                        chunk;
+                    fi),
+                close () = syncd
+                  \(delete pos instance;
+                    if empty? pos then
+                        s.close ()
+                    fi),
+            }
+            done [1..copies];
+    fi;
+
+spaced mult s = //!!! mult must be an integer [how to enforce this??]
+   (spaceToNext pos = case (pos % mult) of 0: 0; n: (mult - n) esac;
+    readWithoutPadding n =
+       (toRead = int Math#ceil(n / mult);
+        source = s.read toRead;
+        targetWidth = min n (mult * mat.width source);
+        mat.newMatrix (ColumnMajor ())
+           (map do i:
+                if i % mult == 0 then
+                    mat.getColumn (int (i / mult)) source
+                else
+                    vec.zeros s.channels
+                fi
+                done [0..targetWidth-1]));
+    var pos = 0;
+    s with
+    {
+        get position () = pos,
+        get available () = 
+            case s.available of
+            Known n: Known ((spaceToNext pos) + (n * mult));
+            other: other 
+            esac,
+        read n =
+           (sp = spaceToNext pos;
+            result = mat.toRowMajor
+               (mat.concat (Horizontal ())
+                   [mat.zeroMatrix { rows = s.channels, columns = min sp n },
+                    readWithoutPadding (max (n - sp) 0)]);
+            pos := pos + mat.width result;
+            result),
+    });
+
+picked frac s = //!!! frac must be an integer [how to enforce this??]
+    s with
+    {
+        get position () = int Math#ceil(s.position / frac),
+        get available () =
+            case s.available of 
+            Known n: Known (int Math#ceil(n / frac)); 
+            other: other 
+            esac,
+        read n =
+           (m = s.read (n*frac);
+            obtained = int Math#ceil((mat.width m) / frac);
+            mat.flipped
+               (mat.newMatrix (ColumnMajor ())
+                   (map do c: mat.getColumn (c*frac) m done [0..obtained-1])))
+    };
+
+{
+    withDuration is number -> stream -> stream,
+    delayedBy is number -> stream -> stream,
+    scaledBy is number -> stream -> stream,
+    inverted is stream -> stream,
+    mixedTo is number -> stream -> stream,
+    sum is list<stream> -> stream = sum',
+    mean is list<stream> -> stream,
+    difference is stream -> stream -> stream,
+    multiplexed is list<stream> -> stream,
+    repeated is stream -> stream,
+    duplicated is number -> stream -> array<stream>,
+    spaced is number -> stream -> stream,
+    picked is number -> stream -> stream,
+}
+

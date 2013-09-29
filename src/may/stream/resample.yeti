@@ -1,0 +1,259 @@
+
+module may.stream.resample;
+
+mat = load may.matrix;
+vec = load may.vector;
+bf = load may.vector.blockfuncs;
+win = load may.signal.window;
+manip = load may.stream.manipulate;
+convolve = load may.stream.convolve;
+
+load may.stream.type;
+load may.vector.type;
+load may.matrix.type;
+
+//!!! todo: synchronized for everything with state assignment
+
+/**
+  Produce a sinc window of width equal to zc zero crossings per half,
+  with n samples from peak to first zero crossing, multiplied by a
+  Kaiser window with attenuation alpha dB
+ */
+kaiserSincWindow zc n alpha =
+   (sw = win.sinc (n*2) (n*zc*2 + 1);
+    kw = win.kaiserForAttenuation alpha (vec.length sw);
+    bf.multiply sw kw);
+
+/**
+ * Produce a sinc window with n samples from peak to first zero
+ * crossing, multiplied by a Kaiser window with attenuation alpha dB
+ * and transition bandwidth Hz at the given sampleRate. The filter
+ * will contain an odd number of samples.
+ */
+kaiserSincFilterFor { n, attenuation, bandwidth, samplerate } =
+   (pp = win.kaiserParameters (ByFrequency { attenuation, bandwidth, samplerate });
+    length = if pp.length % 2 == 0 then pp.length + 1 else pp.length fi;
+    kw = win.kaiser (pp with { length });
+    sw = win.sinc (n*2) length;
+    println "kaiserSincFilterFor: filter length is \(vec.length sw)";
+    bf.multiply sw kw);
+
+durationAdjusterFor factor s =
+    case s.available of
+    Known n: manip.withDuration (int (n * factor));
+    _: id;
+    esac;
+
+//!!!doc: Resampled streams only have accurate duration when their inputs
+// have known duration (otherwise they may be rounded up to the
+// processing block size).
+   
+interpolated factor s = //!!! factor must be an integer [how to enforce this??]
+    if factor == 1 then s
+    else
+        adjuster = durationAdjusterFor factor s;
+        nzc = 13;
+        attenuation = 80;
+        filter = kaiserSincWindow nzc factor attenuation;
+        out = adjuster
+           (manip.delayedBy (- (nzc * factor))
+               (convolve.convolvedWith [Framesize 1024]
+                   (mat.newMatrix (RowMajor ()) (map \filter [1..s.channels]))
+                   (manip.spaced factor s)));
+        out with { get sampleRate () = s.sampleRate * factor };
+    fi;
+
+//!!!doc: Resampled streams only have accurate duration when their inputs
+// have known duration (otherwise they may be rounded up to the
+// processing block size).
+
+decimated factor s = //!!! factor must be an integer [how to enforce this??]
+    if factor == 1 then s
+    else
+        adjuster = durationAdjusterFor (1/factor) s;
+        nzc = 13;
+        attenuation = 80;
+        filter = kaiserSincWindow nzc factor attenuation;
+        filtered =
+           (convolve.convolvedWith [Framesize 1024]
+               (mat.newMatrix (RowMajor ()) (map \filter [1..s.channels])) s);
+        out = adjuster
+           (manip.scaledBy (1/factor)
+               (manip.delayedBy (- nzc)
+                   (manip.picked factor filtered)));
+        out with { get sampleRate () = s.sampleRate / factor };
+    fi;
+
+gcd a b = (c = a % b; if c == 0 then b else gcd b c fi);
+
+//!!! slow -- can't in this form be used for e.g. 44100 -> 48000 conversion
+resampledSlowlyTo rate s =
+   (g = gcd rate s.sampleRate;
+   println "orig = \(s.sampleRate), target = \(rate), g = \(g), up = \(rate/g), down = \(s.sampleRate/g)";
+    decimated (s.sampleRate / g) (interpolated (rate/g) s));
+
+resampledSplendidlyTo targetRate s =
+   (
+    // We need a low-pass filter with a cutoff of the lower of the two
+    // (nyquist frequencies of the) sample rates. This filter needs to
+    // be sampled at a sufficient resolution that we can get values
+    // from it at every sample point in the source rate and in the
+    // target.
+
+    sourceRate = s.sampleRate;
+    higher = max sourceRate targetRate;
+    lower = min sourceRate targetRate;
+    g = gcd higher lower;
+
+    initialAvailable = s.available; // only so as to distinguish Known etc
+    var remaining = 
+        case initialAvailable of
+        Known n: int ((n * targetRate) / sourceRate + 0.5);
+        other: 0;
+        esac;
+
+    // Example: ratio of 3:4 in sample periods, corresponding to
+    // e.g. resampling from 48kHz to 36kHz. The lower rate has the
+    // longer sample period. We need a filter with n=4 values from
+    // peak to first pole -- this is the longer sample period relative
+    // to the shorter and is obtained by dividing the *higher* rate by
+    // the gcd (because the ratio of sample periods is the reciprocal
+    // of the ratio of sample rates).
+
+    peakToPole = higher / g; // would be 4 in the above example
+
+    println "for target rate \(targetRate) and source rate \(sourceRate), gcd = \(g) and peakToPole = \(peakToPole)";
+
+    // Our filter is a sinc function with peak-to-pole length
+    // peakToPole, multiplied by a Kaiser window of transition
+    // bandwidth narrow enough at the effective sample rate n to
+    // exclude... what?
+
+    //!!! ponder
+/*
+    filt = kaiserSincFilterFor {
+        n = peakToPole,
+        attenuation = 140,
+//        bandwidth = 10,
+        bandwidth = lower / 100,
+        samplerate = lower
+    };
+*/
+
+    filt = kaiserSincFilterFor {
+        n = peakToPole, 
+        attenuation = 80, 
+        bandwidth = 1, 
+        samplerate = higher
+    };
+
+    // Now we have a filter of (odd) length flen in which the lower
+    // sample rate corresponds to every n'th point and the higher rate
+    // to every m'th where n and m are higher and lower rates divided
+    // by their gcd respectively. So if x coordinates are on the same
+    // scale as our filter resolution, then source sample i is at i *
+    // (targetRate / gcd) and target sample j is at j * (sourceRate /
+    // gcd).
+
+    // To reconstruct a single target sample, we want a buffer (real
+    // or virtual) of flen values formed of source samples spaced at
+    // intervals of (targetRate / gcd), in our example case 3.  This
+    // is initially formed with the first sample at the filter peak.
+    //
+    // 0  0  0  0  a  0  0  b  0
+    //
+    // and of course we have our filter
+    //
+    // f1 f2 f3 f4 f5 f6 f7 f8 f9
+    //
+    // We take the sum of products of non-zero values from this buffer
+    // with corresponding values in the filter
+    //
+    // a * f5 + b * f8
+    //
+    // Then we drop (sourceRate / gcd) values, in our example case 4,
+    // from the start of the buffer and fill until it has flen values
+    // again
+    //
+    // a  0  0  b  0  0  c  0  0
+    //
+    // repeat to reconstruct the next target sample
+    //
+    // a * f1 + b * f4 + c * f7
+    //
+    // and so on.
+
+    flen = vec.length filt;
+    halflen = int (flen/2); // actual filter length is halflen + halflen + 1
+    spacedInput = manip.spaced (targetRate / g) s;
+    
+    initialFill = spacedInput.read (halflen + 1);
+
+    var buffer = mat.toRowMajor
+       (mat.concat (Horizontal ())
+           [mat.zeroMatrix { rows = s.channels, columns = halflen },
+            initialFill]);
+    var pos = 0;
+
+    expired? () = 
+        case initialAvailable of
+        Known _: remaining <= 0;
+        _: mat.width buffer <= halflen;
+        esac;
+
+    reconstructOne ch =
+       (series = mat.getRow ch buffer;
+        var out = 0;
+        for [0..(vec.length series)-1] do i:
+            x = vec.at series i;
+            if x != 0 then
+                out := out + x * (vec.at filt i);
+            fi;
+        done;
+        if sourceRate <= targetRate then out
+        else out / (sourceRate / targetRate)
+        fi);
+
+    readOne () =
+        if expired? () then
+            mat.zeroSizeMatrix ()
+        else
+            result = mat.newColumnVector
+               (vec.fromList (map reconstructOne [0 .. s.channels-1]));
+            m = sourceRate / g;
+            next = spacedInput.read m;
+            buffer := mat.concat (Horizontal ())
+               [mat.columnSlice buffer m flen, next];
+            remaining := if remaining > 0 then remaining - 1 else 0 fi;
+            pos := pos + 1;
+            result
+        fi;
+    
+    s with
+    {
+        get sampleRate () = targetRate,
+        get position () = pos,
+        get available () = 
+            case initialAvailable of
+            Known n: Known remaining;
+            other: other;
+            esac,
+        get finished? () = expired? (),
+        read n = 
+            mat.toRowMajor
+               (mat.concat (Horizontal ()) (map do _: readOne () done [1..n])),
+    });
+
+resampledTo = resampledSplendidlyTo;
+
+interpolated factor s = resampledTo (s.sampleRate * factor) s;
+decimated factor s = resampledTo (s.sampleRate / factor) s;
+
+//resampledTo = resampledSlowlyTo;
+
+{
+    kaiserSincWindow, kaiserSincFilterFor,
+    interpolated, decimated,
+    resampledTo,
+}
+
