@@ -8,9 +8,9 @@ syn = load may.stream.syntheticstream;
 manip = load may.stream.manipulate;
 resample = load may.stream.resample;
 
-//pl = load may.plot;//!!!
+pl = load may.plot;//!!!
 
-pl = { plot things = true; };
+//pl = { plot things = true; };
 
 { compare, compareUsing, assert } = load may.test.test;
 
@@ -131,6 +131,7 @@ compareClose = compareUsing
        (map vec.list (mat.asRows a)) (map vec.list (mat.asRows b));
     if not compareOutputs result expected then
         println "diff: \(mat.difference result expected)";
+\() (    pl.plot [ Vector (mat.getRow 0 (mat.difference result expected)) ] );
 	false
     else true fi
 ),
@@ -148,10 +149,6 @@ compareClose = compareUsing
     phase = 0;
     a = vec.list data;
     b = map do i: vec.at result (i*factor + phase) done [0..vec.length data - 1];
-\() (    pl.plot [ Vector data, Vector (vec.fromList b) ] );
-\() (    pl.plot [ Vector result ] );
-println "a = \(a)";
-println "b = \(b)";
     compareClose [b] [a];
 ),
 
