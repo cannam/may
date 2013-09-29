@@ -8,9 +8,9 @@ syn = load may.stream.syntheticstream;
 manip = load may.stream.manipulate;
 resample = load may.stream.resample;
 
-pl = load may.plot;//!!!
+//pl = load may.plot;//!!!
 
-//pl = { plot things = true; };
+pl = { plot things = true; };
 
 { compare, compareUsing, assert } = load may.test.test;
 
