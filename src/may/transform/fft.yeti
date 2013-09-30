@@ -43,6 +43,10 @@ realForward n =
         packedToComplex (vec.length bl) v;
     done);
 
+//!!! doc: n separately as above
+realForwardMagnitude n =
+    complex.magnitudes . (realForward n);
+
 //!!! doc: input requires n/2+1 complex values (or should test and throw?)
 //!!! doc: powers of two only? check with jtransforms
 realInverse n = 
@@ -55,6 +59,7 @@ realInverse n =
 
 {
 realForward,
+realForwardMagnitude,
 realInverse,
 }
 
