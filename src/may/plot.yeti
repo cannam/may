@@ -97,6 +97,13 @@ plotSeries chart colour depth { start, step, values } is ~Chart -> ~Color -> num
 */
     ());
 
+/**
+ * Plot a list of typed structures onto a single chart, and return the
+ * resulting Chart object.
+ *
+ * The caller must call dispose() on the Chart when it is no longer
+ * needed.
+ */
 plot structures =
    (quality = Quality#Nicest;
     quality#setAnimated(false);
