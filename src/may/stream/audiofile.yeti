@@ -101,29 +101,31 @@ write str name is stream -> string -> number =
     Infinite (): failWith "Cannot write infinite stream to file";
     _: ()
     esac;
+    channels = str.channels;
+    bitdepth = 16;
     class StreamAdapter extends TargetDataLine
         int read(byte[] bytes, int off, int len)
            (bb = ByteBuffer#wrap(bytes, off, len);
             bb#order(ByteOrder#LITTLE_ENDIAN);
-            m = str.read (len / (str.channels * 2));
+            m = str.read (len / (channels * 2));
             tot := mat.width m;
             for [0..mat.width m - 1] do i:
-                for [0..str.channels - 1] do c:
+                for [0..channels - 1] do c:
                     v = int (32767 * mat.at m c i);
                     v = if v < -32768 then -32768
                         elif v > 32767 then 32767
                         else v fi;
-                    \() bb#putShort((i * str.channels + c) * 2, v);
+                    \() bb#putShort((i * channels + c) * 2, v);
                 done
             done;
-            str.channels * 2 * mat.width m),
+            channels * 2 * mat.width m),
         int available()
             case str.available of
-            Known n: str.channels * n * 2;
-            other: str.channels * 1024; //!!!???
+            Known n: channels * n * 2;
+            other: channels * 1024; //!!!???
             esac,
         AudioFormat getFormat()
-            new AudioFormat(str.sampleRate, 16, str.channels, true, false),
+            new AudioFormat(str.sampleRate, bitdepth, channels, true, false),
         void open(),
         void open(AudioFormat format),
         void open(AudioFormat format, int bufferSize),
@@ -151,7 +153,7 @@ write str name is stream -> string -> number =
     n = AudioSystem#write(new AudioInputStream(new StreamAdapter()),
                           AudioFileFormat$Type#WAVE, f);
     str.close ();
-    n); //!!! this is wrong, should be number of frames (is number of bytes?)
+    n / (channels * bitdepth));
 
 {
     open,
