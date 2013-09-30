@@ -1,16 +1,21 @@
 
 module may.transform.test.test_fft;
 
-{ realForward, realInverse } = load may.transform.fft;
+{ realForward, realForwardMagnitude, realInverse } = load may.transform.fft;
 { list, fromList } = load may.vector;
-{ complex } = load may.complex;
+{ complex, magnitude } = load may.complex;
 
 { compare } = load may.test.test;
 
 testFFT orig reals imags =
    (out = realForward (length orig) (fromList orig);
+    outmag = realForwardMagnitude (length orig) (fromList orig);
     back = realInverse (length orig) out;
-    compare out (array (map2 complex reals imags)) and compare (list back) orig);
+    compare out (array (map2 complex reals imags)) and
+        compare (list back) orig and
+        compare (list outmag) (map2 do r i: magnitude (complex r i) done
+                               reals imags)
+    );
 
 [
 
