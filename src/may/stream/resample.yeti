@@ -35,7 +35,6 @@ kaiserSincFilterFor { n, attenuation, bandwidth, samplerate } =
     length = if pp.length % 2 == 0 then pp.length + 1 else pp.length fi;
     kw = win.kaiser (pp with { length });
     sw = win.sinc (n*2) length;
-    println "kaiserSincFilterFor: filter length is \(vec.length sw)";
     bf.multiply sw kw);
 
 durationAdjusterFor factor s =
@@ -86,31 +85,31 @@ decimated factor s = //!!! factor must be an integer [how to enforce this??]
 
 gcd a b = (c = a % b; if c == 0 then b else gcd b c fi);
 
-//!!! slow -- can't in this form be used for e.g. 44100 -> 48000 conversion
-resampledSlowlyTo rate s =
-   (g = gcd rate s.sampleRate;
-   println "orig = \(s.sampleRate), target = \(rate), g = \(g), up = \(rate/g), down = \(s.sampleRate/g)";
-    decimated (s.sampleRate / g) (interpolated (rate/g) s));
+/**
+ * Resample a stream to the given target rate, using separate successive
+ * interpolation and decimation processes. This should give the same 
+ * results as resampledDirectlyTo, but in most cases should be slower.
+ */
+resampledUpDownTo targetRate s =
+   (g = gcd targetRate s.sampleRate;
+    decimated (s.sampleRate / g) (interpolated (targetRate / g) s));
 
-resampledSplendidlyTo targetRate s =
+/**
+ * Resample a stream to the given target rate, by applying a single
+ * resampling filter directly.
+ */
+resampledDirectlyTo targetRate s =
    (
-    // We need a low-pass filter with a cutoff of the lower of the two
-    // (nyquist frequencies of the) sample rates. This filter needs to
-    // be sampled at a sufficient resolution that we can get values
-    // from it at every sample point in the source rate and in the
-    // target.
+    // We need a low-pass filter that will cut off just below the
+    // Nyquist frequency at the lower of the two sample rates. This
+    // filter needs to be sampled at a sufficient resolution that we
+    // can get values from it at every sample point in the source rate
+    // and in the target.
 
     sourceRate = s.sampleRate;
     higher = max sourceRate targetRate;
     lower = min sourceRate targetRate;
     g = gcd higher lower;
-
-    initialAvailable = s.available; // only so as to distinguish Known etc
-    var remaining = 
-        case initialAvailable of
-        Known n: int ((n * targetRate) / sourceRate + 0.5);
-        other: 0;
-        esac;
 
     // Example: ratio of 3:4 in sample periods, corresponding to
     // e.g. resampling from 48kHz to 36kHz. The lower rate has the
@@ -122,12 +121,24 @@ resampledSplendidlyTo targetRate s =
 
     peakToPole = higher / g; // would be 4 in the above example
 
-    println "for target rate \(targetRate) and source rate \(sourceRate), gcd = \(g) and peakToPole = \(peakToPole)";
-
     // Our filter is a sinc function with peak-to-pole length
     // peakToPole, multiplied by a Kaiser window of transition
     // bandwidth narrow enough at the effective sample rate n to
     // exclude... what?
+
+    fparams = {
+        n = peakToPole,
+        attenuation = 120,
+        bandwidth = (lower / g) / 1000,
+        samplerate = (higher / g),
+    };
+
+    filt = kaiserSincFilterFor fparams;
+
+    println "for target rate \(targetRate) and source rate \(sourceRate), gcd = \(g) and peakToPole = \(peakToPole), filt parameters \(fparams), filter length \(vec.length filt)";
+
+//filt = kaiserSincWindow 13 peakToPole 80;
+//println "temporary: filter length \(vec.length filt)";
 
     //!!! ponder
 /*
@@ -138,7 +149,6 @@ resampledSplendidlyTo targetRate s =
         bandwidth = lower / 100,
         samplerate = lower
     };
-*/
 
     filt = kaiserSincFilterFor {
         n = peakToPole, 
@@ -146,6 +156,7 @@ resampledSplendidlyTo targetRate s =
         bandwidth = 1, 
         samplerate = higher
     };
+*/
 
     // Now we have a filter of (odd) length flen in which the lower
     // sample rate corresponds to every n'th point and the higher rate
@@ -183,9 +194,22 @@ resampledSplendidlyTo targetRate s =
     //
     // and so on.
 
+    // Get this before we do anything else with s -- we're just
+    // retrieving it in order to distinguish between known-duration
+    // and unknown-duration streams
+    initialAvailable = s.available;
+
+    var remaining = 
+        case initialAvailable of
+        Known n: int ((n * targetRate) / sourceRate + 0.5);
+        other: 0;
+        esac;
+
     flen = vec.length filt;
     halflen = int (flen/2); // actual filter length is halflen + halflen + 1
-    spacedInput = manip.spaced (targetRate / g) s;
+
+    spacedInput =
+        if targetRate == g then s else manip.spaced (targetRate / g) s fi;
     
     initialFill = spacedInput.read (halflen + 1);
 
@@ -244,16 +268,12 @@ resampledSplendidlyTo targetRate s =
                (mat.concat (Horizontal ()) (map do _: readOne () done [1..n])),
     });
 
-resampledTo = resampledSplendidlyTo;
-
-interpolated factor s = resampledTo (s.sampleRate * factor) s;
-decimated factor s = resampledTo (s.sampleRate / factor) s;
-
-//resampledTo = resampledSlowlyTo;
+resampledTo = resampledDirectlyTo;
 
 {
     kaiserSincWindow, kaiserSincFilterFor,
     interpolated, decimated,
-    resampledTo,
+    resampledUpDownTo, resampledDirectlyTo,
+    resampledTo
 }
 
