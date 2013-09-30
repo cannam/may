@@ -2,6 +2,7 @@ module may.signal.window;
 
 vec = load may.vector;
 bf = load may.vector.blockfuncs;
+mat = load may.matrix;
 
 cosineWindowSymmetric a0 a1 a2 a3 n =
    (n1 = n - 1;
@@ -189,8 +190,16 @@ windowFunction type options =
     Kaiser (): do length: kaiser { beta, length } done;
     esac);
 
-//!!! should use vector. but does anyone use this function anyway? would we use it in framer if it used vector?
-windowed windowFunc frames =
+//!!! doc note: recalculates window every time! not fast for multiple blocks, consider windowedFrames then
+windowed windowFunc data =
+    bf.multiply (windowFunc (vec.length data)) data;
+
+windowedRows windowFunc matrix = 
+   (w = windowFunc (mat.width matrix);
+    mat.newMatrix (RowMajor ())
+       (map (bf.multiply w) (mat.asRows matrix)));
+
+windowedFrames windowFunc frames =
     case frames of
         []: frames;
          _: (first = head frames;
@@ -213,6 +222,8 @@ sinc,
 kaiser, kaiserParameters,
 kaiserForAttenuation, kaiserForTransitionWidth, kaiserForBandwidth,
 windowFunction,
-windowed
+windowed,
+windowedRows,
+windowedFrames
 };
 
