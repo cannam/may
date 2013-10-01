@@ -7,12 +7,28 @@ mat = load may.matrix;
 syn = load may.stream.syntheticstream;
 manip = load may.stream.manipulate;
 resample = load may.stream.resample;
+win = load may.signal.window;
+waves = load may.stream.waves;
+fft = load may.transform.fft;
 
-//pl = load may.plot;//!!!
+pl = load may.plot;//!!!
 
-pl = { plot things = true; };
+//pl = { plot things = true; };
 
-{ compare, compareUsing, assert } = load may.test.test;
+{ compare, compareUsing, assert, time } = load may.test.test;
+
+//!!! This and gcd should be Somewhere
+nextPowerOfTwo n =
+   (nextPowerOfTwo' p n =
+        if p >= n then p
+        else nextPowerOfTwo' (p * 2) n
+        fi;
+    nextPowerOfTwo' 1 n);
+
+windowedSignalFrom stream nsamps =
+   (data = stream.read nsamps;
+    windowed = win.windowedRows win.hann data;
+    syn.precalculated stream.sampleRate windowed);
 
 compareClose = compareUsing 
     do m1 m2:
@@ -103,39 +119,88 @@ compareClose = compareUsing
         compare str.finished? true and
         ( str.close (); true )
 ),
-
+/*
 "interpolated-sine": \(
-    // Interpolating a sinusoid should give us a sinusoid
-    //!!! only beyond half the filter length
+    // Interpolating a windowed sinusoid should give us a windowed sinusoid
     sinusoid = syn.sinusoid 8 2; // 2Hz sine sampled at 8Hz: [ 0, 1, 0, -1 ] etc
-    input = manip.withDuration 16 sinusoid;
+    input = windowedSignalFrom sinusoid 16;
     output = resample.interpolated 2 input;
     result = output.read 32;
     reference = syn.sinusoid 16 2;
-    expected = reference.read 32;
+    expected = (windowedSignalFrom reference 32).read 32;
     compareOutputs a b = compareClose
        (map vec.list (mat.asRows a)) (map vec.list (mat.asRows b));
+\() (pl.plot [Vector (mat.getRow 0 result), Vector (mat.getRow 0 expected)]);
+println "diff is \(mat.difference result expected)";
+\() (pl.plot [Vector (mat.getRow 0 (mat.difference result expected))]);
     compareOutputs result expected;
 ),
 
 "decimated-sine": \(
-    // Decimating a sinusoid should give us a sinusoid
-    //!!! only beyond half the filter length
+    // Decimating a windowed sinusoid should give us a windowed sinusoid
     sinusoid = syn.sinusoid 32 1; // 1Hz sine sampled at 32Hz
-    input = manip.withDuration 400 sinusoid;
+    input = windowedSignalFrom sinusoid 400;
     output = resample.decimated 2 input;
-    result = mat.columnSlice (output.read 200) 50 150;
+//    result = mat.columnSlice (output.read 200) 50 150;
+    result = output.read 200;
     reference = syn.sinusoid 16 1;
-    expected = mat.columnSlice (reference.read 200) 50 150;
+//    expected = mat.columnSlice (reference.read 200) 50 150;
+    expected = (windowedSignalFrom reference 200).read 200;
     compareOutputs a b = compareClose
        (map vec.list (mat.asRows a)) (map vec.list (mat.asRows b));
     if not compareOutputs result expected then
+\() (pl.plot [Vector (mat.getRow 0 result), Vector (mat.getRow 0 expected)]);
         println "diff: \(mat.difference result expected)";
 \() (    pl.plot [ Vector (mat.getRow 0 (mat.difference result expected)) ] );
 	false
     else true fi
 ),
-
+*/
+"resample-spectrum": \(
+    // Generate a wave with a lot of harmonics, resample by some
+    // ratio, check that the resulting signal has substantially the
+    // same magnitude spectrum as the original
+    inrate = 44100;
+    outrate = 48000;
+    freq = 500;
+    forms = manip.duplicated 3 (waves.saw inrate freq);
+    inform = forms[0];
+    outform = resample.resampledTo outrate forms[1];
+//    outform2 = resample.resampledTo outrate forms[2];
+    sigOf str n =
+       (\() (str.read n);
+        sig = mat.getRow 0 (str.read n);
+//\() (pl.plot [Vector (vec.slice sig 0 100)]);
+        win.windowed win.hann sig);
+    incount = inrate;
+    outcount = outrate;
+    insig = time "read original, \(incount*2) at rate \(inrate)" \(sigOf inform incount);
+    outsig = time "read resampled, \(outcount*2) at rate \(outrate)" \(sigOf outform outcount);
+//    outsig2 = sigOf outform2 outcount;
+    speclen = (min incount outcount) / 2 + 1;
+    inmag = bf.divideBy incount (vec.resizedTo speclen (fft.realForwardMagnitude incount insig));
+    outmag = bf.divideBy outcount (vec.resizedTo speclen (fft.realForwardMagnitude outcount outsig));
+//    \() (pl.plot [Vector insig, Vector outsig]);
+//\() (pl.plot [Vector outsig, Vector outsig2]);
+    diff = bf.subtract inmag outmag;
+//    compareClose [vec.list inmag] [vec.list outmag] or
+        (//println "inmag: \(vec.list inmag)";
+         //println "outmag: \(vec.list outmag)";
+         //println "diff: \(vec.list diff)";
+         println "\nout of range: ";
+         var i = 0;
+         for (vec.list diff) do d:
+             if abs d > 1e-8 then
+                 print " * \(d) at \(i) [\(vec.at inmag i) vs \(vec.at outmag i)]\n";
+             fi;
+             i := i + 1;
+         done;
+         println "";
+//         \() (pl.plot [Vector inmag, Vector outmag]);
+         \() (pl.plot [Vector diff]);
+         false);
+),
+/*
 "interpolated-misc": \(
     // Interpolating any signal by N should give a signal in which
     // every Nth sample is the original signal
@@ -177,9 +242,10 @@ compareClose = compareUsing
                       Vector (mat.getRow 0 (updown 2))]);
         up = (resample.interpolated 2 (syn.precalculatedMono 4 data)).read 80;
         \() (pl.plot [Vector (mat.getRow 0 up)]);
+
         false
     else true fi;
 ),
-
+*/
 ] is hash<string, () -> boolean>;
 
