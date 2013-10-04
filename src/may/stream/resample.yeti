@@ -239,18 +239,15 @@ resampledDirectlyTo targetRate s =
 //    println "initial buffer (for flen = \(flen) and inputSpacing = \(inputSpacing)) with input phase \(phase) is: \(vec.list (mat.getRow 0 buffer))";
 
     var pos = 0;
-
-    reconstructOne ch =
+    
+    reconstructOne rowdata ch n is array<~double[]> -> number -> number -> () =
        (series = mat.getRow ch buffer;
-        var out = 0;
+        row = rowdata[ch];
         for [0..(vec.length series)-1] do i:
-            x = vec.at series i;
-            j = phase + i * inputSpacing;
-            out := out + x * (vec.at filt j);
-        done;
-        if sourceRate <= targetRate then out
-        else out / (sourceRate / targetRate)
-        fi);
+            a = vec.at series i;
+            b = vec.at filt (phase + i * inputSpacing);
+            row[n] := row[n] + a * b;
+        done);
 
     expired? () = 
         case initialAvailable of
@@ -258,32 +255,40 @@ resampledDirectlyTo targetRate s =
         _: (inputSpacing * mat.width buffer + phase) <= halflen;
         esac;
 
-    readOne () =
-        if expired? () then
-            mat.zeroSizeMatrix ()
-        else
-            result = mat.newColumnVector
-               (vec.fromList (map reconstructOne [0 .. s.channels-1]));
-            m = sourceRate / g;
+    fill rowdata n =
+        fold do count i: 
+            if expired? () then
+                count
+            else
 
-            // I'm sure the sums for drop, take, phase could be simpler
-
-            drop = int Math#ceil((max 0 (m - phase)) / inputSpacing);
-            take = int ((m + ((flen - 1 - phase) % inputSpacing))
-                        / inputSpacing);
+                for [0..s.channels-1] do ch:
+                    reconstructOne rowdata ch i;
+                done;
             
-            phase := (phase - m);
-            phase < 0 loop phase := phase + inputSpacing;
-            phase := phase % inputSpacing;
+                m = sourceRate / g;
+    
+                // I'm sure the sums for drop, take, phase could be simpler
+    
+                drop = int Math#ceil((max 0 (m - phase)) / inputSpacing);
+                take = int ((m + ((flen - 1 - phase) % inputSpacing))
+                            / inputSpacing);
+                
+                phase := (phase - m);
+                phase < 0 loop phase := phase + inputSpacing;
+                phase := phase % inputSpacing;
 
-            next = s.read take;
-            buffer := mat.concat (Horizontal ())
-               [mat.columnSlice buffer drop flen, next];
+//print "[\(drop):\(take)] ";
 
-            remaining := if remaining > 0 then remaining - 1 else 0 fi;
-            pos := pos + 1;
-            result
-        fi;
+                next = s.read take;
+                buffer := mat.concat (Horizontal ())
+                   [mat.columnSlice buffer drop flen, next];
+
+                remaining := if remaining > 0 then remaining - 1 else 0 fi;
+                pos := pos + 1;
+
+                count + 1;
+            fi
+        done 0 [0..n-1];
     
     s with
     {
@@ -296,8 +301,15 @@ resampledDirectlyTo targetRate s =
             esac,
         get finished? () = expired? (),
         read n = 
-            mat.toRowMajor
-               (mat.concat (Horizontal ()) (map do _: readOne () done [1..n])),
+           (rowdata = array (map \(new double[n]) [1..s.channels]);
+println "n = \(n)";
+            obtained = fill rowdata n;
+            scaleFactor = min 1.0 (targetRate / sourceRate);
+            result = mat.newMatrix (RowMajor ())
+               (map do r: bf.scaled scaleFactor (vec.vector r) done rowdata);
+            if obtained < n then mat.columnSlice result 0 obtained
+            else result
+            fi)
     });
 
 resampledTo = resampledDirectlyTo;
