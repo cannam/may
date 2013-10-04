@@ -36,10 +36,10 @@ compareMatrices tolerance obtained expected =
         count = 40;
         faulty = mat.enumerate (mat.filter (>= tolerance) d);
         for (take count faulty) do f:
-            println " * at (\(f.i),\(f.j)) expected: \(mat.at expected f.i f.j); obtained: \(mat.at obtained f.i f.j); diff: \(f.v)";
+            println " * at (\(f.i),\(f.j)) diff of \(f.v) (expected: \(mat.at expected f.i f.j); obtained: \(mat.at obtained f.i f.j))";
         done;
         if length faulty > count then
-            print "** (only first \(count) of \(length faulty) shown)";
+            println "** (only first \(count) of \(length faulty) shown)";
         fi;
         false;
     fi);
