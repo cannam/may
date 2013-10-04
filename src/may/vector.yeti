@@ -22,9 +22,8 @@ zeros n =
 /// Return a vector of length n, containing all m.
 consts m n =
    (a = zeros n;
-    for [0..n-1] do i:
-        a[i] := m;
-    done;
+    d = [m] as ~double[];
+    Arrays#fill(a, d[0]); //!!! wanted "m as ~double", compiler didn't like it
     a);
 
 /// Return a vector of length n, containing all ones.
@@ -125,15 +124,19 @@ reverse v is ~double[] -> ~double[] =
 /// given vectors, in order. (Unlike the standard module list concat
 /// function, this one cannot be lazy.)
 concat vv is list?<~double[]> -> ~double[] =
-   (len = sum (map length' vv);
-    vout = zeros len;
-    var base = 0;
-    for vv do v: 
-        vlen = length' v;
-        for [0..vlen-1] do i: vout[base + i] := v[i] done;
-        base := base + vlen;
-    done;
-    vout);
+    if empty? vv then zeros 0
+    else
+        len = sum (map length' vv);
+        v0 = head vv;
+        vout = Arrays#copyOf(v0, len);
+        var base = length' v0;
+        for (tail vv) do v: 
+            vlen = length' v;
+            System#arraycopy(v, 0, vout, base, vlen);
+            base := base + vlen;
+        done;
+        vout;
+    fi;
 
 /// Return a single new vector that contains the contents of the given
 /// vector, repeated n times. The vector will therefore have length n
