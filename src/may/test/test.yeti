@@ -1,5 +1,7 @@
 module may.test.test;
 
+mat = load may.matrix;
+
 import yeti.lang: FailureException;
 
 var goodCompares = 0;
@@ -23,6 +25,24 @@ compareUsing comparator obtained expected =
     fi;
 
 compare obtained expected = compareUsing (==) obtained expected;
+
+compareMatrices tolerance obtained expected =
+   (d = mat.abs (mat.difference obtained expected);
+    if mat.all (< tolerance) d then
+        goodCompares := goodCompares + 1;
+        true;
+    else
+        println "** value(s) outside tolerance \(tolerance) from expected:";
+        count = 40;
+        faulty = mat.enumerate (mat.filter (>= tolerance) d);
+        for (take count faulty) do f:
+            println " * at (\(f.i),\(f.j)) expected: \(mat.at expected f.i f.j); obtained: \(mat.at obtained f.i f.j); diff: \(f.v)";
+        done;
+        if length faulty > count then
+            print "** (only first \(count) of \(length faulty) shown)";
+        fi;
+        false;
+    fi);
 
 time msg f =
    (start = System#currentTimeMillis();
@@ -58,7 +78,7 @@ runTests group testHash =
     bad);
 
 {
-    compare, compareUsing, assert,
+    compare, compareUsing, compareMatrices, assert,
     time,
     runTests, 
 }

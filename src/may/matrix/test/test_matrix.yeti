@@ -502,7 +502,24 @@ makeTests name flipper =
     compareMatrices
        (mat.filter (> 2) m)
        (newMatrix (ColumnMajor ()) [[0,0,0],[0,0,6],[0,0,3]]) and
+        compare (mat.isSparse? (mat.filter (> 2) m)) true and
         compare (mat.density (mat.filter (> 2) m)) (2/9)
+),
+
+"all-\(name)": \(
+    m = newMatrix (ColumnMajor ()) [[1,2,0],[-1,-4,6],[0,0,3]];
+    compare (mat.all (== 9) m) false and
+    compare (mat.all (!= 9) m) true and
+    compare (mat.all (== 2) m) false and
+    compare (mat.all (!= 2) m) false
+),
+
+"any-\(name)": \(
+    m = newMatrix (ColumnMajor ()) [[1,2,0],[-1,-4,6],[0,0,3]];
+    compare (mat.any (== 9) m) false and
+    compare (mat.any (!= 9) m) true and
+    compare (mat.any (== 2) m) true and
+    compare (mat.any (!= 2) m) true
 ),
 
 "newSparseMatrix-\(name)": \(

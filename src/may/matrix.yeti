@@ -294,6 +294,7 @@ makeSparse type size data =
 // cells which need to be filtered out. This is the public API for
 // makeSparse and is also used to discard out-of-range cells from
 // resizedTo.
+//!!! doc: i is row number, j is column number (throughout, for sparse stuff). Would calling them row/column be better?
 newSparseMatrix type size data =
     makeSparse type size
        (filter
@@ -474,19 +475,17 @@ abs' m =
         newMatrix (typeOf m) (map bf.abs (asColumns m));
     fi;
 
+//!!! doc: filter by predicate, always returns sparse matrix
 filter' f m =
-    if isSparse? m then
-        makeSparse (typeOf m) (size m)
-           (map do { i, j, v }: { i, j, v = if f v then v else 0 fi } done
-               (enumerate m))
-    else
-        vfilter = vec.fromList . (map do i: if f i then i else 0 fi done) . vec.list;
-        if isRowMajor? m then
-            newMatrix (typeOf m) (map vfilter (asRows m));
-        else
-            newMatrix (typeOf m) (map vfilter (asColumns m));
-        fi;
-    fi;
+    makeSparse (typeOf m) (size m)
+       (map do { i, j, v }: { i, j, v = if f v then v else 0 fi } done
+           (enumerate m));
+
+any' f m =
+    any f (map (.v) (enumerate m));
+
+all' f m =
+    all f (map (.v) (enumerate m));
 
 sparseProductLeft size m1 m2 =
    ({ values, indices, pointers } = case m1 of
@@ -779,6 +778,8 @@ resizedTo newsize m =
     difference,
     abs = abs',
     filter = filter',
+    all = all',
+    any = any',
     product,
     entryWiseProduct,
     concat,
@@ -828,6 +829,8 @@ as
     difference is matrix -> matrix -> matrix,
     abs is matrix -> matrix,
     filter is (number -> boolean) -> matrix -> matrix,
+    all is (number -> boolean) -> matrix -> boolean,
+    any is (number -> boolean) -> matrix -> boolean,
     product is matrix -> matrix -> matrix,
     entryWiseProduct is matrix -> matrix -> matrix,
     concat is (Horizontal () | Vertical ()) -> list<matrix> -> matrix,

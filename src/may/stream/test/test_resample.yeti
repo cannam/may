@@ -15,7 +15,7 @@ pl = load may.plot;//!!!
 
 //pl = { plot things = true; };
 
-{ compare, compareUsing, assert, time } = load may.test.test;
+{ compare, compareUsing, compareMatrices, assert, time } = load may.test.test;
 
 //!!! This and gcd should be Somewhere
 nextPowerOfTwo n =
@@ -29,15 +29,6 @@ windowedSignalFrom stream nsamps =
    (data = stream.read nsamps;
     windowed = win.windowedRows win.hann data;
     syn.precalculated stream.sampleRate windowed);
-
-compareClose = compareUsing 
-    do m1 m2:
-        length m1 == length m2 and 
-            all id (map2 do v1 v2:
-                length v1 == length v2 and
-                    all id (map2 do a b: abs(a - b) < 1e-10 done v1 v2)
-                done m1 m2);
-    done;
 
 [
 
@@ -128,12 +119,7 @@ compareClose = compareUsing
     result = output.read 32;
     reference = syn.sinusoid 16 2;
     expected = (windowedSignalFrom reference 32).read 32;
-    compareOutputs a b = compareClose
-       (map vec.list (mat.asRows a)) (map vec.list (mat.asRows b));
-\() (pl.plot [Vector (mat.getRow 0 result), Vector (mat.getRow 0 expected)]);
-println "diff is \(mat.difference result expected)";
-\() (pl.plot [Vector (mat.getRow 0 (mat.difference result expected))]);
-    compareOutputs result expected;
+    compareMatrices 1e-8 result expected;
 ),
 
 "decimated-sine": \(
@@ -146,14 +132,7 @@ println "diff is \(mat.difference result expected)";
     reference = syn.sinusoid 16 1;
 //    expected = mat.columnSlice (reference.read 200) 50 150;
     expected = (windowedSignalFrom reference 200).read 200;
-    compareOutputs a b = compareClose
-       (map vec.list (mat.asRows a)) (map vec.list (mat.asRows b));
-    if not compareOutputs result expected then
-\() (pl.plot [Vector (mat.getRow 0 result), Vector (mat.getRow 0 expected)]);
-        println "diff: \(mat.difference result expected)";
-\() (    pl.plot [ Vector (mat.getRow 0 (mat.difference result expected)) ] );
-	false
-    else true fi
+    compareMatrices 1e-8 result expected;
 ),
 */
 
@@ -179,7 +158,9 @@ println "diff is \(mat.difference result expected)";
     inmag = bf.divideBy incount (vec.resizedTo speclen (fft.realForwardMagnitude incount insig));
     outmag = bf.divideBy outcount (vec.resizedTo speclen (fft.realForwardMagnitude outcount outsig));
     diff = bf.subtract inmag outmag;
-//    compareClose [vec.list inmag] [vec.list outmag] or
+    compareMatrices 1e-7 (mat.newRowVector outmag) (mat.newRowVector inmag);
+/*
+//    compareMatrices 1e-8 [vec.list inmag] [vec.list outmag] or
         (//println "inmag: \(vec.list inmag)";
          //println "outmag: \(vec.list outmag)";
          //println "diff: \(vec.list diff)";
@@ -195,6 +176,7 @@ println "diff is \(mat.difference result expected)";
 //         \() (pl.plot [Vector inmag, Vector outmag]);
 //         \() (pl.plot [Vector diff]);
          false);
+*/
 ),
 
 
@@ -209,9 +191,9 @@ println "diff is \(mat.difference result expected)";
     up = resample.interpolated factor input;
     result = mat.getRow 0 (up.read (factor * vec.length data));
     phase = 0;
-    a = vec.list data;
-    b = map do i: vec.at result (i*factor + phase) done [0..vec.length data - 1];
-    compareClose [b] [a];
+    b = vec.fromList
+       (map do i: vec.at result (i*factor + phase) done [0..vec.length data - 1]);
+    compareMatrices 1e-8 (mat.newRowVector b) (mat.newRowVector data);
 ),
 
 "interpolated-rs-misc": \(
@@ -224,9 +206,9 @@ println "diff is \(mat.difference result expected)";
     up = resample.resampledTo (factor * input.sampleRate) input;
     result = mat.getRow 0 (up.read (factor * vec.length data));
     phase = 0;
-    a = vec.list data;
-    b = map do i: vec.at result (i*factor + phase) done [0..vec.length data - 1];
-    compareClose [b] [a];
+    b = vec.fromList
+       (map do i: vec.at result (i*factor + phase) done [0..vec.length data - 1]);
+    compareMatrices 1e-8 (mat.newRowVector b) (mat.newRowVector data);
 ),
 
 /*
@@ -248,7 +230,7 @@ println "diff is \(mat.difference result expected)";
         output.read (vec.length data));
 
     result = updown 0;
-    if not compareClose [vec.list (mat.getRow 0 result)] [vec.list data] then
+    if not compareMatrices 1e-8 [vec.list (mat.getRow 0 result)] [vec.list data] then
         \() (pl.plot [Vector data, 
                       Vector (mat.getRow 0 result), 
                       Vector (mat.getRow 0 (updown 1)),
