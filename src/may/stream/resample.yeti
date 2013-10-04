@@ -8,6 +8,8 @@ win = load may.signal.window;
 manip = load may.stream.manipulate;
 convolve = load may.stream.convolve;
 
+pl = load may.plot;
+
 load may.stream.type;
 load may.vector.type;
 load may.matrix.type;
@@ -209,6 +211,20 @@ resampledDirectlyTo targetRate s =
     //
     // 0 a b  [ with phase 1 ]
     // a b c  [ with phase 0 ]
+    //
+    // Having thus broken down the buffer so that only the elements we
+    // need to multiply are present, we can also unzip the filter into
+    // every-nth-element subsets at each phase, allowing us to do the
+    // filter multiplication as a simply vector multiply. That is, rather
+    // than store
+    //
+    // f1 f2 f3 f4 f5 f6 f7 f8 f9
+    // 
+    // we store separately
+    //
+    // f1 f4 f7
+    // f2 f5 f8
+    // f3 f6 f9
 
     // Get this before we do anything else with s -- we're just
     // retrieving it in order to distinguish between known-duration
@@ -225,6 +241,37 @@ resampledDirectlyTo targetRate s =
     halflen = int (flen/2); // actual filter length is halflen + halflen + 1
 
     inputSpacing = targetRate / g;
+    outputSpacing = sourceRate / g;
+
+    phaseData = array
+       (map do phase:
+
+        // This maps phase onto the filter subset for that phase, the
+        // next phase number (based on input and output spacings), and
+        // the number of elements to be dropped and refilled in the
+        // data buffer. Since these are all fixed per phase, we might
+        // as well precalculate.
+
+        // I'm sure the sums for drop, take, nextPhase could be simpler.
+
+        var nextPhase = (phase - outputSpacing);
+        nextPhase < 0 loop nextPhase := nextPhase + inputSpacing;
+        nextPhase := nextPhase % inputSpacing;
+
+        filtZipLength = int Math#ceil((flen - phase) / inputSpacing);
+
+        {
+            nextPhase,
+            filter = vec.fromList
+               (map do i: vec.at filt (i * inputSpacing + phase) done
+                    [0 .. filtZipLength-1]),
+            drop = int Math#ceil((max 0 (outputSpacing - phase)) / inputSpacing),
+            take = int ((outputSpacing + ((flen - 1 - phase) % inputSpacing))
+                        / inputSpacing),
+        };
+
+        done [0..inputSpacing-1]);
+
     var phase = halflen % inputSpacing;
     
     var buffer = mat.toRowMajor
@@ -235,19 +282,10 @@ resampledDirectlyTo targetRate s =
             },
             s.read Math#ceil((halflen + 1) / inputSpacing)
             ]);
-            
-//    println "initial buffer (for flen = \(flen) and inputSpacing = \(inputSpacing)) with input phase \(phase) is: \(vec.list (mat.getRow 0 buffer))";
+
+//    println "initial buffer (for flen = \(flen) and inputSpacing = \(inputSpacing)) with input phase \(phase) has length \(mat.width buffer)";
 
     var pos = 0;
-    
-    reconstructOne rowdata ch n is array<~double[]> -> number -> number -> () =
-       (series = mat.getRow ch buffer;
-        row = rowdata[ch];
-        for [0..(vec.length series)-1] do i:
-            a = vec.at series i;
-            b = vec.at filt (phase + i * inputSpacing);
-            row[n] := row[n] + a * b;
-        done);
 
     expired? () = 
         case initialAvailable of
@@ -255,33 +293,23 @@ resampledDirectlyTo targetRate s =
         _: (inputSpacing * mat.width buffer + phase) <= halflen;
         esac;
 
-    fill rowdata n =
+    fill rowdata n is array<~double[]> -> number -> number =
         fold do count i: 
             if expired? () then
                 count
             else
+                pd = phaseData[phase];
 
                 for [0..s.channels-1] do ch:
-                    reconstructOne rowdata ch i;
+                    rowdata[ch][i] := bf.sum
+                       (bf.multiply (mat.getRow ch buffer) pd.filter);
                 done;
             
-                m = sourceRate / g;
-    
-                // I'm sure the sums for drop, take, phase could be simpler
-    
-                drop = int Math#ceil((max 0 (m - phase)) / inputSpacing);
-                take = int ((m + ((flen - 1 - phase) % inputSpacing))
-                            / inputSpacing);
-                
-                phase := (phase - m);
-                phase < 0 loop phase := phase + inputSpacing;
-                phase := phase % inputSpacing;
-
-//print "[\(drop):\(take)] ";
-
-                next = s.read take;
                 buffer := mat.concat (Horizontal ())
-                   [mat.columnSlice buffer drop flen, next];
+                   [mat.columnSlice buffer pd.drop (mat.width buffer),
+                    s.read pd.take];
+
+                phase := pd.nextPhase;
 
                 remaining := if remaining > 0 then remaining - 1 else 0 fi;
                 pos := pos + 1;
