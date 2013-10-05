@@ -20,10 +20,9 @@ zeros n =
     new double[n];
 
 /// Return a vector of length n, containing all m.
-consts m n =
+consts m n is number -> number -> ~double[] =
    (a = zeros n;
-    d = [m] as ~double[];
-    Arrays#fill(a, d[0]); //!!! wanted "m as ~double", compiler didn't like it
+    Arrays#fill(a, m);
     a);
 
 /// Return a vector of length n, containing all ones.
