@@ -47,8 +47,8 @@ compareMatrices tolerance obtained expected =
 time msg f =
    (start = System#currentTimeMillis();
     result = f ();
-    end = System#currentTimeMillis();
-    println "\(msg): \(end-start)ms";
+    finish = System#currentTimeMillis();
+    println "\(msg): \(finish-start)ms";
     result);
 
 select f = fold do r x: if f x then x::r else r fi done [];
@@ -68,10 +68,12 @@ failedTests testHash =
         done testHash);
         
 runTests group testHash =
-   (failed = failedTests testHash;
+   (start = System#currentTimeMillis();
+    failed = failedTests testHash;
+    finish = System#currentTimeMillis();
     good = (length testHash - length failed);
     bad = length failed;
-    println "\(group): \(good)/\(good+bad) tests passed";
+    println "\(group): \(good)/\(good+bad) tests passed in \(finish-start)ms";
     if not empty? failed then
         println "\(group): Failed tests [\(bad)]: \(strJoin ' ' failed)";
     fi;
