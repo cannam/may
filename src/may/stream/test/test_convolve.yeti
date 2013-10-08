@@ -7,10 +7,6 @@ syn = load may.stream.syntheticstream;
 manip = load may.stream.manipulate;
 convolve = load may.stream.convolve;
 
-//pl = load may.plot;//!!!
-
-pl = { plot things = true; };
-
 { compare, compareUsing, assert } = load may.test.test;
 
 compareClose = compareUsing 

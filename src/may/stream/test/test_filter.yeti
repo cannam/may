@@ -8,10 +8,6 @@ fft = load may.transform.fft;
 syn = load may.stream.syntheticstream;
 filt = load may.stream.filter;
 
-//pl = load may.plot;//!!!
-
-pl = { plot things = true; };
-
 { compare, compareUsing, assert } = load may.test.test;
 
 logSpectrumFrom output n =
