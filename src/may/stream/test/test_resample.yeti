@@ -156,7 +156,7 @@ windowedSignalFrom stream nsamps =
         all id
            (map do outrate:
                 freq = 500;
-                forms = manip.duplicated 2 (waves.saw inrate freq);
+                forms = manip.duplicated 2 (waves.square inrate freq);
                 inform = forms[0];
                 outform = resample.resampledTo outrate forms[1];
                 incount = inrate;
