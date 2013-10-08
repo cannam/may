@@ -37,10 +37,11 @@ kaiserSincFilterFor { n, attenuation, bandwidth, samplerate } =
     pp = win.kaiserParameters (ByFrequency { attenuation, bandwidth, samplerate });
     length = if pp.length % 2 == 0 then pp.length + 1 else pp.length fi;
     kw = win.kaiser (pp with { length });
+    middle = System#currentTimeMillis();
     sw = win.sinc (n*2) length;
     filter = bf.multiply sw kw;
     after = System#currentTimeMillis();
-    println "filter generation took \(after - before)ms";
+    println "filter generation took \(after - before)ms (kaiser \(middle - before)ms, sinc \(after - middle)ms)";
     filter);
 
 durationAdjusterFor factor s =
@@ -134,37 +135,14 @@ resampledDirectlyTo targetRate s =
 
     fparams = {
         n = peakToPole,
-        attenuation = 120,
-        bandwidth = (lower / g) / 1000,
+        attenuation = 100,
+        bandwidth = 0.02,
         samplerate = (higher / g),
     };
 
     filt = kaiserSincFilterFor fparams;
 
     println "for target rate \(targetRate) and source rate \(sourceRate), gcd = \(g) and peakToPole = \(peakToPole), filt parameters \(fparams), filter length \(vec.length filt)";
-
-//filt = kaiserSincWindow 7 peakToPole 80;
-//println "temporary: filter length \(vec.length filt)";
-
-    println "for target rate \(targetRate) and source rate \(sourceRate), gcd = \(g) and peakToPole = \(peakToPole), filter length \(vec.length filt)";
-
-    //!!! ponder
-/*
-    filt = kaiserSincFilterFor {
-        n = peakToPole,
-        attenuation = 140,
-//        bandwidth = 10,
-        bandwidth = lower / 100,
-        samplerate = lower
-    };
-
-    filt = kaiserSincFilterFor {
-        n = peakToPole, 
-        attenuation = 80, 
-        bandwidth = 1, 
-        samplerate = higher
-    };
-*/
 
     // Now we have a filter of (odd) length flen in which the lower
     // sample rate corresponds to every n'th point and the higher rate
@@ -283,7 +261,7 @@ resampledDirectlyTo targetRate s =
             s.read Math#ceil((halflen + 1) / inputSpacing)
             ]);
 
-//    println "initial buffer (for flen = \(flen) and inputSpacing = \(inputSpacing)) with input phase \(phase) has length \(mat.width buffer)";
+    println "initial buffer (for flen = \(flen), inputSpacing = \(inputSpacing), outputSpacing = \(outputSpacing)) with input phase \(phase) has length \(mat.width buffer)";
 
     var pos = 0;
 

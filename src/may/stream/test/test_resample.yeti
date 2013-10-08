@@ -47,13 +47,11 @@ windowedSignalFrom stream nsamps =
         compare str.available (Known 4) and
         compare str.finished? false and
        (r = str.read 3;
-        println "r = \(r)";
         compare (mat.size r) { rows = 1, columns = 3 }) and
         compare str.position 3 and
         compare str.available (Known 1) and
         compare str.finished? false and
        (r = str.read 3;
-        println "r = \(r)";
         compare (mat.size r) { rows = 1, columns = 1 }) and
         compare str.position 4 and
         compare str.available (Known 0) and
@@ -137,48 +135,43 @@ windowedSignalFrom stream nsamps =
 */
 
 "resample-spectrum": \(
-    // Generate a wave with a lot of harmonics, resample by some
-    // ratio, check that the resulting signal has substantially the
-    // same magnitude spectrum as the original
-    inrate = 44100;
-    outrate = 48000;
-    freq = 500;
-    forms = manip.duplicated 2 (waves.saw inrate freq);
-    inform = forms[0];
-    outform = resample.resampledTo outrate forms[1];
+    // Principle: Generate a wave with a lot of harmonics, resample by
+    // some ratio, check that the resulting signal has substantially
+    // the same magnitude spectrum as the original.
+    
+    // Read and window a chunk of signal from a stream
     sigOf str n =
-       (\() (str.read n);
-        sig = mat.getRow 0 (str.read n);
+       (sig = mat.getRow 0 (str.read n);
         win.windowed win.hann sig);
-    incount = inrate;
-    outcount = outrate;
-    insig = time "read original, \(incount*2) at rate \(inrate)" \(sigOf inform incount);
-    outsig = time "read resampled, \(outcount*2) at rate \(outrate)" \(sigOf outform outcount);
-    speclen = (min incount outcount) / 2 + 1;
-    inmag = bf.divideBy incount (vec.resizedTo speclen (fft.realForwardMagnitude incount insig));
-    outmag = bf.divideBy outcount (vec.resizedTo speclen (fft.realForwardMagnitude outcount outsig));
-    diff = bf.subtract inmag outmag;
-    compareMatrices 1e-7 (mat.newRowVector outmag) (mat.newRowVector inmag);
-/*
-//    compareMatrices 1e-8 [vec.list inmag] [vec.list outmag] or
-        (//println "inmag: \(vec.list inmag)";
-         //println "outmag: \(vec.list outmag)";
-         //println "diff: \(vec.list diff)";
-         println "\nout of range: ";
-         var i = 0;
-         for (vec.list diff) do d:
-             if abs d > 1e-8 then
-                 print " * \(d) at \(i) [\(vec.at inmag i) vs \(vec.at outmag i)]\n";
-             fi;
-             i := i + 1;
-         done;
-         println "";
-//         \() (pl.plot [Vector inmag, Vector outmag]);
-//         \() (pl.plot [Vector diff]);
-         false);
-*/
-),
 
+    // Return magnitude spectrum, running fft at n points and then
+    // truncating to m
+    specOf sig n m =
+        vec.resizedTo m (bf.divideBy n (fft.realForwardMagnitude n sig));
+
+  //!!! better to generate n separate tests here?
+
+    all id
+       (map do inrate: 
+        all id
+           (map do outrate:
+                freq = 500;
+                forms = manip.duplicated 2 (waves.saw inrate freq);
+                inform = forms[0];
+                outform = resample.resampledTo outrate forms[1];
+                incount = inrate;
+                outcount = outrate;
+                // We don't compare bins within 1% of the Nyquist freq
+                speclen = (min incount outcount) / 2;
+                speclen = speclen - int (speclen / 100);
+                inmag = specOf (sigOf inform incount) incount speclen;
+                outmag = specOf (sigOf outform outcount) outcount speclen;
+                compareMatrices 1e-7
+                   (mat.newRowVector outmag)
+                   (mat.newRowVector inmag);
+            done [8000,44100,48000])
+        done [8000,44100,48000]);
+),
 
 "interpolated-misc": \(
     // Interpolating any signal by N should give a signal in which
