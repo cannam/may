@@ -99,20 +99,17 @@ sinc p n =
     fi;
 
 //!!! if kaiser is going to take a structure, so I guess should sinc and cosineWindow
-kaiser { length, beta } =
+calculateKaiser { length, beta } =
    (terms = 20;
     fact x = fold do x y: x*y done 1 [1..x];   // x!
     ipow a b = fold do x _: x*a done 1 [1..b]; // a^b where b∈ℕ
     factorials = array (map fact [1..terms]);
     bes0 x = 
-       (term x i =
-            case i of
-             0: 1;
-             _:
-                 f = factorials[i-1];
-                 (ipow (x/2) (i*2)) / (f * f);
-            esac;
-        sum (map (term x) [0..terms]));
+        1 + sum
+           (map do i:
+                f = factorials[i-1];
+                (ipow (x/2) (i*2)) / (f * f);
+                done [1..terms]);
     denominator = bes0 beta;
     kw = vec.fromList
        (map do i:
@@ -120,6 +117,16 @@ kaiser { length, beta } =
             bes0 (beta * sqrt (1 - k*k)) / denominator;
             done [0..length-1]);
     kw);
+
+kaisers = [:];
+
+kaiser params =
+   (if not (params in kaisers)
+    then
+        k = calculateKaiser params;
+        kaisers[params] := k;
+    fi;
+    kaisers[params]);
 
 /**
  * Calculate beta and length for a Kaiser window with the given
