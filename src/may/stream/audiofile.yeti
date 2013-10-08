@@ -153,6 +153,7 @@ write str name is stream -> string -> number =
     n = AudioSystem#write(new AudioInputStream(new StreamAdapter()),
                           AudioFileFormat$Type#WAVE, f);
     str.close ();
+//!!! no, the header size is included in the return value!
     n / (channels * bitdepth));
 
 {

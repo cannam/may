@@ -101,10 +101,14 @@ multiply b1 b2 =
     vec.vector out);
 
 scaled n v =
-    vec.fromList (map (* n) (vec.list v));
+    if n == 1 then v
+    else vec.fromList (map (* n) (vec.list v));
+    fi;
 
 divideBy n v =  // Not just "scaled (1/n)" -- this way we get exact rationals
-    vec.fromList (map (/ n) (vec.list v));
+    if n == 1 then v
+    else vec.fromList (map (/ n) (vec.list v));
+    fi;
 
 sqr v =
     multiply v v;
