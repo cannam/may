@@ -8,8 +8,6 @@ win = load may.signal.window;
 manip = load may.stream.manipulate;
 convolve = load may.stream.convolve;
 
-pl = load may.plot;
-
 load may.stream.type;
 load may.vector.type;
 load may.matrix.type;
@@ -33,15 +31,13 @@ kaiserSincWindow zc n alpha =
  * will contain an odd number of samples.
  */
 kaiserSincFilterFor { n, attenuation, bandwidth, samplerate } =
-   (before = System#currentTimeMillis();
-    pp = win.kaiserParameters (ByFrequency { attenuation, bandwidth, samplerate });
+   (pp = win.kaiserParameters (ByFrequency { attenuation, bandwidth, samplerate });
     length = if pp.length % 2 == 0 then pp.length + 1 else pp.length fi;
+    maxlength = 200001;
+    length = if length > maxlength then maxlength else length fi;
     kw = win.kaiser (pp with { length });
-    middle = System#currentTimeMillis();
     sw = win.sinc (n*2) length;
     filter = bf.multiply sw kw;
-    after = System#currentTimeMillis();
-    println "filter generation took \(after - before)ms (kaiser \(middle - before)ms, sinc \(after - middle)ms)";
     filter);
 
 durationAdjusterFor factor s =
@@ -140,9 +136,11 @@ resampledDirectlyTo targetRate s =
         samplerate = (higher / g),
     };
 
+//    println "for target rate \(targetRate) and source rate \(sourceRate), gcd = \(g) and peakToPole = \(peakToPole), filt parameters \(fparams)";
+
     filt = kaiserSincFilterFor fparams;
 
-    println "for target rate \(targetRate) and source rate \(sourceRate), gcd = \(g) and peakToPole = \(peakToPole), filt parameters \(fparams), filter length \(vec.length filt)";
+//    println "resulting filter length \(vec.length filt)";
 
     // Now we have a filter of (odd) length flen in which the lower
     // sample rate corresponds to every n'th point and the higher rate
@@ -261,8 +259,6 @@ resampledDirectlyTo targetRate s =
             s.read Math#ceil((halflen + 1) / inputSpacing)
             ]);
 
-    println "initial buffer (for flen = \(flen), inputSpacing = \(inputSpacing), outputSpacing = \(outputSpacing)) with input phase \(phase) has length \(mat.width buffer)";
-
     var pos = 0;
 
     expired? () = 
@@ -308,7 +304,6 @@ resampledDirectlyTo targetRate s =
         get finished? () = expired? (),
         read n = 
            (rowdata = array (map \(new double[n]) [1..s.channels]);
-println "n = \(n)";
             obtained = fill rowdata n;
             scaleFactor = min 1.0 (targetRate / sourceRate);
             result = mat.newMatrix (RowMajor ())

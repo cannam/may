@@ -11,24 +11,7 @@ win = load may.signal.window;
 waves = load may.stream.waves;
 fft = load may.transform.fft;
 
-pl = load may.plot;//!!!
-
-//pl = { plot things = true; };
-
 { compare, compareUsing, compareMatrices, assert, time } = load may.test.test;
-
-//!!! This and gcd should be Somewhere
-nextPowerOfTwo n =
-   (nextPowerOfTwo' p n =
-        if p >= n then p
-        else nextPowerOfTwo' (p * 2) n
-        fi;
-    nextPowerOfTwo' 1 n);
-
-windowedSignalFrom stream nsamps =
-   (data = stream.read nsamps;
-    windowed = win.windowedRows win.hann data;
-    syn.precalculated stream.sampleRate windowed);
 
 [
 
@@ -108,31 +91,55 @@ windowedSignalFrom stream nsamps =
         ( str.close (); true )
 ),
 
-/*
 "interpolated-sine": \(
-    // Interpolating a windowed sinusoid should give us a windowed sinusoid
+    // Interpolating a sinusoid should give us a sinusoid, once we've
+    // dropped the first few samples
     sinusoid = syn.sinusoid 8 2; // 2Hz sine sampled at 8Hz: [ 0, 1, 0, -1 ] etc
-    input = windowedSignalFrom sinusoid 16;
-    output = resample.interpolated 2 input;
-    result = output.read 32;
+    output = resample.interpolated 2 sinusoid;
+    \() (output.read 300);
+    result = output.read 200;
     reference = syn.sinusoid 16 2;
-    expected = (windowedSignalFrom reference 32).read 32;
-    compareMatrices 1e-8 result expected;
+    \() (reference.read 300);
+    expected = reference.read 200;
+    compareMatrices 1e-4 result expected;
+),
+
+"interpolated-rs-sine": \(
+    // Just as above, but using resampledTo instead of interpolated
+    sinusoid = syn.sinusoid 8 2; // 2Hz sine sampled at 8Hz: [ 0, 1, 0, -1 ] etc
+    output = resample.resampledTo 16 sinusoid;
+    \() (output.read 300);
+    result = output.read 200;
+    reference = syn.sinusoid 16 2;
+    \() (reference.read 300);
+    expected = reference.read 200;
+    compareMatrices 1e-4 result expected;
 ),
 
 "decimated-sine": \(
-    // Decimating a windowed sinusoid should give us a windowed sinusoid
+    // Decimating a sinusoid should give us a sinusoid, once we've
+    // dropped the first few samples
     sinusoid = syn.sinusoid 32 1; // 1Hz sine sampled at 32Hz
-    input = windowedSignalFrom sinusoid 400;
-    output = resample.decimated 2 input;
-//    result = mat.columnSlice (output.read 200) 50 150;
+    output = resample.decimated 2 sinusoid;
+    \() (output.read 300);
     result = output.read 200;
     reference = syn.sinusoid 16 1;
-//    expected = mat.columnSlice (reference.read 200) 50 150;
-    expected = (windowedSignalFrom reference 200).read 200;
-    compareMatrices 1e-8 result expected;
+    \() (reference.read 300);
+    expected = reference.read 200;
+    compareMatrices 1e-4 result expected;
 ),
-*/
+
+"decimated-rs-sine": \(
+    // Just as above, but using resampledTo instead of interpolated
+    sinusoid = syn.sinusoid 32 1; // 1Hz sine sampled at 32Hz
+    output = resample.resampledTo 16 sinusoid;
+    \() (output.read 300);
+    result = output.read 200;
+    reference = syn.sinusoid 16 1;
+    \() (reference.read 300);
+    expected = reference.read 200;
+    compareMatrices 1e-4 result expected;
+),
 
 "resample-spectrum": \(
     // Principle: Generate a wave with a lot of harmonics, resample by
@@ -149,28 +156,28 @@ windowedSignalFrom stream nsamps =
     specOf sig n m =
         vec.resizedTo m (bf.divideBy n (fft.realForwardMagnitude n sig));
 
-  //!!! better to generate n separate tests here?
-
     all id
-       (map do inrate: 
-        all id
-           (map do outrate:
-                freq = 500;
-                forms = manip.duplicated 2 (waves.square inrate freq);
-                inform = forms[0];
-                outform = resample.resampledTo outrate forms[1];
-                incount = inrate;
-                outcount = outrate;
-                // We don't compare bins within 1% of the Nyquist freq
-                speclen = (min incount outcount) / 2;
-                speclen = speclen - int (speclen / 100);
-                inmag = specOf (sigOf inform incount) incount speclen;
-                outmag = specOf (sigOf outform outcount) outcount speclen;
-                compareMatrices 1e-7
-                   (mat.newRowVector outmag)
-                   (mat.newRowVector inmag);
-            done [8000,44100,48000])
-        done [8000,44100,48000]);
+       (map do { inrate, outrate }:
+            freq = 500;
+            forms = manip.duplicated 2 (waves.square inrate freq);
+            inform = forms[0];
+            outform = resample.resampledTo outrate forms[1];
+            incount = inrate;
+            outcount = outrate;
+            // We don't compare bins within 1% of the Nyquist freq
+            speclen = (min incount outcount) / 2;
+            speclen = speclen - int (speclen / 100);
+            inmag = specOf (sigOf inform incount) incount speclen;
+            outmag = specOf (sigOf outform outcount) outcount speclen;
+            compareMatrices 1e-7
+               (mat.newRowVector outmag)
+               (mat.newRowVector inmag);
+        done [
+            { inrate =  8000, outrate = 44100 },
+            { inrate = 48000, outrate = 44100 },
+            { inrate = 44100, outrate = 22050 },
+            { inrate = 48000, outrate =  8000 },
+        ]);
 ),
 
 "interpolated-misc": \(
@@ -183,10 +190,9 @@ windowedSignalFrom stream nsamps =
     factor = 3;
     up = resample.interpolated factor input;
     result = mat.getRow 0 (up.read (factor * vec.length data));
-    phase = 0;
     b = vec.fromList
-       (map do i: vec.at result (i*factor + phase) done [0..vec.length data - 1]);
-    compareMatrices 1e-8 (mat.newRowVector b) (mat.newRowVector data);
+       (map do i: vec.at result (i*factor) done [0..vec.length data - 1]);
+    compareMatrices 1e-5 (mat.newRowVector b) (mat.newRowVector data);
 ),
 
 "interpolated-rs-misc": \(
@@ -198,42 +204,21 @@ windowedSignalFrom stream nsamps =
     factor = 3;
     up = resample.resampledTo (factor * input.sampleRate) input;
     result = mat.getRow 0 (up.read (factor * vec.length data));
-    phase = 0;
     b = vec.fromList
-       (map do i: vec.at result (i*factor + phase) done [0..vec.length data - 1]);
-    compareMatrices 1e-8 (mat.newRowVector b) (mat.newRowVector data);
+       (map do i: vec.at result (i*factor) done [0..vec.length data - 1]);
+    compareMatrices 1e-5 (mat.newRowVector b) (mat.newRowVector data);
 ),
 
-/*
-"int-dec": \(
-    // Interpolating any signal then decimating by the same factor
-    // should get us the original back again
-    //!!! no, this is phase dependent
-//    data = vec.fromList [ 0, 0.1, -0.3, -0.4, -0.3, 0, 0.5, 0.2, 0.8, -0.1 ];
-//    data = vec.concat [ data, bf.scaled (5/4) data, bf.scaled (3/4) data, data ];
-    data = vec.fromList [ 0, 1, 2, 3 ];
+"same-rate": \(
+    // Test that resample to the original rate leaves data unchanged
+    data = vec.fromList [ 0, 0.1, -0.3, -0.4, -0.3, 0, 0.5, 0.2, 0.8, -0.1 ];
+    data = vec.concat [ data, bf.scaled (5/4) data, bf.scaled (3/4) data, data ];
     data = vec.concat [ data, data ];
-
-    factor = 3;
-
-    updown prepad =
-       (input = manip.withDuration (vec.length data) (syn.precalculatedMono 4 data);
-        intermediate = resample.interpolated factor input;
-        output = resample.decimated factor (manip.delayedBy prepad intermediate);
-        output.read (vec.length data));
-
-    result = updown 0;
-    if not compareMatrices 1e-8 [vec.list (mat.getRow 0 result)] [vec.list data] then
-        \() (pl.plot [Vector data, 
-                      Vector (mat.getRow 0 result), 
-                      Vector (mat.getRow 0 (updown 1)),
-                      Vector (mat.getRow 0 (updown 2))]);
-        up = (resample.interpolated 2 (syn.precalculatedMono 4 data)).read 80;
-        \() (pl.plot [Vector (mat.getRow 0 up)]);
-
-        false
-    else true fi;
+    input = syn.precalculatedMono 4 data;
+    output = resample.resampledTo (input.sampleRate) input;
+    b = output.read (vec.length data);
+    compareMatrices 1e-8 b (mat.newRowVector data);
 ),
-*/
+
 ] is hash<string, () -> boolean>;
 
