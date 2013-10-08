@@ -38,7 +38,7 @@ complexToPacked arr =
 realForward n = 
    (d = new DoubleFFT_1D(n);
     do bl:
-        v = vec.primitive bl;
+        v = vec.primitive (vec.resizedTo n bl);
         d#realForward(v);
         packedToComplex (vec.length bl) v;
     done);
