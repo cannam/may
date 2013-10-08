@@ -7,6 +7,10 @@
  * list<number>, a vector can be faster and more compact when dealing
  * with dense data of suitable range and precision such as sampled
  * sequences.
+ *
+ * Because vectors are immutable, functions that transform them will
+ * return the original data for identity transformations
+ * (e.g. resizing to the vector's existing length).
  */
 
 module may.vector;
@@ -87,28 +91,34 @@ equalUnder comparator v1 v2 =
 copyOf v is ~double[] -> ~double[] =
     Arrays#copyOf(v, list' v |> length);
 
+/// Return the given vector as a primitive array. Modifying the
+/// array contents will not affect the original vector.
+primitive = copyOf;
+
 /// Return a new vector containing a subset of the elements of the
-/// given vector, from index start (inclusive) to index end
+/// given vector, from index start (inclusive) to index finish
 /// (exclusive). (The function name and argument order are chosen for
 /// symmetry with the standard library slice and strSlice functions.)
-slice v start end is ~double[] -> number -> number -> ~double[] =
-    if start < 0 then slice v 0 end
-    elif start > length' v then slice v (length' v) end
+slice v start finish is ~double[] -> number -> number -> ~double[] =
+   (len = length' v;
+    if start == 0 and finish == len then v
+    elif start < 0 then slice v 0 finish
+    elif start > len then slice v len finish
+    elif finish < start then slice v start start
+    elif finish > len then slice v start len
     else
-        if end < start then slice v start start
-        elif end > length' v then slice v start (length' v)
-        else
-            Arrays#copyOfRange(v, start, end);
-        fi
+        Arrays#copyOfRange(v, start, finish);
+    fi);
+
+/// Return a vector of length n, containing the contents of the given
+/// vector v. If v is longer than n, the contents will be truncated;
+/// if shorter, they will be padded with zeros.
+resizedTo n v is number -> ~double[] -> ~double[] =
+    if n == length' v then v;
+    else Arrays#copyOf(v, n);
     fi;
 
-/// Return a new vector of length n, containing the contents of the
-/// given vector v. If v is longer than n, the contents will be
-/// truncated; if shorter, they will be padded with zeros.
-resizedTo n v is number -> ~double[] -> ~double[] =
-    Arrays#copyOf(v, n);
-
-/// Return a new vector that is the reverse of the given vector.  Name
+/// Return a vector that is the reverse of the given vector.  Name
 /// chosen (in preference to passive "reversed") for symmetry with the
 /// standard library list reverse function.
 reverse v is ~double[] -> ~double[] =
@@ -123,19 +133,20 @@ reverse v is ~double[] -> ~double[] =
 /// given vectors, in order. (Unlike the standard module list concat
 /// function, this one cannot be lazy.)
 concat vv is list?<~double[]> -> ~double[] =
-    if empty? vv then zeros 0
-    else
-        len = sum (map length' vv);
-        v0 = head vv;
-        vout = Arrays#copyOf(v0, len);
-        var base = length' v0;
-        for (tail vv) do v: 
-            vlen = length' v;
-            System#arraycopy(v, 0, vout, base, vlen);
-            base := base + vlen;
-        done;
-        vout;
-    fi;
+    case vv of
+        [v]: v;
+        v0::rest:
+           (len = sum (map length' vv);
+            vout = Arrays#copyOf(v0 is ~double[], len);
+            var base = length' v0;
+            for rest do v: 
+                vlen = length' v;
+                System#arraycopy(v, 0, vout, base, vlen);
+                base := base + vlen;
+            done;
+            vout);
+        _: zeros 0;
+    esac;
 
 /// Return a single new vector that contains the contents of the given
 /// vector, repeated n times. The vector will therefore have length n
@@ -148,7 +159,7 @@ repeated v n is ~double[] -> number -> ~double[] =
     consts,
     ones,
     vector v = v,
-    primitive = copyOf,
+    primitive,
     floats,
     fromFloats,
     fromList,
