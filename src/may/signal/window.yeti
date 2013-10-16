@@ -111,12 +111,16 @@ calculateKaiser { length, beta } =
                 (ipow (x/2) (i*2)) / (f * f);
                 done [1..terms]);
     denominator = bes0 beta;
-    kw = vec.fromList
-       (map do i:
+    even = (length % 2 == 0);
+    halflen = if even then length/2 else (length+1)/2 fi;
+    half =
+        map do i:
             k = 2*i / (length-1) - 1;
             bes0 (beta * sqrt (1 - k*k)) / denominator;
-            done [0..length-1]);
-    kw);
+            done [0..halflen-1];
+    vec.fromList
+       (half ++
+            if even then reverse half else drop 1 (reverse half) fi));
 
 kaisers = [:];
 
