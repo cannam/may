@@ -7,6 +7,9 @@ module may.stream.waves;
 { sinusoid } = load may.stream.syntheticstream;
 { sum, scaledBy } = load may.stream.manipulate;
 
+//!!! todo: test; make sure outputs are in range [-1,1) (which
+//currently they're not)
+
 square rate freq = 
     sum
        (map do n: 

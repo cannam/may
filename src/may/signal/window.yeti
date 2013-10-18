@@ -107,7 +107,7 @@ calculateKaiser { length, beta } =
     bes0 x = 
         1 + sum
            (map do i:
-                f = factorials[i-1];
+                f = factorials[i-1]; // this is i!, not (i-1)!
                 (ipow (x/2) (i*2)) / (f * f);
                 done [1..terms]);
     denominator = bes0 beta;

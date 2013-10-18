@@ -37,8 +37,7 @@ kaiserSincFilterFor { n, attenuation, bandwidth, samplerate } =
     length = if length > maxlength then maxlength else length fi;
     kw = win.kaiser (pp with { length });
     sw = win.sinc (n*2) length;
-    filter = bf.multiply sw kw;
-    filter);
+    bf.multiply sw kw);
 
 durationAdjusterFor factor s =
     case s.available of
@@ -201,6 +200,16 @@ resampledDirectlyTo targetRate s =
     // f1 f4 f7
     // f2 f5 f8
     // f3 f6 f9
+    //
+    // Each time we complete a multiply-and-sum, we need to work out
+    // how many (real) samples to drop from the start of our buffer,
+    // and how many to add at the end of it for the next multiply.  We
+    // know we want to drop enough real samples to move along by one
+    // computed output sample, which is our outputSpacing number of
+    // virtual buffer samples. Depending on the relationship between
+    // input and output spacings, this may mean dropping several real
+    // samples, one real sample, or none at all (and simply moving to
+    // a different "phase").
 
     // Get this before we do anything else with s -- we're just
     // retrieving it in order to distinguish between known-duration
