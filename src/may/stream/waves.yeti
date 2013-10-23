@@ -6,32 +6,68 @@ module may.stream.waves;
 
 { sinusoid } = load may.stream.syntheticstream;
 { sum, scaledBy } = load may.stream.manipulate;
+{ precalculatedRepeated } = load may.stream.syntheticstream;
+{ gcd } = load may.mathmisc;
 
-//!!! todo: test; make sure outputs are in range [-1,1) (which
-//currently they're not)
+load may.stream.type;
 
-square rate freq = 
+cycleLengthFor rate freq = 
+    // The number of samples we can cache and repeat from a wavetable,
+    // in order to exactly reproduce a signal of the given frequency
+    // at the given samplerate. 
+   (if rate == int rate and freq == int freq and rate > 0 and freq > 0 then
+        rate / (gcd rate freq)
+    else
+        period = rate / freq;
+        m = find do i: i * period == int (i * period) done [1..rate];
+        if empty? m then 0
+        else period * (head m)
+        fi
+    fi);
+
+square' rate freq = 
     sum
        (map do n: 
             m = n*2 + 1;
             scaledBy (1/m)
                (sinusoid rate (m * freq))
-            done [0 .. int (rate/4 / freq) - 1]);
+            done (0 :: [1 .. int (rate/4 / freq) - 1]));
 
-saw rate freq =
+saw' rate freq =
     sum
        (map do n:
             scaledBy if n % 2 == 0 then -1/n else 1/n fi
                (sinusoid rate (n * freq))
             done [1 .. int (rate/2 / freq)]);
 
-triangle rate freq = 
+triangle' rate freq = 
     sum
        (map do n: 
             m = n*2 + 1;
             scaledBy if n % 2 == 0 then -1/(m*m) else 1/(m*m) fi
                (sinusoid rate (m * freq))
-            done [0 .. int (rate/4 / freq) - 1]);
+            done (0 :: [1 .. int (rate/4 / freq) - 1]));
 
-{ square, saw, triangle }
+cached f rate freq =
+   (n = cycleLengthFor rate freq;
+    if n == 0 then
+        f rate freq;
+    else
+        // one could alternatively do
+        //   repeated (precalculated rate ((f rate freq).read n))
+        // or
+        //   repeated (withDuration n (f rate freq))
+        precalculatedRepeated rate ((f rate freq).read n);
+    fi);
+
+square = cached square';
+saw = cached saw';
+triangle = cached triangle';
+
+{
+    square is number -> number -> stream,
+    saw is number -> number -> stream, 
+    triangle is number -> number -> stream,
+    cycleLengthFor is number -> number -> number,
+}
 

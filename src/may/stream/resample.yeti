@@ -7,6 +7,7 @@ bf = load may.vector.blockfuncs;
 win = load may.signal.window;
 manip = load may.stream.manipulate;
 convolve = load may.stream.convolve;
+maths = load may.mathmisc;
 
 load may.stream.type;
 load may.vector.type;
@@ -85,15 +86,13 @@ decimated factor s = //!!! factor must be an integer [how to enforce this??]
         out with { get sampleRate () = s.sampleRate / factor };
     fi;
 
-gcd a b = (c = a % b; if c == 0 then b else gcd b c fi);
-
 /**
  * Resample a stream to the given target rate, using separate successive
  * interpolation and decimation processes. This should give the same 
  * results as resampledDirectlyTo, but in most cases should be slower.
  */
 resampledUpDownTo targetRate s =
-   (g = gcd targetRate s.sampleRate;
+   (g = maths.gcd targetRate s.sampleRate;
     decimated (s.sampleRate / g) (interpolated (targetRate / g) s));
 
 /**
@@ -111,7 +110,7 @@ resampledDirectlyTo targetRate s =
     sourceRate = s.sampleRate;
     higher = max sourceRate targetRate;
     lower = min sourceRate targetRate;
-    g = gcd higher lower;
+    g = maths.gcd higher lower;
 
     // Example: ratio of 3:4 in sample periods, corresponding to
     // e.g. resampling from 48kHz to 36kHz. The lower rate has the

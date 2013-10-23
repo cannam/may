@@ -72,6 +72,32 @@ precalculated rate data =
         close = \(),
     });
 
+precalculatedRepeated rate data =
+   (n = mat.width data;
+    c = mat.height data;
+    chunks count pos =
+        if count > 0 then
+            ix = pos % n;
+            rc = min count (n - ix);
+            mat.columnSlice data ix (ix + rc) :.
+              \(chunks (count - rc) (pos + rc));
+        else
+            []
+        fi;
+    var position = 0;
+    {
+        get position () = position,
+        get channels () = c,
+        get sampleRate () = rate,
+        get available () = Infinite (),
+        get finished? () = false,
+        read count = 
+           (result = mat.concat (Horizontal ()) (chunks count position);
+            position := position + count;
+            result),
+        close = \(),
+    });
+
 empty rate channels = // degenerate stream with no data in it, occasionally useful
     {
         get position () = 0,
@@ -87,6 +113,7 @@ empty rate channels = // degenerate stream with no data in it, occasionally usef
     generated is number -> (number -> number) -> stream, 
     precalculated is number -> matrix -> stream,
     precalculatedMono is number -> vector -> stream,
+    precalculatedRepeated is number -> matrix -> stream,
     sinusoid is number -> number -> stream, 
     whiteNoise is number -> stream,
     silent is number -> stream,

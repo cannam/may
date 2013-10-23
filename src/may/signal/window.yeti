@@ -3,6 +3,7 @@ module may.signal.window;
 vec = load may.vector;
 bf = load may.vector.blockfuncs;
 mat = load may.matrix;
+maths = load may.mathmisc;
 
 cosineWindowSymmetric a0 a1 a2 a3 n =
    (n1 = n - 1;
@@ -101,9 +102,8 @@ sinc p n =
 //!!! if kaiser is going to take a structure, so I guess should sinc and cosineWindow
 calculateKaiser { length, beta } =
    (terms = 20;
-    fact x = fold do x y: x*y done 1 [1..x];   // x!
     ipow a b = fold do x _: x*a done 1 [1..b]; // a^b where b∈ℕ
-    factorials = array (map fact [1..terms]);
+    factorials = array (map maths.factorial [1..terms]);
     bes0 x = 
         1 + sum
            (map do i:

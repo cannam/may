@@ -1,0 +1,33 @@
+
+module may.stream.test.test_waves;
+
+wav = load may.stream.waves;
+mat = load may.matrix;
+vec = load may.vector;
+
+{ compare, compareUsing, compareMatrices, assert } = load may.test.test;
+
+[
+
+"square": \(
+    compareMatrices 1e-8 ((wav.square 4 1).read 10)
+       (mat.newRowVector (vec.fromList
+           [0,1,0,-1,0,1,0,-1,0,1])) and
+    compareMatrices 1e-6 ((wav.square 8 1).read 10)
+       (mat.newRowVector (vec.fromList
+           [0, 0.942809, 0.666666, 0.942809,
+            0,-0.942809,-0.666666,-0.942809,
+            0, 0.942809]))
+),
+
+"cycleLengthFor": \(
+    compare (wav.cycleLengthFor 48000 1000) 48 and
+    compare (wav.cycleLengthFor 44100 1000) 441 and
+    compare (wav.cycleLengthFor 48000 1) 48000 and
+    compare (wav.cycleLengthFor 48000 0.5) 96000 and
+    compare (wav.cycleLengthFor 3 2) 3 and
+    compare (wav.cycleLengthFor 2.5 1) 5
+),
+
+] is hash<string, () -> boolean>;
+
