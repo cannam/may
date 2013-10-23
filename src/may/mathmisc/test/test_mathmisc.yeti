@@ -1,0 +1,33 @@
+
+module may.mathmisc.test.test_mathmisc;
+
+mm = load may.mathmisc;
+
+{ compare, compareUsing, assert } = load may.test.test;
+
+[
+
+"gcd": \(
+    compare (mm.gcd 1 1) 1 and
+    compare (mm.gcd 2 1) 1 and
+    compare (mm.gcd 2 3) 1 and
+    compare (mm.gcd 4 2) 2 and
+    compare (mm.gcd 18 24) 6 and
+    compare (mm.gcd 27 18) 9 and
+    compare (mm.gcd 18 36) 18 and
+    compare (mm.gcd 37 18) 1
+),
+
+"factorial": \(
+    compare (mm.factorial (-10)) 0 and
+    compare (mm.factorial 0) 1 and
+    compare (mm.factorial 1) 1 and
+    compare (mm.factorial 2) 2 and
+    compare (mm.factorial 3) 6 and
+    compare (mm.factorial 4) 24 and
+    compare (mm.factorial 4.5) 24 and
+    compare (mm.factorial 20) 2432902008176640000
+),
+
+] is hash<string, () -> boolean>;
+
