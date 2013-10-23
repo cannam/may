@@ -29,5 +29,73 @@ mm = load may.mathmisc;
     compare (mm.factorial 20) 2432902008176640000
 ),
 
+"pow": \(
+    compare (mm.pow 0 1) 0 and
+    compare (mm.pow 1 0) 1 and
+    compare (mm.pow 2 0) 1 and
+    compare (mm.pow 3 1) 3 and
+    compare (mm.pow 5 2) 25 and
+    compare (mm.pow 5.5 2) 30.25 and
+    compare (mm.pow 5.5 3) 166.375 and
+    compare (mm.pow 4 (-1)) (1/4) and
+    compare (mm.pow 4 (-2)) (1/16) and
+    compare (mm.pow 4.1 5) 1158.56201 and
+    compare (mm.pow 4.1 5.1) 1334.1285230128055
+),
+    
+"round": \(
+    compare (mm.round 0.5) 1.0 and
+    compare (mm.round 0.49) 0.0 and
+    compare (mm.round 0.99) 1.0 and
+    compare (mm.round 0.01) 0.0 and
+    compare (mm.round 0.0) 0.0 and
+    compare (mm.round 100.0) 100.0 and
+    compare (mm.round (-0.2)) 0.0 and
+    compare (mm.round (-0.5)) (-1.0) and
+    compare (mm.round (-0.99)) (-1.0) and
+    compare (mm.round (-1.0)) (-1.0) and
+    compare (mm.round (-1.1)) (-1.0) and
+    compare (mm.round (-1.5)) (-2.0)
+),
+
+"ceil": \(
+    compare (mm.ceil 0.5) 1.0 and
+    compare (mm.ceil 0.49) 1.0 and
+    compare (mm.ceil 0.99) 1.0 and
+    compare (mm.ceil 0.01) 1.0 and
+    compare (mm.ceil 0.0) 0.0 and
+    compare (mm.ceil 100.0) 100.0 and
+    compare (mm.ceil (-0.2)) 0.0 and
+    compare (mm.ceil (-0.5)) 0.0 and
+    compare (mm.ceil (-0.99)) 0.0 and
+    compare (mm.ceil (-1.0)) (-1.0) and
+    compare (mm.ceil (-1.1)) (-1.0) and
+    compare (mm.ceil (-1.5)) (-1.0)
+),
+
+"isPowerOfTwo": \(
+    compare (mm.isPowerOfTwo 0) false and
+    compare (mm.isPowerOfTwo 1) true and
+    compare (mm.isPowerOfTwo (-2)) false and
+    compare (mm.isPowerOfTwo 2) true and
+    compare (mm.isPowerOfTwo 3) false and
+    compare (mm.isPowerOfTwo 12) false and
+    compare (mm.isPowerOfTwo 12.3) false and
+    compare (mm.isPowerOfTwo 16) true and
+    compare (mm.isPowerOfTwo 15.9) false
+),
+
+"nextPowerOfTwo": \(
+    compare (mm.nextPowerOfTwo 0) 1 and
+    compare (mm.nextPowerOfTwo 1) 1 and
+    compare (mm.nextPowerOfTwo (-2)) 1 and
+    compare (mm.nextPowerOfTwo 2) 2 and
+    compare (mm.nextPowerOfTwo 3) 4 and
+    compare (mm.nextPowerOfTwo 12) 16 and
+    compare (mm.nextPowerOfTwo 12.3) 16 and
+    compare (mm.nextPowerOfTwo 16) 16 and
+    compare (mm.nextPowerOfTwo 15.9) 16
+),
+
 ] is hash<string, () -> boolean>;
 
