@@ -92,8 +92,10 @@ scaled n v =
     fi;
 
 divideBy n v =
+    // Not just "scaled (1/n)" -- this way we get exact rationals. In fact
+    // the unit test for this function will fail if we use scaled (1/n)
     if n == 1 then v
-    else VectorBits#scaled(raw v, 1.0 / n);
+    else vec.fromList (map (/ n) (vec.list v));
     fi;
 
 sqr v =
