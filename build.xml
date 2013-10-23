@@ -25,10 +25,21 @@
 	     classpath="${basedir}/../yeti/yeti.jar:${extjars}" />
   </target>
 
-  <target name="classes" depends="taskdef">
+  <target name="prepare">
+    <mkdir dir="${basedir}/classes"/>
+  </target>
+
+  <target name="yeticlasses" depends="taskdef">
     <yetic srcdir="${basedir}/src" destdir="${basedir}/classes"
 	   includes="**/*.yeti" excludes="**/test/*.yeti" preload="yeti/lang/std:yeti/lang/io"/>
   </target>
+
+  <target name="javaclasses">
+    <javac srcdir="${basedir}/src" destdir="${basedir}/classes"
+	   includes="**/*.java" includeantruntime="false"/>
+  </target>
+
+  <target name="classes" depends="prepare,javaclasses,yeticlasses"/>
 
   <target name="jar" depends="classes,taskdef">
     <jar jarfile="${basedir}/may.jar">

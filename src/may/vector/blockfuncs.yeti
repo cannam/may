@@ -5,19 +5,15 @@ vec = load may.vector;
 
 load may.vector.type;
 
-//!!! "internal" vector function to retrieve data for read-only
+import may.bits: VectorBits;
+
+// "internal" vector function to retrieve data for read-only
 // purposes without copying
 raw =
    (raw' v is ~double[] -> ~double[] = v;
     raw' as vector -> ~double[]);
 
-sum' v =
-   (dat = raw v;
-    tot = new double[1];
-    for [0..length dat - 1] do i:
-        tot[0] := tot[0] + dat[i]
-    done;
-    tot[0]);
+sum' v = VectorBits#sum(raw v);
 
 max' v = 
    (dat = raw v;
@@ -73,10 +69,8 @@ add bb =
    (len = head (sort (map vec.length bb));
     vv = map raw bb;
     out = new double[len];
-    for [0..len-1] do i:
-        for vv do v: 
-            out[i] := out[i] + v[i];
-        done;
+    for vv do v:
+        VectorBits#addTo(out, v, len);
     done;
     vec.vector out);
 
@@ -90,24 +84,16 @@ subtract b1 b2 =
     done;
     vec.vector out);
 
-multiply b1 b2 =
-   (v1 = raw b1;
-    v2 = raw b2;
-    len = if length v1 < length v2 then length v1 else length v2 fi;
-    out = new double[len];
-    for [0..len-1] do i:
-        out[i] := v1[i] * v2[i]
-    done;
-    vec.vector out);
+multiply b1 b2 = VectorBits#multiply(raw b1, raw b2);
 
 scaled n v =
     if n == 1 then v
-    else vec.fromList (map (* n) (vec.list v));
+    else VectorBits#scaled(raw v, n);
     fi;
 
-divideBy n v =  // Not just "scaled (1/n)" -- this way we get exact rationals
+divideBy n v =
     if n == 1 then v
-    else vec.fromList (map (/ n) (vec.list v));
+    else VectorBits#scaled(raw v, 1.0 / n);
     fi;
 
 sqr v =
