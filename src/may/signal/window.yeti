@@ -103,12 +103,16 @@ sinc p n =
 calculateKaiser { length, beta } =
    (terms = 20;
     factorials = array (map maths.factorial [1..terms]);
-    bes0 x = 
-        1 + sum
-           (map do i:
-                f = factorials[i-1]; // this is i!, not (i-1)!
-                (maths.pow (x/2) (i*2)) / (f * f);
-                done [1..terms]);
+    threshold = 1e-12;
+    bes0term x i =
+       (f = factorials[i-1]; // this is i!, not (i-1)!
+        (maths.pow (x/2) (i*2)) / (f * f));
+    bes0sub x i acc =
+       (term = bes0term x i;
+        if i == terms or abs term < threshold then acc + term
+        else bes0sub x (i+1) (acc + term)
+        fi);
+    bes0 x = bes0sub x 1 1;
     denominator = bes0 beta;
     even = (length % 2 == 0);
     halflen = if even then length/2 else (length+1)/2 fi;
