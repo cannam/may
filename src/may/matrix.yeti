@@ -47,34 +47,31 @@ bf = load may.vector.blockfuncs;
 load may.vector.type;
 load may.matrix.type;
 
-size m =
+width m = 
     case m of
     DenseRows r:
-        major = length r;
-        { 
-            rows = major, 
-            columns = if major > 0 then vec.length r[0] else 0 fi,
-        };
+        if not empty? r then vec.length r[0] else 0 fi;
     DenseCols c:
-        major = length c;
-        { 
-            rows = if major > 0 then vec.length c[0] else 0 fi,
-            columns = major, 
-        };
+        length c;
     SparseCSR { values, indices, pointers, extent }:
-        {
-            rows = (length pointers) - 1,
-            columns = extent
-        };
+        extent;
     SparseCSC { values, indices, pointers, extent }:
-        {
-            rows = extent,
-            columns = (length pointers) - 1
-        };
+        (length pointers) - 1;
     esac;
 
-width m = (size m).columns;
-height m = (size m).rows;
+height m =
+    case m of
+    DenseRows r:
+        length r;
+    DenseCols c:
+        if not empty? c then vec.length c[0] else 0 fi;
+    SparseCSR { values, indices, pointers, extent }:
+        (length pointers) - 1;
+    SparseCSC { values, indices, pointers, extent }:
+        extent;
+    esac;
+
+size m = { rows = height m, columns = width m };
 
 nonZeroValues m =
    (nz d =
