@@ -73,6 +73,8 @@ multiply c1 c2 is ~Cplx -> ~Cplx -> ~Cplx =
 scale r c is number -> ~Cplx -> ~Cplx =
     complex (r * real c) (r * imaginary c);
 
+zero = complex 0 0;
+
 zeros n is number -> array<~Cplx> =
     array (map \(complex 0 0) [1..n]);
 
@@ -81,6 +83,9 @@ magnitudes cc is list?<~Cplx> -> vector =
 
 angles cc is list?<~Cplx> -> vector =
     vec.fromList (map angle cc);
+
+complexArray reals imags =
+    array (map2 complex (vec.list reals) (vec.list imags));
 
 {
    real,
@@ -92,9 +97,11 @@ angles cc is list?<~Cplx> -> vector =
    add,
    multiply,
    scale,
+   zero,
    zeros,
    magnitudes,
    angles,
+   complexArray
 } as {
    real is cplx -> number,
    imaginary is cplx -> number,
@@ -105,8 +112,10 @@ angles cc is list?<~Cplx> -> vector =
    add is cplx -> cplx -> cplx,
    multiply is cplx -> cplx -> cplx,
    scale is number -> cplx -> cplx,
+   zero is cplx,
    zeros is number -> array<cplx>,
    magnitudes is list?<cplx> -> vector,
    angles is list?<cplx> -> vector,
+   complexArray is vector -> vector -> array<cplx>
 }
 

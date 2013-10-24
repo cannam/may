@@ -1,6 +1,6 @@
 module may.complex.test.test_complex;
 
-{ real, imaginary, complex, magnitude, angle, sum, scale, zeros, magnitudes, angles }
+{ real, imaginary, complex, magnitude, angle, sum, scale, zeros, magnitudes, angles, complexArray, zero }
    = load may.complex;
 
 { compare } = load may.test.test;
@@ -44,6 +44,11 @@ vec = load may.vector;
     compare (scale 4 (complex 2 3)) (complex 8 12)
 ),
 
+"zero": \(
+    compare (zero) (complex 0 0) and
+        compare (zero) (head (zeros 5))
+),
+
 "zeros": \(
     compare (zeros 0) (array []) and
         compare (zeros 3) (array [complex 0 0, complex 0 0, complex 0 0])
@@ -61,6 +66,10 @@ vec = load may.vector;
        compare (vec.list (angles (array []))) []
 ),
 
+"complexArray": \(
+    compare (complexArray (vec.fromList [0,1,2]) (vec.fromList [-3,4,5]))
+       (array [complex 0 (-3), complex 1 4, complex 2 5])
+),
 
 ] is hash<string, () -> boolean>;
 
