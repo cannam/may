@@ -2,9 +2,12 @@
 module may.matrix.complex;
 
 mat = load may.matrix;
+vec = load may.vector;
+cpx = load may.complex;
 
 load may.matrix.type;
 load may.matrix.complextype;
+load may.complex.type;
 
 complex real imaginary =
    (size = mat.size real;
@@ -93,6 +96,12 @@ product c1 c2 =
         imaginary = addParts (multiplyParts b c) (multiplyParts a d);
     });
 
+newComplexMatrix type data =
+   (newPart f type d =
+        mat.newMatrix type 
+           (map do cc: vec.fromList (map f cc) done data);
+    complex (newPart cpx.real type data) (newPart cpx.imaginary type data));
+
 {
     complex,
     fromReal,
@@ -101,6 +110,7 @@ product c1 c2 =
     imaginary,
     sum,
     product,
+    newComplexMatrix,
 } as {
     complex is matrix -> matrix -> complexmatrix,
     fromReal is matrix -> complexmatrix,
@@ -109,5 +119,6 @@ product c1 c2 =
     imaginary is complexmatrix -> matrix,
     sum is complexmatrix -> complexmatrix -> complexmatrix,
     product is complexmatrix -> complexmatrix -> complexmatrix,
+    newComplexMatrix is (ColumnMajor () | RowMajor ()) -> list?<list?<cplx>> -> complexmatrix,
 }
 
