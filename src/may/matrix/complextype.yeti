@@ -1,0 +1,13 @@
+
+module may.matrix.complextype;
+
+load may.matrix.type;
+
+typedef opaque complexmatrix = {
+    .size is { .rows is number, .columns is number },
+    .real is Some matrix | None (),
+    .imaginary is Some matrix | None ()
+};
+
+();
+

@@ -1,0 +1,113 @@
+
+module may.matrix.complex;
+
+mat = load may.matrix;
+
+load may.matrix.type;
+load may.matrix.complextype;
+
+complex real imaginary =
+   (size = mat.size real;
+    if size != mat.size imaginary then
+        failWith "Matrices are not the same size: \(size), \(mat.size imaginary)";
+    else
+        { size, real = Some real, imaginary = Some imaginary };
+    fi);
+
+fromReal m =
+    { size = mat.size m, real = Some m, imaginary = None () };
+
+fromImaginary m =
+    { size = mat.size m, real = None (), imaginary = Some m };
+
+real cm = 
+    case cm.real of
+    Some m: m;
+    None (): mat.zeroMatrix cm.size;
+    esac;
+
+imaginary cm = 
+    case cm.imaginary of
+    Some m: m;
+    None (): mat.zeroMatrix cm.size;
+    esac;
+
+addParts p1 p2 =
+    case p1 of
+    Some m1:
+        case p2 of
+        Some m2: Some (mat.sum m1 m2);
+        None (): Some m1;
+        esac;
+    None ():
+        case p2 of
+        Some m2: Some m2;
+        None (): None ();
+        esac;
+    esac;
+
+subtractParts p1 p2 =
+    case p1 of
+    Some m1:
+        case p2 of
+        Some m2: Some (mat.difference m1 m2);
+        None (): Some m1;
+        esac;
+    None ():
+        case p2 of
+        Some m2: Some (mat.negative m2);
+        None (): None ();
+        esac;
+    esac;
+
+multiplyParts p1 p2 =
+    case p1 of
+    Some m1:
+        case p2 of
+        Some m2: Some (mat.product m1 m2);
+        None (): None ();
+        esac;
+    None ():
+        None ();
+    esac;
+
+sum c1 c2 =
+   (a = c1.real;
+    b = c1.imaginary;
+    c = c2.real;
+    d = c2.imaginary;
+    {
+        size = c1.size,
+        real = addParts a c,
+        imaginary = addParts b d,
+    });
+
+product c1 c2 =
+   (a = c1.real;
+    b = c1.imaginary;
+    c = c2.real;
+    d = c2.imaginary;
+    {
+        size = { rows = c1.size.rows, columns = c2.size.columns },
+        real = subtractParts (multiplyParts a c) (multiplyParts b d),
+        imaginary = addParts (multiplyParts b c) (multiplyParts a d);
+    });
+
+{
+    complex,
+    fromReal,
+    fromImaginary,
+    real,
+    imaginary,
+    sum,
+    product,
+} as {
+    complex is matrix -> matrix -> complexmatrix,
+    fromReal is matrix -> complexmatrix,
+    fromImaginary is matrix -> complexmatrix,
+    real is complexmatrix -> matrix,
+    imaginary is complexmatrix -> matrix,
+    sum is complexmatrix -> complexmatrix -> complexmatrix,
+    product is complexmatrix -> complexmatrix -> complexmatrix,
+}
+
