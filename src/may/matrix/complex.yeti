@@ -96,6 +96,28 @@ product c1 c2 =
         imaginary = addParts (multiplyParts b c) (multiplyParts a d);
     });
 
+density cm =
+    case cm.real of
+    Some m1:
+        case cm.imaginary of
+        Some m2: (mat.density m1 + mat.density m2) / 2;
+        None (): mat.density m1;
+        esac;
+    None ():
+        case cm.imaginary of
+        Some m2: mat.density m2;
+        None (): 0.0;
+        esac;
+    esac;
+
+toSparse cm =
+   (partSparse p =
+        case p of
+        Some m: Some (mat.toSparse m);
+        None (): None ();
+        esac;
+    cm with { real = partSparse cm.real, imaginary = partSparse cm.imaginary });
+
 newComplexMatrix type data =
    (newPart f type d =
         mat.newMatrix type 
@@ -110,6 +132,8 @@ newComplexMatrix type data =
     imaginary,
     sum,
     product,
+    density,
+    toSparse,
     newComplexMatrix,
 } as {
     complex is matrix -> matrix -> complexmatrix,
@@ -119,6 +143,8 @@ newComplexMatrix type data =
     imaginary is complexmatrix -> matrix,
     sum is complexmatrix -> complexmatrix -> complexmatrix,
     product is complexmatrix -> complexmatrix -> complexmatrix,
+    density is complexmatrix -> number,
+    toSparse is complexmatrix -> complexmatrix,
     newComplexMatrix is (ColumnMajor () | RowMajor ()) -> list?<list?<cplx>> -> complexmatrix,
 }
 
