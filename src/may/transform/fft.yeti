@@ -32,6 +32,34 @@ complexToPacked arr =
     v[1] := complex.real arr[n-1];
     v);
 
+unpackedToComplex len unp is number -> ~double[] -> array<cplx> =
+    array
+       (map2 complex.complex
+           (vec.list (vec.slice unp 0 len))
+           (vec.list (vec.slice unp len (len*2))));
+
+complexToUnpacked cc is array<cplx> -> ~double[] =
+    vec.primitive
+       (vec.fromList (map complex.real cc ++ map complex.imaginary cc));
+
+//!!! doc: n separately as below
+forward n =
+   (d = new DoubleFFT_1D(n);
+    do cc:
+        arr = complexToUnpacked cc;
+        d#complexForward(arr);
+        unpackedToComplex n arr;
+    done);
+
+//!!! doc: n separately as below
+inverse n =
+   (d = new DoubleFFT_1D(n);
+    do cc:
+        arr = complexToUnpacked cc;
+        d#complexInverse(arr, true);
+        unpackedToComplex n arr;
+    done);
+
 //!!! doc: n is supplied separately from the input vector to support partial evaluation
 //!!! doc: output has n/2+1 complex values
 //!!! doc: powers of two only? check with jtransforms
@@ -40,7 +68,7 @@ realForward n =
     do bl:
         v = vec.primitive (vec.resizedTo n bl);
         d#realForward(v);
-        packedToComplex (vec.length bl) v;
+        packedToComplex n v;
     done);
 
 //!!! doc: n separately as above
@@ -58,6 +86,8 @@ realInverse n =
     done);
 
 {
+forward,
+inverse,
 realForward,
 realForwardMagnitude,
 realInverse,

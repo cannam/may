@@ -19,6 +19,8 @@ testFFT orig reals imags =
 
 [
 
+//!!! test complex forward/inverse
+
 "dc": \(
     testFFT [1,1,1,1] [4,0,0] [0,0,0];
 ),
