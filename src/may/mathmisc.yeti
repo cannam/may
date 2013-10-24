@@ -28,6 +28,9 @@ round x =
         int (x + 0.5)
     fi;
 
+floor x =
+    Math#floor(x);
+
 ceil x =
     Math#ceil(x);
 
@@ -59,6 +62,7 @@ nextPowerOfTwo x =
     factorial,
     pow,
     round,
+    floor,
     ceil,
     isPowerOfTwo,
     nextPowerOfTwo,
