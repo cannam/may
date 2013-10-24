@@ -107,6 +107,9 @@ rms =
 abs' =
     vec.fromList . (map abs) . vec.list;
 
+negative =
+    vec.fromList . (map (0-)) . vec.list;
+
 sqrt' =
     vec.fromList . (map sqrt) . vec.list;
 
@@ -137,6 +140,7 @@ multiply is vector -> vector -> vector,
 divideBy is number -> vector -> vector, 
 scaled is number -> vector -> vector,
 abs is vector -> vector = abs',
+negative is vector -> vector,
 sqr is vector -> vector,
 sqrt is vector -> vector = sqrt',
 rms is vector -> number,
