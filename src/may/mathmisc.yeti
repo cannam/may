@@ -29,10 +29,10 @@ round x =
     fi;
 
 floor x =
-    Math#floor(x);
+    int Math#floor(x);
 
 ceil x =
-    Math#ceil(x);
+    int Math#ceil(x);
 
 /** 
  * True if x is 2^n for some integer n >= 0.

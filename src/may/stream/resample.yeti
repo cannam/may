@@ -242,14 +242,14 @@ resampledDirectlyTo targetRate s =
         nextPhase < 0 loop nextPhase := nextPhase + inputSpacing;
         nextPhase := nextPhase % inputSpacing;
 
-        filtZipLength = int Math#ceil((flen - phase) / inputSpacing);
+        filtZipLength = maths.ceil ((flen - phase) / inputSpacing);
 
         {
             nextPhase,
             filter = vec.fromList
                (map do i: vec.at filt (i * inputSpacing + phase) done
                     [0 .. filtZipLength-1]),
-            drop = int Math#ceil((max 0 (outputSpacing - phase)) / inputSpacing),
+            drop = maths.ceil ((max 0 (outputSpacing - phase)) / inputSpacing),
             take = int ((outputSpacing + ((flen - 1 - phase) % inputSpacing))
                         / inputSpacing),
         };
@@ -264,7 +264,7 @@ resampledDirectlyTo targetRate s =
                 rows = s.channels,
                 columns = int (halflen / inputSpacing)
             },
-            s.read Math#ceil((halflen + 1) / inputSpacing)
+            s.read (maths.ceil ((halflen + 1) / inputSpacing))
             ]);
 
     var pos = 0;

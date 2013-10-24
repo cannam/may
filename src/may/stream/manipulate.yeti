@@ -4,6 +4,7 @@ module may.stream.manipulate;
 mat = load may.matrix;
 ch = load may.stream.channels;
 vec = load may.vector;
+maths = load may.mathmisc;
 
 load may.stream.type;
 load may.vector.type;
@@ -288,7 +289,7 @@ duplicated copies s =
 spaced mult s = //!!! mult must be an integer [how to enforce this??]
    (spaceToNext pos = case (pos % mult) of 0: 0; n: (mult - n) esac;
     readWithoutPadding n =
-       (toRead = int Math#ceil(n / mult);
+       (toRead = maths.ceil (n / mult);
         source = s.read toRead;
         targetWidth = min n (mult * mat.width source);
         mat.newMatrix (ColumnMajor ())
@@ -321,15 +322,15 @@ spaced mult s = //!!! mult must be an integer [how to enforce this??]
 picked frac s = //!!! frac must be an integer [how to enforce this??]
     s with
     {
-        get position () = int Math#ceil(s.position / frac),
+        get position () = maths.ceil (s.position / frac),
         get available () =
             case s.available of 
-            Known n: Known (int Math#ceil(n / frac)); 
+            Known n: Known (maths.ceil (n / frac));
             other: other 
             esac,
         read n =
            (m = s.read (n*frac);
-            obtained = int Math#ceil((mat.width m) / frac);
+            obtained = maths.ceil ((mat.width m) / frac);
             mat.flipped
                (mat.newMatrix (ColumnMajor ())
                    (map do c: mat.getColumn (c*frac) m done [0..obtained-1])))
