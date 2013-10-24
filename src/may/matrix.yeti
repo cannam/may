@@ -472,6 +472,16 @@ abs' m =
         newMatrix (typeOf m) (map bf.abs (asColumns m));
     fi;
 
+negative m =
+    if isSparse? m then
+        makeSparse (typeOf m) (size m)
+           (map do { i, j, v }: { i, j, v = (-v) } done (enumerate m))
+    elif isRowMajor? m then
+        newMatrix (typeOf m) (map bf.negative (asRows m));
+    else
+        newMatrix (typeOf m) (map bf.negative (asColumns m));
+    fi;
+
 //!!! doc: filter by predicate, always returns sparse matrix
 filter' f m =
     makeSparse (typeOf m) (size m)
@@ -593,7 +603,7 @@ product m1 m2 =
     fi;
 
 entryWiseProduct m1 m2 = // or element-wise, or Hadamard product
-//!!! todo: faster, sparse version, units
+//!!! todo: faster, sparse version, unit tests
     if (size m1) != (size m2)
     then failWith "Matrices are not the same size: \(size m1), \(size m2)";
     else generate do row col: at' m1 row col * at' m2 row col done (size m1);
@@ -774,6 +784,7 @@ resizedTo newsize m =
     sum = sum',
     difference,
     abs = abs',
+    negative,
     filter = filter',
     all = all',
     any = any',
@@ -825,6 +836,7 @@ as
     sum is matrix -> matrix -> matrix,
     difference is matrix -> matrix -> matrix,
     abs is matrix -> matrix,
+    negative is matrix -> matrix,
     filter is (number -> boolean) -> matrix -> matrix,
     all is (number -> boolean) -> matrix -> boolean,
     any is (number -> boolean) -> matrix -> boolean,

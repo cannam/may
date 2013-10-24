@@ -68,7 +68,7 @@ multiply c1 c2 is ~Cplx -> ~Cplx -> ~Cplx =
     b = imaginary c1;
     c = real c2;
     d = imaginary c2;
-    complex (a * c - b * d) (b * c + a * d)); //!!! need units
+    complex (a * c - b * d) (b * c + a * d)); //!!! needs unit tests
 
 scale r c is number -> ~Cplx -> ~Cplx =
     complex (r * real c) (r * imaginary c);
