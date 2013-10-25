@@ -106,6 +106,13 @@ transposed cm =
         imaginary = maybe none (Some . mat.transposed) cm.imaginary,
     };
 
+flipped cm =
+    {
+        size = { rows = cm.size.columns, columns = cm.size.rows },
+        real = maybe none (Some . mat.flipped) cm.real,
+        imaginary = maybe none (Some . mat.flipped) cm.imaginary,
+    };
+
 toSparse cm =
    (ts = maybe none (Some . mat.toSparse);
     cm with { real = ts cm.real, imaginary = ts cm.imaginary });
@@ -253,6 +260,7 @@ enumerate cm =
     equal,
     conjugateTransposed,
     transposed,
+    flipped,
     toSparse,
     toDense,
     scaled,
@@ -283,6 +291,7 @@ enumerate cm =
     equal is complexmatrix -> complexmatrix -> boolean,
     conjugateTransposed is complexmatrix -> complexmatrix,
     transposed is complexmatrix -> complexmatrix,
+    flipped is complexmatrix -> complexmatrix,
     toSparse is complexmatrix -> complexmatrix,
     toDense is complexmatrix -> complexmatrix,
     scaled is number -> complexmatrix -> complexmatrix,
