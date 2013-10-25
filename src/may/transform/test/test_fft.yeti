@@ -1,9 +1,9 @@
 
 module may.transform.test.test_fft;
 
-{ realForward, realForwardMagnitude, realInverse } = load may.transform.fft;
+{ forward, inverse, realForward, realForwardMagnitude, realInverse } = load may.transform.fft;
 { list, fromList } = load may.vector;
-{ complex, magnitude } = load may.complex;
+{ complex, magnitude, real, imaginary } = load may.complex;
 
 { compare } = load may.test.test;
 
@@ -17,9 +17,16 @@ testFFT orig reals imags =
                                reals imags)
     );
 
-[
+testFFTComplex rin iin rout iout =
+   (cin = array (map2 complex rin iin);
+    cout = forward (length cin) cin;
+    back = inverse (length cin) cout;
+    compare (map real cout) rout and
+        compare (map imaginary cout) iout and
+        compare back cin
+    );
 
-//!!! test complex forward/inverse
+[
 
 "dc": \(
     testFFT [1,1,1,1] [4,0,0] [0,0,0];
@@ -46,6 +53,18 @@ testFFT orig reals imags =
         testFFT [0,1,0,0] [1,0,-1] [0,-1,0] and
         testFFT [0,0,1,0] [1,-1,1] [0,0,0] and
         testFFT [0,0,0,1] [1,0,-1] [0,1,0];
+),
+
+"c_dc": \(
+    testFFTComplex [1,1,1,1] [1,1,1,1] [4,0,0,0] [4,0,0,0];
+),
+
+"c_cosine": \(
+    testFFTComplex [1,0,-1,0] [1,0,-1,0] [0,2,0,2] [0,2,0,2];
+),
+
+"c_sineCosine": \(
+    testFFTComplex [1,0,-1,0] [0,1,0,-1] [0,4,0,0] [0,0,0,0];
 ),
 
 ] is hash<string, () -> boolean>;

@@ -5,6 +5,7 @@ import edu.emory.mathcs.jtransforms.fft: DoubleFFT_1D;
 
 vec = load may.vector;
 complex = load may.complex;
+bf = load may.vector.blockfuncs;
 
 load may.complex.type;
 
@@ -33,21 +34,18 @@ complexToPacked arr =
     v);
 
 unpackedToComplex len unp is number -> ~double[] -> array<cplx> =
-    array
-       (map2 complex.complex
-           (vec.list (vec.slice unp 0 len))
-           (vec.list (vec.slice unp len (len*2))));
+   (vv = bf.unzipped 2 unp;
+    array (map2 complex.complex (vec.list vv[0]) (vec.list vv[1])));
 
-complexToUnpacked len cc is number -> array<cplx> -> ~double[] =
-    vec.primitive
-       (vec.resizedTo (len*2)
-           (vec.fromList (map complex.real cc ++ map complex.imaginary cc)));
+complexToUnpacked cc is array<cplx> -> ~double[] =
+    bf.zipped [ vec.fromList (map complex.real cc),
+                vec.fromList (map complex.imaginary cc) ];
 
 //!!! doc: n separately as below
 forward n =
    (d = new DoubleFFT_1D(n);
     do cc:
-        arr = complexToUnpacked n cc;
+        arr = vec.resizedTo (n*2) (complexToUnpacked cc);
         d#complexForward(arr);
         unpackedToComplex n arr;
     done);
@@ -56,7 +54,7 @@ forward n =
 inverse n =
    (d = new DoubleFFT_1D(n);
     do cc:
-        arr = complexToUnpacked n cc;
+        arr = vec.resizedTo (n*2) (complexToUnpacked cc);
         d#complexInverse(arr, true);
         unpackedToComplex n arr;
     done);
@@ -67,7 +65,7 @@ inverse n =
 realForward n = 
    (d = new DoubleFFT_1D(n);
     do bl:
-        v = vec.primitive (vec.resizedTo n bl);
+        v = vec.resizedTo n bl;
         d#realForward(v);
         packedToComplex n v;
     done);
