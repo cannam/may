@@ -186,6 +186,13 @@ makeTests name flipper =
         and compareMatrices m m''';
 ),
 
+"diagonal-\(name)": \(
+    m = newMatrix (RowMajor ()) [[1,4],[0,5],[3,6]];
+    compare (vec.list (mat.getDiagonal 0 m)) [1,5] and
+        compare (vec.list (mat.getDiagonal 1 m)) [4] and
+        compare (vec.list (mat.getDiagonal (-1) m)) [0,6]
+),
+
 "scaled-\(name)": \(
     compareMatrices
        (mat.scaled 0.5 (constMatrix 2 { rows = 3, columns = 4 }))

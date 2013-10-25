@@ -134,6 +134,8 @@ at' m row col =
     SparseCSC data: fromSlice col row data;
     esac;
 
+//!!! better as getXx or just xx?
+
 getColumn j m =
     case m of
     DenseCols cols: cols[j];
@@ -147,6 +149,12 @@ getRow i m =
     SparseCSR data: filledSlice i data; 
     _: vec.fromList (map do j: at' m i j done [0..width m - 1]);
     esac;
+
+getDiagonal k m =
+   (ioff = if k < 0 then -k else 0 fi;
+    joff = if k > 0 then  k else 0 fi;
+    n = min (width m - joff) (height m - ioff);
+    vec.fromList (map do i: at' m (i + ioff) (i + joff) done [0..n - 1]));
 
 asRows m =
     map do i: getRow i m done [0 .. (height m) - 1];
@@ -751,6 +759,11 @@ resizedTo newsize m =
             fi
     fi);
 
+//!!! todo: look at all occurrences of matrix (and complexmatrix)
+// construction and make sure we have good apis for those use cases.
+// in particular, constructing from literal data (list<list<number>>)
+// is much too hard at the moment.
+
 {
     size,
     width,
@@ -760,6 +773,7 @@ resizedTo newsize m =
     at = at',
     getColumn,
     getRow,
+    getDiagonal,
     isRowMajor?,
     isSparse?,
     generate,
@@ -811,6 +825,7 @@ as
     at is matrix -> number -> number -> number,
     getColumn is number -> matrix -> vector,
     getRow is number -> matrix -> vector,
+    getDiagonal is number -> matrix -> vector,
     isRowMajor? is matrix -> boolean,
     isSparse? is matrix -> boolean,
     generate is (number -> number -> number) -> { .rows is number, .columns is number } -> matrix,
