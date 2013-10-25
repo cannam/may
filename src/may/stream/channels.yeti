@@ -14,34 +14,11 @@ raw =
    (raw' v is ~double[] -> ~double[] = v;
     raw' as vector -> ~double[]);
         
-interleaved m = 
-   ({ columns, rows } = (mat.size m);
-    if rows == 1 then
-        mat.getRow 0 m
-    else
-        v = new double[columns * rows];
-        for [0..rows-1] do row:
-            for [0..columns-1] do col:
-                v[col * rows + row] := mat.at m row col;
-            done;
-        done;
-        vec.vector v;
-    fi);
+interleaved m =
+    bf.zipped (mat.asRows m);
 
 deinterleaved channels b =
-    if channels == 1 then
-        mat.newRowVector b
-    else
-        rows = (vec.length b) / channels;
-        vv = array (map \(new double[rows]) [0..channels-1]);
-        v = raw b;
-        for [0..rows-1] do row:
-            for [0..channels-1] do col:
-                vv[col][row] := v[channels * row + col];
-            done
-        done;
-        mat.newMatrix (RowMajor ()) (map vec.vector vv);
-    fi;
+    mat.newMatrix (RowMajor ()) (list (bf.unzipped channels b));
 
 mixedDown m =  //!!!doc: average, not sum
    ({ columns, rows } = (mat.size m);
