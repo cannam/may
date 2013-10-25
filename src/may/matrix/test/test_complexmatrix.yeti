@@ -41,5 +41,25 @@ load may.matrix.complextype;
        (sortEntries all);
 ),
     
+"magnitudes": \(
+    // 1+0i 0-2i
+    // 0+0i 4-3i
+    reals = mat.newMatrix (RowMajor ()) (map vec.fromList [[1,0],[0,4]]);
+    imags = mat.newMatrix (RowMajor ()) (map vec.fromList [[0,-2],[0,-3]]);
+    m = cm.complex reals imags;
+    mags = cm.magnitudes m;
+    compare (map vec.list (mat.asRows mags)) [[1,2],[0,5]];
+),
+ 
+"angles": \(
+    // 1+0i 0-2i
+    // 0+0i -4-4i
+    reals = mat.newMatrix (RowMajor ()) (map vec.fromList [[1,0],[0,-4]]);
+    imags = mat.newMatrix (RowMajor ()) (map vec.fromList [[0,-2],[0,-4]]);
+    m = cm.complex reals imags;
+    mags = cm.angles m;
+    compare (map vec.list (mat.asRows mags)) [[0,-pi/2],[0,-3*pi/4]];
+),
+
 ] is hash<string, () -> boolean>;
 

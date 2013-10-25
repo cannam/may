@@ -40,13 +40,64 @@ at cm row col =
         esac;
     cpx.complex (partAt cm.real row col) (partAt cm.imaginary row col));
 
+maybe' lambda f = // like maybe but with lazy default
+   \case of
+    Some v: f v;
+    None _: lambda ();
+    esac;
+
 getRow n cm = 
-   (pget = maybe (vec.zeros cm.size.columns) (mat.getRow n);
+   (pget = maybe' \(vec.zeros cm.size.columns) (mat.getRow n);
     array (map2 cpx.complex (pget cm.real) (pget cm.imaginary)));
 
 getColumn n cm = 
-   (pget = maybe (vec.zeros cm.size.rows) (mat.getColumn n);
+   (pget = maybe' \(vec.zeros cm.size.rows) (mat.getColumn n);
     array (map2 cpx.complex (pget cm.real) (pget cm.imaginary)));
+
+getDiagonal k cm = 
+   (ioff = if k < 0 then -k else 0 fi;
+    joff = if k > 0 then  k else 0 fi;
+    n = min (cm.size.columns - joff) (cm.size.rows - ioff);
+    pget = maybe' \(vec.zeros n) (mat.getDiagonal k);
+    array (map2 cpx.complex (pget cm.real) (pget cm.imaginary)));
+
+rowSlice cm start end =
+   (pget = maybe none (Some . do m: mat.rowSlice m start end done);
+    {
+        size = { rows = end - start, columns = cm.size.columns },
+        real = pget cm.real,
+        imaginary = pget cm.imaginary
+    });
+
+columnSlice cm start end =
+   (pget = maybe none (Some . do m: mat.columnSlice m start end done);
+    {
+        size = { columns = end - start, rows = cm.size.rows },
+        real = pget cm.real,
+        imaginary = pget cm.imaginary
+    });
+
+equal cm1 cm2 =
+    cm1.size == cm2.size and
+        case cm1.real of
+        Some m1:
+            case cm2.real of
+            Some m2: mat.equal m1 m2;
+            None (): mat.equal m1 (mat.zeroMatrix cm1.size);
+            esac;
+        None ():
+            case cm2.real of
+            Some m2: mat.equal m2 (mat.zeroMatrix cm2.size);
+            None (): true;
+            esac;
+        esac;
+
+conjugateTransposed cm =
+    {
+        size = { rows = cm.size.columns, columns = cm.size.rows },
+        real = maybe none (Some . mat.transposed) cm.real,
+        imaginary = maybe none (Some . mat.negative . mat.transposed) cm.imaginary,
+    };
 
 transposed cm =
     {
@@ -67,9 +118,19 @@ scaled factor cm =
    (sc = maybe none (Some . (mat.scaled factor));
     cm with { real = sc cm.real, imaginary = sc cm.imaginary });
 
-real cm = maybe (mat.zeroMatrix cm.size) id cm.real;
+real cm = maybe' \(mat.zeroMatrix cm.size) id cm.real;
 
-imaginary cm = maybe (mat.zeroMatrix cm.size) id cm.imaginary;
+imaginary cm = maybe' \(mat.zeroMatrix cm.size) id cm.imaginary;
+
+magnitudes cm =
+    mat.generate do row col:
+        cpx.magnitude (at cm row col);
+    done cm.size;
+
+angles cm =
+    mat.generate do row col:
+        cpx.angle (at cm row col);
+    done cm.size;
 
 addParts p1 p2 =
     case p1 of
@@ -180,6 +241,9 @@ enumerate cm =
     at,
     getColumn,
     getRow,
+    getDiagonal,
+    equal,
+    conjugateTransposed,
     transposed,
     toSparse,
     toDense,
@@ -191,6 +255,10 @@ enumerate cm =
     fromImaginary,
     real,
     imaginary,
+    magnitudes,
+    angles,
+    rowSlice,
+    columnSlice,
     newComplexMatrix,
     enumerate,
 } as {
@@ -201,6 +269,9 @@ enumerate cm =
     at is complexmatrix -> number -> number -> cplx,
     getColumn is number -> complexmatrix -> array<cplx>,
     getRow is number -> complexmatrix -> array<cplx>,
+    getDiagonal is number -> complexmatrix -> array<cplx>,
+    equal is complexmatrix -> complexmatrix -> boolean,
+    conjugateTransposed is complexmatrix -> complexmatrix,
     transposed is complexmatrix -> complexmatrix,
     toSparse is complexmatrix -> complexmatrix,
     toDense is complexmatrix -> complexmatrix,
@@ -215,6 +286,10 @@ enumerate cm =
     fromImaginary is matrix -> complexmatrix,
     real is complexmatrix -> matrix,
     imaginary is complexmatrix -> matrix,
+    magnitudes is complexmatrix -> matrix,
+    angles is complexmatrix -> matrix,
+    rowSlice is complexmatrix -> number -> number -> complexmatrix,
+    columnSlice is complexmatrix -> number -> number -> complexmatrix,
     newComplexMatrix is (ColumnMajor () | RowMajor ()) -> list?<list?<cplx>> -> complexmatrix,
     enumerate is complexmatrix -> list<{ .i is number, .j is number, .v is cplx }>,
 }
