@@ -21,6 +21,7 @@ tests = [
 "vamppost"   : load may.vamp.test.test_vamppost,
 "vamp"       : load may.vamp.test.test_vamp,
 "matrix"     : load may.matrix.test.test_matrix,
+"complexmatrix" : load may.matrix.test.test_complexmatrix,
 "plot"       : load may.plot.test.test_plot,
 "signal"     : load may.signal.test.test_signal,
 "window"     : load may.signal.test.test_window,
