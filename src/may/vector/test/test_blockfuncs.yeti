@@ -4,7 +4,7 @@ module may.vector.test.test_blockfuncs;
 stdSqrt = sqrt;
 
 { zeros, consts, ones, fromList, list } = load may.vector;
-{ sum, max, min, maxindex, minindex, mean, add, subtract, multiply, divideBy, scaled, abs, negative, sqr, sqrt, rms, unityNormalised, fftshift, ifftshift } = load may.vector.blockfuncs;
+{ sum, max, min, maxindex, minindex, mean, add, subtract, multiply, divideBy, scaled, abs, negative, sqr, sqrt, rms, unityNormalised, fftshift, ifftshift, zipped, unzipped } = load may.vector.blockfuncs;
 { compare } = load may.test.test;
 
 [
@@ -123,6 +123,19 @@ stdSqrt = sqrt;
     compare ((list . ifftshift . zeros) 0) [] and 
         compare ((list . ifftshift . fromList) [3,4,1,2]) [1,2,3,4] and
         compare ((list . ifftshift . fromList) [4,5,1,2,3]) [1,2,3,4,5]
+),
+
+"zipped": \(
+    compare (list (zipped (map fromList []))) [] and
+        compare (list (zipped (map fromList [[],[]]))) [] and
+        compare (list (zipped (map fromList [[1,2]]))) [1,2] and
+        compare (list (zipped (map fromList [[1,2],[3,4],[5,6]]))) [1,3,5,2,4,6]
+),
+
+"unzipped": \(
+    compare (map list (unzipped 1 (fromList []))) [[]] and
+        compare (map list (unzipped 1 (fromList [1,2,3]))) [[1,2,3]] and
+        compare (map list (unzipped 3 (fromList [1,3,5,2,4,6]))) [[1,2],[3,4],[5,6]]
 ),
 
 ] is hash<string, () -> boolean>;

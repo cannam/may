@@ -5,6 +5,8 @@ vec = load may.vector;
 
 load may.vector.type;
 
+{ ceil } = load may.mathmisc;
+
 import may.bits: VectorBits;
 
 // "internal" vector function to retrieve data for read-only
@@ -131,6 +133,35 @@ ifftshift v =
     half = int(len/2); // round down for odd-length sequences
     vec.concat [vec.slice v half len, vec.slice v 0 half]);
 
+zipped vv =
+    case vv of
+    [v]: v;
+    first::rest:
+       (len = vec.length first;
+        if len != min' (vec.fromList (map vec.length vv)) then
+            failWith "Vectors must all be of the same length";
+        fi;
+        vec.fromList
+           (concat
+              (map do i:
+                   map do v:
+                       vec.at v i
+                       done vv
+                   done [0..len-1])));
+     _: vec.zeros 0;
+    esac;
+
+unzipped n v =
+    if n == 1 then array [v]
+    else 
+        len = vec.length v;
+        vv = array (map \(new double[ceil(len / n)]) [1..n]);
+        for [0..len-1] do x:
+            vv[x % n][int (x / n)] := vec.at v x;
+        done;
+        array (map vec.vector vv);
+    fi;
+
 {
 sum is vector -> number = sum',
 mean is vector -> number,
@@ -151,6 +182,8 @@ minindex is vector -> number,
 unityNormalised is vector -> vector,
 fftshift is vector -> vector,
 ifftshift is vector -> vector,
+zipped is list?<vector> -> vector,
+unzipped is number -> vector -> array<vector>,
 }
 
 
