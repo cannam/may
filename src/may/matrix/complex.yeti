@@ -208,10 +208,18 @@ density cm =
     esac;
 
 newComplexMatrix type data =
-   (newPart f type d =
+   (newPart f =
         mat.newMatrix type 
            (map do cc: vec.fromList (map f cc) done data);
-    complex (newPart cpx.real type data) (newPart cpx.imaginary type data));
+    complex (newPart cpx.real) (newPart cpx.imaginary));
+
+newComplexRowVector data =
+   (newPart f = mat.newRowVector (vec.fromList (map f data));
+    complex (newPart cpx.real) (newPart cpx.imaginary));
+
+newComplexColumnVector data =
+   (newPart f = mat.newColumnVector (vec.fromList (map f data));
+    complex (newPart cpx.real) (newPart cpx.imaginary));
 
 enumerate cm =
    (enhash h p proto ix =
@@ -260,6 +268,8 @@ enumerate cm =
     rowSlice,
     columnSlice,
     newComplexMatrix,
+    newComplexRowVector,
+    newComplexColumnVector,
     enumerate,
 } as {
     size is complexmatrix -> { .rows is number, .columns is number },
@@ -291,6 +301,8 @@ enumerate cm =
     rowSlice is complexmatrix -> number -> number -> complexmatrix,
     columnSlice is complexmatrix -> number -> number -> complexmatrix,
     newComplexMatrix is (ColumnMajor () | RowMajor ()) -> list?<list?<cplx>> -> complexmatrix,
+    newComplexRowVector is list?<cplx> -> complexmatrix,
+    newComplexColumnVector is list?<cplx> -> complexmatrix,
     enumerate is complexmatrix -> list<{ .i is number, .j is number, .v is cplx }>,
 }
 
