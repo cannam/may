@@ -73,6 +73,22 @@ mm = load may.mathmisc;
     compare (mm.ceil (-1.5)) (-1.0)
 ),
 
+"log10": \(
+    compare (mm.log10 1) 0 and
+    compare (mm.log10 10) 1 and
+    compare (mm.log10 1e50) 50 and
+    compareUsing do a b: (abs (a-b)) < 1e-12 done
+       (mm.log10 pi) (Math#log(pi) / Math#log(10))
+),
+
+"log2": \(
+    compare (mm.log2 1) 0 and
+    compare (mm.log2 2) 1 and
+    compare (mm.log2 (mm.pow 2 157)) 157 and
+    compareUsing do a b: (abs (a-b)) < 1e-12 done
+       (mm.log2 pi) (Math#log(pi) / Math#log(2))
+),
+
 "isPowerOfTwo": \(
     compare (mm.isPowerOfTwo 0) false and
     compare (mm.isPowerOfTwo 1) true and

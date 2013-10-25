@@ -34,6 +34,14 @@ floor x =
 ceil x =
     int Math#ceil(x);
 
+log10 x =
+    Math#log10(x);
+
+log2' = Math#log(2);
+
+log2 x =
+    Math#log(x) / log2';
+
 /** 
  * True if x is 2^n for some integer n >= 0.
  */
@@ -64,6 +72,8 @@ nextPowerOfTwo x =
     round,
     floor,
     ceil,
+    log10,
+    log2,
     isPowerOfTwo,
     nextPowerOfTwo,
 }
