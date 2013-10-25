@@ -9,7 +9,7 @@ load may.matrix.type;
 load may.matrix.complextype;
 load may.complex.type;
 
-complex real imaginary =
+complex real imaginary = //!!! or complex { .real, .imaginary } ?
    (size = mat.size real;
     if size != mat.size imaginary then
         failWith "Matrices are not the same size: \(size), \(mat.size imaginary)";
@@ -17,35 +17,71 @@ complex real imaginary =
         { size, real = Some real, imaginary = Some imaginary };
     fi);
 
+size cm = 
+    cm.size;
+
+width cm =
+    cm.size.columns;
+
+height cm =
+    cm.size.rows;
+
 fromReal m =
-    { size = mat.size m, real = Some m, imaginary = None () };
+    { size = mat.size m, real = Some m, imaginary = none };
 
 fromImaginary m =
-    { size = mat.size m, real = None (), imaginary = Some m };
+    { size = mat.size m, real = none, imaginary = Some m };
 
-real cm = 
-    case cm.real of
-    Some m: m;
-    None (): mat.zeroMatrix cm.size;
-    esac;
+at cm row col =
+   (partAt p row col =
+        case p of
+        Some m: mat.at m row col;
+        none: 0 
+        esac;
+    cpx.complex (partAt cm.real row col) (partAt cm.imaginary row col));
 
-imaginary cm = 
-    case cm.imaginary of
-    Some m: m;
-    None (): mat.zeroMatrix cm.size;
-    esac;
+getRow n cm = 
+   (pget = maybe (vec.zeros cm.size.columns) (mat.getRow n);
+    array (map2 cpx.complex (pget cm.real) (pget cm.imaginary)));
+
+getColumn n cm = 
+   (pget = maybe (vec.zeros cm.size.rows) (mat.getColumn n);
+    array (map2 cpx.complex (pget cm.real) (pget cm.imaginary)));
+
+transposed cm =
+    {
+        size = { rows = cm.size.columns, columns = cm.size.rows },
+        real = maybe none (Some . mat.transposed) cm.real,
+        imaginary = maybe none (Some . mat.transposed) cm.imaginary,
+    };
+
+toSparse cm =
+   (ts = maybe none (Some . mat.toSparse);
+    cm with { real = ts cm.real, imaginary = ts cm.imaginary });
+
+toDense cm =
+   (td = maybe none (Some . mat.toDense);
+    cm with { real = td cm.real, imaginary = td cm.imaginary });
+
+scaled factor cm =
+   (sc = maybe none (Some . (mat.scaled factor));
+    cm with { real = sc cm.real, imaginary = sc cm.imaginary });
+
+real cm = maybe (mat.zeroMatrix cm.size) id cm.real;
+
+imaginary cm = maybe (mat.zeroMatrix cm.size) id cm.imaginary;
 
 addParts p1 p2 =
     case p1 of
     Some m1:
         case p2 of
         Some m2: Some (mat.sum m1 m2);
-        None (): Some m1;
+        none: Some m1;
         esac;
-    None ():
+    none:
         case p2 of
         Some m2: Some m2;
-        None (): None ();
+        none: none;
         esac;
     esac;
 
@@ -54,12 +90,12 @@ subtractParts p1 p2 =
     Some m1:
         case p2 of
         Some m2: Some (mat.difference m1 m2);
-        None (): Some m1;
+        none: Some m1;
         esac;
-    None ():
+    none:
         case p2 of
         Some m2: Some (mat.negative m2);
-        None (): None ();
+        none: none;
         esac;
     esac;
 
@@ -68,10 +104,10 @@ multiplyParts p1 p2 =
     Some m1:
         case p2 of
         Some m2: Some (mat.product m1 m2);
-        None (): None ();
+        none: none;
         esac;
-    None ():
-        None ();
+    none:
+        none;
     esac;
 
 sum c1 c2 =
@@ -101,22 +137,14 @@ density cm =
     Some m1:
         case cm.imaginary of
         Some m2: (mat.density m1 + mat.density m2) / 2;
-        None (): mat.density m1;
+        none: mat.density m1;
         esac;
-    None ():
+    none:
         case cm.imaginary of
         Some m2: mat.density m2;
-        None (): 0.0;
+        none: 0.0;
         esac;
     esac;
-
-toSparse cm =
-   (partSparse p =
-        case p of
-        Some m: Some (mat.toSparse m);
-        None (): None ();
-        esac;
-    cm with { real = partSparse cm.real, imaginary = partSparse cm.imaginary });
 
 newComplexMatrix type data =
    (newPart f type d =
@@ -124,27 +152,70 @@ newComplexMatrix type data =
            (map do cc: vec.fromList (map f cc) done data);
     complex (newPart cpx.real type data) (newPart cpx.imaginary type data));
 
+enumerate cm =
+   (enhash h p proto ix =
+       (e = maybe [] mat.enumerate p;
+        for e do { i, j, v }:
+            key = { i, j };
+            if not key in h then h[key] := proto (); fi;
+            h[key][ix] := v;
+        done);
+    h = [:];
+    proto = \(array[0,0]);
+    enhash h cm.real proto 0;
+    enhash h cm.imaginary proto 1;
+    sortBy
+        do a b:
+            if a.i == b.i then a.j < b.j else a.i < b.i fi
+        done
+           (map do k: k with { v = cpx.complex h[k][0] h[k][1] } done
+               (keys h))
+    );
+
 {
+    size,
+    width,
+    height,
+    density,
+    at,
+    getColumn,
+    getRow,
+    transposed,
+    toSparse,
+    toDense,
+    scaled,
+    sum,
+    product,
     complex,
     fromReal,
     fromImaginary,
     real,
     imaginary,
-    sum,
-    product,
-    density,
-    toSparse,
     newComplexMatrix,
+    enumerate,
 } as {
+    size is complexmatrix -> { .rows is number, .columns is number },
+    width is complexmatrix -> number,
+    height is complexmatrix -> number,
+    density is complexmatrix -> number,
+    at is complexmatrix -> number -> number -> cplx,
+    getColumn is number -> complexmatrix -> array<cplx>,
+    getRow is number -> complexmatrix -> array<cplx>,
+    transposed is complexmatrix -> complexmatrix,
+    toSparse is complexmatrix -> complexmatrix,
+    toDense is complexmatrix -> complexmatrix,
+    scaled is number -> complexmatrix -> complexmatrix,
+    sum is complexmatrix -> complexmatrix -> complexmatrix,
+    difference is complexmatrix -> complexmatrix -> complexmatrix,
+    abs is complexmatrix -> matrix,
+    product is complexmatrix -> complexmatrix -> complexmatrix,
+    entryWiseProduct is complexmatrix -> complexmatrix -> complexmatrix,
     complex is matrix -> matrix -> complexmatrix,
     fromReal is matrix -> complexmatrix,
     fromImaginary is matrix -> complexmatrix,
     real is complexmatrix -> matrix,
     imaginary is complexmatrix -> matrix,
-    sum is complexmatrix -> complexmatrix -> complexmatrix,
-    product is complexmatrix -> complexmatrix -> complexmatrix,
-    density is complexmatrix -> number,
-    toSparse is complexmatrix -> complexmatrix,
     newComplexMatrix is (ColumnMajor () | RowMajor ()) -> list?<list?<cplx>> -> complexmatrix,
+    enumerate is complexmatrix -> list<{ .i is number, .j is number, .v is cplx }>,
 }
 
