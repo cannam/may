@@ -829,7 +829,6 @@ as
     toSparse is matrix -> matrix,
     toDense is matrix -> matrix,
     scaled is number -> matrix -> matrix,
-    thresholded is number -> matrix -> matrix,
     resizedTo is { .rows is number, .columns is number } -> matrix -> matrix,
     asRows is matrix -> list<vector>, 
     asColumns is matrix -> list<vector>,
