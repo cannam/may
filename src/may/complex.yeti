@@ -78,6 +78,12 @@ zero = complex 0 0;
 zeros n is number -> array<~Cplx> =
     array (map \(complex 0 0) [1..n]);
 
+reals cc is list?<~Cplx> -> vector =
+    vec.fromList (map real cc);
+
+imaginaries cc is list?<~Cplx> -> vector =
+    vec.fromList (map imaginary cc);
+
 magnitudes cc is list?<~Cplx> -> vector =
     vec.fromList (map magnitude cc);
 
@@ -99,6 +105,8 @@ complexArray reals imags =
    scale,
    zero,
    zeros,
+   reals,
+   imaginaries,
    magnitudes,
    angles,
    complexArray
@@ -114,6 +122,8 @@ complexArray reals imags =
    scale is number -> cplx -> cplx,
    zero is cplx,
    zeros is number -> array<cplx>,
+   reals is list?<cplx> -> vector,
+   imaginaries is list?<cplx> -> vector,
    magnitudes is list?<cplx> -> vector,
    angles is list?<cplx> -> vector,
    complexArray is vector -> vector -> array<cplx>
