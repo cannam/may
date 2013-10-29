@@ -61,6 +61,29 @@ getDiagonal k cm =
     pget = maybe' \(vec.zeros n) (mat.getDiagonal k);
     array (map2 cpx.complex (pget cm.real) (pget cm.imaginary)));
 
+generate f size =
+    //!!! doc: inefficient if function is not fast as it's called
+    // twice for every cell (real & imag separately)
+    {
+        size,
+        real = Some (mat.generate do row col: cpx.real (f row col) done size),
+        imaginary = Some (mat.generate do row col: cpx.imaginary (f row col) done size),
+    };
+
+constMatrix c size =
+    {
+        size,
+        real = Some (mat.constMatrix (cpx.real c) size),
+        imaginary = Some (mat.constMatrix (cpx.imaginary c) size),
+    };
+
+zeroMatrix size =
+    {
+        size,
+        real = none,
+        imaginary = none
+    };
+
 rowSlice cm start end =
    (pget = maybe none (Some . do m: mat.rowSlice m start end done);
     {
@@ -257,6 +280,9 @@ enumerate cm =
     getColumn,
     getRow,
     getDiagonal,
+    generate,
+    constMatrix,
+    zeroMatrix,
     equal,
     conjugateTransposed,
     transposed,
@@ -288,6 +314,9 @@ enumerate cm =
     getColumn is number -> complexmatrix -> array<cplx>,
     getRow is number -> complexmatrix -> array<cplx>,
     getDiagonal is number -> complexmatrix -> array<cplx>,
+    generate is (number -> number -> cplx) -> { .rows is number, .columns is number } -> complexmatrix,
+    constMatrix is cplx -> { .rows is number, .columns is number } -> complexmatrix,
+    zeroMatrix is { .rows is number, .columns is number } -> complexmatrix,
     equal is complexmatrix -> complexmatrix -> boolean,
     conjugateTransposed is complexmatrix -> complexmatrix,
     transposed is complexmatrix -> complexmatrix,
