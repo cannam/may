@@ -59,7 +59,23 @@ getDiagonal k cm =
     joff = if k > 0 then  k else 0 fi;
     n = min (cm.size.columns - joff) (cm.size.rows - ioff);
     pget = maybe' \(vec.zeros n) (mat.getDiagonal k);
-    array (map2 cpx.complex (pget cm.real) (pget cm.imaginary)));
+    cpx.complexArray (pget cm.real) (pget cm.imaginary));
+
+asRows cm =
+   (partAsRows p =
+        case p of 
+        Some m: mat.asRows m;
+        none: map \(vec.zeros cm.size.columns) [1..cm.size.rows];
+        esac;
+    map2 cpx.complexArray (partAsRows cm.real) (partAsRows cm.imaginary));
+
+asColumns cm =
+   (partAsColumns p =
+        case p of 
+        Some m: mat.asColumns m;
+        none: map \(vec.zeros cm.size.rows) [1..cm.size.columns];
+        esac;
+    map2 cpx.complexArray (partAsColumns cm.real) (partAsColumns cm.imaginary));
 
 generate f size =
     //!!! doc: inefficient if function is not fast as it's called
@@ -280,6 +296,8 @@ enumerate cm =
     getColumn,
     getRow,
     getDiagonal,
+    asRows,
+    asColumns,
     generate,
     constMatrix,
     zeroMatrix,
@@ -314,6 +332,8 @@ enumerate cm =
     getColumn is number -> complexmatrix -> array<cplx>,
     getRow is number -> complexmatrix -> array<cplx>,
     getDiagonal is number -> complexmatrix -> array<cplx>,
+    asRows is complexmatrix -> list<array<cplx>>,
+    asColumns is complexmatrix -> list<array<cplx>>,
     generate is (number -> number -> cplx) -> { .rows is number, .columns is number } -> complexmatrix,
     constMatrix is cplx -> { .rows is number, .columns is number } -> complexmatrix,
     zeroMatrix is { .rows is number, .columns is number } -> complexmatrix,
