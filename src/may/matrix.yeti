@@ -783,7 +783,7 @@ resizedTo newsize m =
     identityMatrix,
     zeroSizeMatrix,
     empty? = empty?',
-    equal,
+    equal, //!!! if empty is empty?, why is equal not equal? ?
     equalUnder,
     transposed,
     flipped,
