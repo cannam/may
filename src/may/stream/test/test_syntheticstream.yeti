@@ -37,6 +37,18 @@ epsilon = 0.000001;
         compare str.position 6
 ),
 
+"pulseTrain": \(
+    // 2 pulses a second sampled 8 times a second
+    str = syn.pulseTrain 8 2;
+    compare str.position 0 and
+        compare str.channels 1 and
+        compare str.sampleRate 8 and
+        compare str.available (Infinite ()) and
+        compare str.finished? false and
+        compareApprox epsilon (vec.list (mat.getRow 0 (str.read 9))) [ 1, 0, 0, 0, 1, 0, 0, 0, 1 ] and
+        compare str.position 9
+),
+
 "silent": \(
     str = syn.silent 8;
     compare str.position 0 and

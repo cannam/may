@@ -34,6 +34,9 @@ sinusoid rate freq =
 whiteNoise rate =
     generated rate \((Math#random() * 2.0) - 1.0);
 
+pulseTrain rate freq =
+    generated rate do n: if n % int (rate / freq) == 0 then 1 else 0 fi done;
+
 silent rate =
     generated rate \0;
 
@@ -116,6 +119,7 @@ empty rate channels = // degenerate stream with no data in it, occasionally usef
     precalculatedRepeated is number -> matrix -> stream,
     sinusoid is number -> number -> stream, 
     whiteNoise is number -> stream,
+    pulseTrain is number -> number -> stream,
     silent is number -> stream,
     empty is number -> number -> stream,
 }
