@@ -16,16 +16,6 @@ load may.matrix.type;
 //!!! todo: synchronized for everything with state assignment
 
 /**
-  Produce a sinc window of width equal to zc zero crossings per half,
-  with n samples from peak to first zero crossing, multiplied by a
-  Kaiser window with attenuation alpha dB
- */
-kaiserSincWindow zc n alpha =
-   (sw = win.sinc (n*2) (n*zc*2 + 1);
-    kw = win.kaiserForAttenuation alpha (vec.length sw);
-    bf.multiply sw kw);
-
-/**
  * Produce a sinc window with n samples from peak to first zero
  * crossing, multiplied by a Kaiser window with attenuation alpha dB
  * and transition bandwidth Hz at the given sampleRate. The filter
@@ -54,11 +44,16 @@ interpolated factor s = //!!! factor must be an integer [how to enforce this??]
     if factor == 1 then s
     else
         adjuster = durationAdjusterFor factor s;
-        nzc = 13;
-        attenuation = 80;
-        filter = kaiserSincWindow nzc factor attenuation;
+        fparams = { 
+            n = factor,
+            attenuation = 80,
+            bandwidth = 0.02,
+            samplerate = 2,
+        };
+        filter = kaiserSincFilterFor fparams;
+        delay = -(int ((vec.length filter) / 2));
         out = adjuster
-           (manip.delayedBy (- (nzc * factor))
+           (manip.delayedBy delay
                (convolve.convolvedWith [Framesize 1024]
                    (mat.newMatrix (RowMajor ()) (map \filter [1..s.channels]))
                    (manip.spaced factor s)));
@@ -73,15 +68,22 @@ decimated factor s = //!!! factor must be an integer [how to enforce this??]
     if factor == 1 then s
     else
         adjuster = durationAdjusterFor (1/factor) s;
-        nzc = 13;
-        attenuation = 80;
-        filter = kaiserSincWindow nzc factor attenuation;
+        bandwidth = 0.02;
+        fparams = {
+//            n = factor / (1 - bandwidth/2),
+            n = factor,
+            attenuation = 80,
+            bandwidth = 0.02,
+            samplerate = 1,
+        };
+        filter = kaiserSincFilterFor fparams;
         filtered =
            (convolve.convolvedWith [Framesize 1024]
                (mat.newMatrix (RowMajor ()) (map \filter [1..s.channels])) s);
+        delay = -(int ((vec.length filter) / 4));
         out = adjuster
            (manip.scaledBy (1/factor)
-               (manip.delayedBy (- nzc)
+               (manip.delayedBy delay
                    (manip.picked factor filtered)));
         out with { get sampleRate () = s.sampleRate / factor };
     fi;
@@ -127,12 +129,28 @@ resampledDirectlyTo targetRate s =
     // bandwidth narrow enough at the effective sample rate n to
     // exclude... what?
 
-    fparams = {
-        n = peakToPole,
-        attenuation = 100,
-        bandwidth = 0.02,
-        samplerate = (higher / g),
-    };
+    fparams = 
+        if targetRate >= sourceRate then
+            // upsampling: filter is for interpolation, should be at
+            // exactly the source rate's nyquist frequency
+            {
+                n = peakToPole,
+                attenuation = 100,
+                bandwidth = 0.02,
+                samplerate = (higher / g),
+            }
+        else
+            // downsampling: filter is for antialiasing, should be
+            // slightly lower (depending on the bandwidth)
+            bandwidth = 0.02;
+            {
+//                n = peakToPole / (1 - bandwidth/2),
+                n = peakToPole,
+                attenuation = 100,
+                bandwidth,
+                samplerate = (higher / g),
+            }
+        fi;
 
 //    println "for target rate \(targetRate) and source rate \(sourceRate), gcd = \(g) and peakToPole = \(peakToPole), filt parameters \(fparams)";
 
@@ -324,7 +342,7 @@ resampledDirectlyTo targetRate s =
 resampledTo = resampledDirectlyTo;
 
 {
-    kaiserSincWindow, kaiserSincFilterFor,
+    kaiserSincFilterFor,
     interpolated, decimated,
     resampledUpDownTo, resampledDirectlyTo,
     resampledTo

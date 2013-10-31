@@ -4,6 +4,7 @@ vec = load may.vector;
 mat = load may.matrix;
 
 { distinctColour } = load may.plot.colour;
+{ log10 } = load may.mathmisc;
 
 import org.jzy3d.plot3d.builder: Mapper;
 import org.jzy3d.maths: Range, Coord3d;
@@ -15,20 +16,27 @@ import org.jzy3d.colors: ColorMapper, Color;
 import org.jzy3d.plot3d.rendering.canvas: Quality;
 import org.jzy3d.plot3d.rendering.view.modes: ViewPositionMode;
 import org.jzy3d.plot3d.primitives: FlatLine2d, Point;
+import org.jzy3d.plot3d.primitives.axes: ContourAxeBox;
+import org.jzy3d.contour: DefaultContourColoringPolicy;
+import org.jzy3d.contour: MapperContourPictureGenerator;
+
+import javax.imageio: ImageIO;
+
+import java.io: File;
 
 newMatrixMapper matrix =
    (class MMapper extends Mapper
         double f(double x, double y)
-            result = mat.at matrix y x;
-            println "f(\(x),\(y)) -> \(result)";
-            result
+            mat.at matrix y x;
     end;
     new MMapper());
 
 newMatrixLogMapper matrix =
    (class MMapper extends Mapper
         double f(double x, double y)
-            ln (mat.at matrix y x)
+           (thresh = 1e-100;
+            v = (mat.at matrix y x);
+            if v < thresh then log10 thresh else log10 v fi);
     end;
     new MMapper());
 
@@ -53,6 +61,29 @@ plotMatrix chart colour matrix is ~Chart -> ~Color -> 'a -> () =
     surface#setWireframeDisplayed(true);
     surface#setWireframeColor(colour);
     chart#getScene()#getGraph()#add(surface);
+    ());
+
+plotContour chart colour matrix is ~Chart -> ~Color -> 'a -> () =
+   (mapper = newMatrixMapper matrix;
+    size = mat.size matrix;
+    //!!! doesn't work if either rows or columns is 1
+    xrange = new Range(0, size.columns - 1);
+    yrange = new Range(0, size.rows - 1);
+    grid = new OrthonormalGrid(xrange, size.columns, yrange, size.rows);
+    eprintln "Matrix size: \(size)";
+//    surface = Builder#buildOrthonormal(grid, mapper); //??? big?
+//    println "Z Bounds: \(surface#getBounds()#getZmin()) -> \(surface#getBounds()#getZmax())";
+    contour = new MapperContourPictureGenerator(mapper, xrange, yrange);
+    zmin = mat.minValue matrix;
+    zmax = mat.maxValue matrix;
+    eprintln "z range: \(zmin) -> \(zmax)";
+    cmapper = new ColorMapper(new ColorMapRainbow(), zmin, zmax, new Color(1,1,1,0.5));
+    img = contour#getFilledContourImage(new DefaultContourColoringPolicy(cmapper), 4000, 4000, 10);
+    outfile = new File("contourplot.png");
+\()    ImageIO#write(img, "png", outfile);
+    eprintln "wrote to contourplot.png";
+//    cab = chart#getView()#getAxe() unsafely_as ~ContourAxeBox;
+//    cab#setContourImg(img, xrange, yrange);
     ());
 
 plotCurve chart colour depth curve is ~Chart -> ~Color -> number -> 'a -> () =
@@ -114,6 +145,8 @@ plot structures =
         case s of
         Grid matrix:
             plotMatrix chart colour matrix;
+        Contour matrix:
+            plotContour chart colour matrix;
         Curve curve:
             plotCurve chart colour j curve;
         Series series:
