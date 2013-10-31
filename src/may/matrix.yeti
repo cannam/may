@@ -759,6 +759,20 @@ resizedTo newsize m =
             fi
     fi);
 
+minValue m =
+    if empty?' m then 0
+    else 
+        minv ll = fold min (head ll) (tail ll);
+        minv (map (.v) (enumerate m));
+    fi;
+
+maxValue m =
+    if empty?' m then 0
+    else 
+        maxv ll = fold max (head ll) (tail ll);
+        maxv (map (.v) (enumerate m));
+    fi;
+
 //!!! todo: look at all occurrences of matrix (and complexmatrix)
 // construction and make sure we have good apis for those use cases.
 // in particular, constructing from literal data (list<list<number>>)
@@ -793,6 +807,8 @@ resizedTo newsize m =
     toDense,
     scaled,
     resizedTo,
+    minValue,
+    maxValue,
     asRows,
     asColumns,
     sum = sum',
@@ -845,6 +861,8 @@ as
     toDense is matrix -> matrix,
     scaled is number -> matrix -> matrix,
     resizedTo is { .rows is number, .columns is number } -> matrix -> matrix,
+    minValue is matrix -> number,
+    maxValue is matrix -> number,
     asRows is matrix -> list<vector>, 
     asColumns is matrix -> list<vector>,
     sum is matrix -> matrix -> matrix,
