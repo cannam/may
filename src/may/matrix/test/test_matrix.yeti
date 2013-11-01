@@ -4,9 +4,6 @@ module may.matrix.test.test_matrix;
 mat = load may.matrix;
 vec = load may.vector;
 
-load may.vector.type;
-load may.matrix.type;
-
 import yeti.lang: FailureException;
 
 { compare, compareUsing } = load may.test.test;
