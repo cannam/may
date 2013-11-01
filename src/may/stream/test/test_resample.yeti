@@ -164,9 +164,9 @@ fft = load may.transform.fft;
             outform = resample.resampledTo outrate forms[1];
             incount = inrate;
             outcount = outrate;
-            // We don't compare bins within 1% of the Nyquist freq
             speclen = (min incount outcount) / 2;
-            speclen = speclen - int (speclen / 100);
+            // We don't compare bins within 4% of the Nyquist freq
+            speclen = speclen - int (speclen / 25);
             inmag = specOf (sigOf inform incount) incount speclen;
             outmag = specOf (sigOf outform outcount) outcount speclen;
             compareMatrices 1e-7

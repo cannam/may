@@ -70,10 +70,9 @@ decimated factor s = //!!! factor must be an integer [how to enforce this??]
         adjuster = durationAdjusterFor (1/factor) s;
         bandwidth = 0.02;
         fparams = {
-//            n = factor / (1 - bandwidth/2),
-            n = factor,
+            n = factor / (1 - bandwidth/2),
             attenuation = 80,
-            bandwidth = 0.02,
+            bandwidth,
             samplerate = 1,
         };
         filter = kaiserSincFilterFor fparams;
@@ -81,8 +80,9 @@ decimated factor s = //!!! factor must be an integer [how to enforce this??]
            (convolve.convolvedWith [Framesize 1024]
                (mat.newMatrix (RowMajor ()) (map \filter [1..s.channels])) s);
         delay = -(int ((vec.length filter) / 4));
+        scaleFactor = 1 / fparams.n;
         out = adjuster
-           (manip.scaledBy (1/factor)
+           (manip.scaledBy scaleFactor
                (manip.delayedBy delay
                    (manip.picked factor filtered)));
         out with { get sampleRate () = s.sampleRate / factor };
@@ -144,8 +144,7 @@ resampledDirectlyTo targetRate s =
             // slightly lower (depending on the bandwidth)
             bandwidth = 0.02;
             {
-//                n = peakToPole / (1 - bandwidth/2),
-                n = peakToPole,
+                n = peakToPole / (1 - bandwidth/2),
                 attenuation = 100,
                 bandwidth,
                 samplerate = (higher / g),
@@ -331,7 +330,7 @@ resampledDirectlyTo targetRate s =
         read n = 
            (rowdata = array (map \(new double[n]) [1..s.channels]);
             obtained = fill rowdata n;
-            scaleFactor = min 1.0 (targetRate / sourceRate);
+            scaleFactor = (targetRate / g) / fparams.n;
             result = mat.newMatrix (RowMajor ())
                (map do r: bf.scaled scaleFactor (vec.vector r) done rowdata);
             if obtained < n then mat.columnSlice result 0 obtained
