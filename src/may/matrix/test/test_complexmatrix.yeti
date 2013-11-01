@@ -6,10 +6,6 @@ vec = load may.vector;
 cm = load may.matrix.complex;
 complex = load may.complex;
 
-load may.vector.type;
-load may.matrix.type;
-load may.matrix.complextype;
-
 { compare, compareUsing } = load may.test.test;
 
 aTestMatrix () =

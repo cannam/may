@@ -15,8 +15,6 @@
 
 module may.vector;
 
-load may.vector.type;
-
 import java.util: Arrays;
 
 /// Return a vector of n zeros.
@@ -154,6 +152,8 @@ concat vv is list?<~double[]> -> ~double[] =
 repeated v n is ~double[] -> number -> ~double[] =
     concat (map \(v) [1..n]);
 
+typedef opaque vector_t = ~double[];
+
 {
     zeros,
     consts,
@@ -175,27 +175,29 @@ repeated v n is ~double[] -> number -> ~double[] =
     reverse,
     repeated,
     concat,
+    raw = id,
 } as {
-    zeros is number -> vector,
-    consts is number -> number -> vector,
-    ones is number -> vector,
-    vector is ~double[] -> vector,
-    primitive is vector -> ~double[],
-    floats is vector -> ~float[],
-    fromFloats is ~float[] -> vector,
-    fromList is list?<number> -> vector,
-    list is vector -> list<number>,
-    array is vector -> array<number>,
-    length is vector -> number,
-    empty? is vector -> boolean,
-    at is vector -> number -> number,
-    equal is vector -> vector -> boolean,
-    equalUnder is (number -> number -> boolean) -> vector -> vector -> boolean,
-    slice is vector -> number -> number -> vector,
-    resizedTo is number -> vector -> vector,
-    reverse is vector -> vector,
-    repeated is vector -> number -> vector,
-    concat is list?<vector> -> vector,
+    zeros is number -> vector_t,
+    consts is number -> number -> vector_t,
+    ones is number -> vector_t,
+    vector is ~double[] -> vector_t,
+    primitive is vector_t -> ~double[],
+    floats is vector_t -> ~float[],
+    fromFloats is ~float[] -> vector_t,
+    fromList is list?<number> -> vector_t,
+    list is vector_t -> list<number>,
+    array is vector_t -> array<number>,
+    length is vector_t -> number,
+    empty? is vector_t -> boolean,
+    at is vector_t -> number -> number,
+    equal is vector_t -> vector_t -> boolean,
+    equalUnder is (number -> number -> boolean) -> vector_t -> vector_t -> boolean,
+    slice is vector_t -> number -> number -> vector_t,
+    resizedTo is number -> vector_t -> vector_t,
+    reverse is vector_t -> vector_t,
+    repeated is vector_t -> number -> vector_t,
+    concat is list?<vector_t> -> vector_t,
+    raw is vector_t -> ~double[],
 }
 
 

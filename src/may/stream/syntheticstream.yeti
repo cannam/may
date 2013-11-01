@@ -5,8 +5,6 @@ ch = load may.stream.channels;
 vec = load may.vector;
 mat = load may.matrix;
 
-load may.vector.type;
-load may.matrix.type;
 load may.stream.type;
 
 generated sampleRate generator =
@@ -114,9 +112,9 @@ empty rate channels = // degenerate stream with no data in it, occasionally usef
 
 {
     generated is number -> (number -> number) -> stream, 
-    precalculated is number -> matrix -> stream,
-    precalculatedMono is number -> vector -> stream,
-    precalculatedRepeated is number -> matrix -> stream,
+    precalculated is number -> mat.matrix_t -> stream,
+    precalculatedMono is number -> vec.vector_t -> stream,
+    precalculatedRepeated is number -> mat.matrix_t -> stream,
     sinusoid is number -> number -> stream, 
     whiteNoise is number -> stream,
     pulseTrain is number -> number -> stream,

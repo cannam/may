@@ -7,9 +7,7 @@ vec = load may.vector;
 complex = load may.complex;
 bf = load may.vector.blockfuncs;
 
-load may.complex.type;
-
-packedToComplex len p is number -> ~double[] -> array<cplx> =
+packedToComplex len p is number -> ~double[] -> array<complex.complex_t> =
    (n = len / 2;
     array
        (map do i:
@@ -18,7 +16,7 @@ packedToComplex len p is number -> ~double[] -> array<cplx> =
             complex.complex re im;
         done [0..n]));
 
-complexToPacked arr =
+complexToPacked arr is array<complex.complex_t> -> ~double[] =
    (n = length arr;
     v = new double[n*2-2];
     for [0..(n-1)*2-1] do i:
@@ -33,11 +31,11 @@ complexToPacked arr =
     v[1] := complex.real arr[n-1];
     v);
 
-unpackedToComplex len unp is number -> ~double[] -> array<cplx> =
+unpackedToComplex len unp is number -> vec.vector_t -> array<complex.complex_t> =
    (vv = bf.unzipped 2 unp;
     array (map2 complex.complex (vec.list vv[0]) (vec.list vv[1])));
 
-complexToUnpacked cc is array<cplx> -> ~double[] =
+complexToUnpacked cc is array<complex.complex_t> -> vec.vector_t =
     bf.zipped [ vec.fromList (map complex.real cc),
                 vec.fromList (map complex.imaginary cc) ];
 
@@ -45,18 +43,18 @@ complexToUnpacked cc is array<cplx> -> ~double[] =
 forward n =
    (d = new DoubleFFT_1D(n);
     do cc:
-        arr = vec.resizedTo (n*2) (complexToUnpacked cc);
+        arr = vec.primitive (vec.resizedTo (n*2) (complexToUnpacked cc));
         d#complexForward(arr);
-        unpackedToComplex n arr;
+        unpackedToComplex n (vec.vector arr);
     done);
 
 //!!! doc: n separately as below
 inverse n =
    (d = new DoubleFFT_1D(n);
     do cc:
-        arr = vec.resizedTo (n*2) (complexToUnpacked cc);
+        arr = vec.primitive (vec.resizedTo (n*2) (complexToUnpacked cc));
         d#complexInverse(arr, true);
-        unpackedToComplex n arr;
+        unpackedToComplex n (vec.vector arr);
     done);
 
 //!!! doc: n is supplied separately from the input vector to support partial evaluation
@@ -65,9 +63,9 @@ inverse n =
 realForward n = 
    (d = new DoubleFFT_1D(n);
     do bl:
-        v = vec.resizedTo n bl;
-        d#realForward(v);
-        packedToComplex n v;
+        arr = vec.primitive (vec.resizedTo n bl);
+        d#realForward(arr);
+        packedToComplex n arr;
     done);
 
 //!!! doc: n separately as above
@@ -79,9 +77,9 @@ realForwardMagnitude n =
 realInverse n = 
    (d = new DoubleFFT_1D(n);
     do cplx:
-        v = complexToPacked (array cplx);
-        d#realInverse(v, true);
-        vec.vector v;
+        arr = complexToPacked (array cplx);
+        d#realInverse(arr, true);
+        vec.vector arr;
     done);
 
 {

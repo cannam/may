@@ -1,9 +1,6 @@
 
 module may.complex;
 
-load may.vector.type;
-load may.complex.type;
-
 vec = load may.vector;
 
 import java.lang: ClassCastException;
@@ -78,20 +75,22 @@ zero = complex 0 0;
 zeros n is number -> array<~Cplx> =
     array (map \(complex 0 0) [1..n]);
 
-reals cc is list?<~Cplx> -> vector =
+reals cc is list?<~Cplx> -> 'a =
     vec.fromList (map real cc);
 
-imaginaries cc is list?<~Cplx> -> vector =
+imaginaries cc is list?<~Cplx> -> 'a =
     vec.fromList (map imaginary cc);
 
-magnitudes cc is list?<~Cplx> -> vector =
+magnitudes cc is list?<~Cplx> -> 'a =
     vec.fromList (map magnitude cc);
 
-angles cc is list?<~Cplx> -> vector =
+angles cc is list?<~Cplx> -> 'a =
     vec.fromList (map angle cc);
 
 complexArray reals imags =
     array (map2 complex (vec.list reals) (vec.list imags));
+
+typedef opaque complex_t = ~may.Cplx;
 
 {
    real,
@@ -111,21 +110,21 @@ complexArray reals imags =
    angles,
    complexArray
 } as {
-   real is cplx -> number,
-   imaginary is cplx -> number,
-   complex is number -> number -> cplx,
-   magnitude is cplx -> number,
-   angle is cplx -> number,
-   sum is list?<cplx> -> cplx,
-   add is cplx -> cplx -> cplx,
-   multiply is cplx -> cplx -> cplx,
-   scale is number -> cplx -> cplx,
-   zero is cplx,
-   zeros is number -> array<cplx>,
-   reals is list?<cplx> -> vector,
-   imaginaries is list?<cplx> -> vector,
-   magnitudes is list?<cplx> -> vector,
-   angles is list?<cplx> -> vector,
-   complexArray is vector -> vector -> array<cplx>
+   real is complex_t -> number,
+   imaginary is complex_t -> number,
+   complex is number -> number -> complex_t,
+   magnitude is complex_t -> number,
+   angle is complex_t -> number,
+   sum is list?<complex_t> -> complex_t,
+   add is complex_t -> complex_t -> complex_t,
+   multiply is complex_t -> complex_t -> complex_t,
+   scale is number -> complex_t -> complex_t,
+   zero is complex_t,
+   zeros is number -> array<complex_t>,
+   reals is list?<complex_t> -> vec.vector_t,
+   imaginaries is list?<complex_t> -> vec.vector_t,
+   magnitudes is list?<complex_t> -> vec.vector_t,
+   angles is list?<complex_t> -> vec.vector_t,
+   complexArray is vec.vector_t -> vec.vector_t -> array<complex_t>
 }
 

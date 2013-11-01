@@ -1,7 +1,7 @@
 
 module may.stream.type;
 
-load may.matrix.type;
+mat = load may.matrix;
 
 typedef stream =
     {
@@ -10,7 +10,7 @@ typedef stream =
         sampleRate is number,
         available is Known number | Unknown () | Infinite (),
         finished? is boolean,
-        read is number -> matrix,
+        read is number -> mat.matrix_t,
         close is () -> (),
     };
 

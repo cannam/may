@@ -1,7 +1,0 @@
-
-module may.vector.type;
-
-typedef opaque vector = ~double[];
-
-();
-

@@ -5,15 +5,6 @@ vec = load may.vector;
 mat = load may.matrix;
 bf = load may.vector.blockfuncs;
 
-load may.vector.type;
-
-//!!! "internal" vector function to retrieve data for read-only
-// purposes without copying
-//!!! need to have this in some internal-use module 
-raw =
-   (raw' v is ~double[] -> ~double[] = v;
-    raw' as vector -> ~double[]);
-        
 interleaved m =
     bf.zipped (mat.asRows m);
 
@@ -35,7 +26,7 @@ mixedDownFromInterleaved channels b =
         b;
     else
         columns = ((vec.length b) / channels);
-        v = raw b;
+        v = vec.raw b;
         v' = new double[columns];
         for [0..channels-1] do row:
             for [0..columns-1] do col:
@@ -52,7 +43,7 @@ mixedFromInterleavedTo targetChannels channels b =
         mixedDownFromInterleaved channels b;
     else
         columns = ((vec.length b) / channels);
-        v = raw b;
+        v = vec.raw b;
         v' = new double[columns * targetChannels];
         for [0..targetChannels-1] do target:
             for [0..columns-1] do col:

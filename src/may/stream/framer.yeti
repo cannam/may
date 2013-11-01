@@ -13,11 +13,9 @@ win = load may.signal.window;
 fft = load may.transform.fft;
 mat = load may.matrix;
 ch = load may.stream.channels;
+complex = load may.complex;
 
 load may.stream.type;
-load may.matrix.type;
-load may.vector.type;
-load may.complex.type;
 
 //!!! todo: synchronized for everything with state assignment
 
@@ -186,13 +184,13 @@ frequencyDomainFrames parameters stream =
     map f (windowedFrames parameters stream));
 
 typedef params = { .framesize is number, .hop is number };
-typedef winparams = { .framesize is number, .hop is number, .window is number -> vector };
+typedef winparams = { .framesize is number, .hop is number, .window is number -> vec.vector_t };
 
 { 
-    frames is params -> stream -> list<matrix>,
-    monoFrames is params -> stream -> list<vector>,
-    windowedFrames is winparams -> stream -> list<vector>,
-    frequencyDomainFrames is winparams -> stream -> list<array<cplx> >,
+    frames is params -> stream -> list<mat.matrix_t>,
+    monoFrames is params -> stream -> list<vec.vector_t>,
+    windowedFrames is winparams -> stream -> list<vec.vector_t>,
+    frequencyDomainFrames is winparams -> stream -> list<array<complex.complex_t> >,
 
     framesOfFile parameters filename =
         frames parameters (af.open filename),
@@ -206,9 +204,9 @@ typedef winparams = { .framesize is number, .hop is number, .window is number ->
     frequencyDomainFramesOfFile parameters filename = 
         frequencyDomainFrames parameters (af.open filename),
 
-    overlapAdd is number -> list<matrix> -> matrix,
+    overlapAdd is number -> list<mat.matrix_t> -> mat.matrix_t,
 
-    streamed is number -> params -> list<matrix> -> stream,
-    streamOverlapping is number -> winparams -> list<matrix> -> stream,
+    streamed is number -> params -> list<mat.matrix_t> -> stream,
+    streamOverlapping is number -> winparams -> list<mat.matrix_t> -> stream,
 }
 

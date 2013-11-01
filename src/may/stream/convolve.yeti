@@ -10,8 +10,6 @@ syn = load may.stream.syntheticstream;
 cplx = load may.complex;
 
 load may.stream.type;
-load may.vector.type;
-load may.matrix.type;
 
 //!!! todo: synchronized for everything with state assignment
 
@@ -149,6 +147,6 @@ convolvedWith options ir s = //!!! cheap mono thing here
     esac);
 
 {
-    convolvedWith is list<Fast boolean | Framesize number> -> matrix -> stream -> stream,
+    convolvedWith is list<Fast boolean | Framesize number> -> mat.matrix_t -> stream -> stream,
 }
 
