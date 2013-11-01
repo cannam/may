@@ -12,6 +12,13 @@ load may.matrix.complextype;
 
 { compare, compareUsing } = load may.test.test;
 
+aTestMatrix () =
+   (// 1+0i 0-2i 3.5+6i
+    // 0+0i 4-3i 1-0.2i
+    reals = mat.newMatrix (RowMajor ()) (map vec.fromList [[1,0,3.5],[0,4,1]]);
+    imags = mat.newMatrix (RowMajor ()) (map vec.fromList [[0,-2,6],[0,-3,-0.2]]);
+    cm.complex reals imags);
+
 [
 
 "enumerate": \(
@@ -40,7 +47,28 @@ load may.matrix.complextype;
        (sortEntries e)
        (sortEntries all);
 ),
-    
+
+"transposed": \(
+    m = aTestMatrix ();
+    mout = cm.transposed m;
+    compare (map vec.list (mat.asRows (cm.real mout))) [[1,0],[0,4],[3.5,1]] and
+    compare (map vec.list (mat.asRows (cm.imaginary mout))) [[0,0],[-2,-3],[6,-0.2]];
+),
+
+"conjugateTransposed": \(
+    m = aTestMatrix ();
+    mout = cm.conjugateTransposed m;
+    compare (map vec.list (mat.asRows (cm.real mout))) [[1,0],[0,4],[3.5,1]] and
+    compare (map vec.list (mat.asRows (cm.imaginary mout))) [[0,0],[2,3],[-6,0.2]];
+),
+
+"flipped": \(
+    m = aTestMatrix ();
+    mout = cm.flipped m;
+    compare (map vec.list (mat.asRows (cm.real mout))) [[1,0,3.5],[0,4,1]] and
+    compare (map vec.list (mat.asRows (cm.imaginary mout))) [[0,-2,6],[0,-3,-0.2]];
+),
+
 "magnitudes": \(
     // 1+0i 0-2i
     // 0+0i 4-3i

@@ -147,7 +147,7 @@ transposed cm =
 
 flipped cm =
     {
-        size = { rows = cm.size.columns, columns = cm.size.rows },
+        size = { rows = cm.size.rows, columns = cm.size.columns },
         real = maybe none (Some . mat.flipped) cm.real,
         imaginary = maybe none (Some . mat.flipped) cm.imaginary,
     };
