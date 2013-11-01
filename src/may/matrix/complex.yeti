@@ -5,9 +5,11 @@ mat = load may.matrix;
 vec = load may.vector;
 cpx = load may.complex;
 
-load may.matrix.type;
-load may.matrix.complextype;
-load may.complex.type;
+typedef opaque complexmatrix = {
+    .size is { .rows is number, .columns is number },
+    .real is Some mat.matrix_t | None (),
+    .imaginary is Some mat.matrix_t | None ()
+};
 
 complex real imaginary = //!!! or complex { .real, .imaginary } ?
    (size = mat.size real;
@@ -47,11 +49,11 @@ maybe' lambda f = // like maybe but with lazy default
     esac;
 
 getRow n cm = 
-   (pget = maybe' \(vec.zeros cm.size.columns) (mat.getRow n);
+   (pget = maybe' \(vec.list (vec.zeros cm.size.columns)) (vec.list . (mat.getRow n));
     array (map2 cpx.complex (pget cm.real) (pget cm.imaginary)));
 
 getColumn n cm = 
-   (pget = maybe' \(vec.zeros cm.size.rows) (mat.getColumn n);
+   (pget = maybe' \(vec.list (vec.zeros cm.size.rows)) (vec.list . (mat.getColumn n));
     array (map2 cpx.complex (pget cm.real) (pget cm.imaginary)));
 
 getDiagonal k cm = 
@@ -328,14 +330,14 @@ enumerate cm =
     width is complexmatrix -> number,
     height is complexmatrix -> number,
     density is complexmatrix -> number,
-    at is complexmatrix -> number -> number -> cplx,
-    getColumn is number -> complexmatrix -> array<cplx>,
-    getRow is number -> complexmatrix -> array<cplx>,
-    getDiagonal is number -> complexmatrix -> array<cplx>,
-    asRows is complexmatrix -> list<array<cplx>>,
-    asColumns is complexmatrix -> list<array<cplx>>,
-    generate is (number -> number -> cplx) -> { .rows is number, .columns is number } -> complexmatrix,
-    constMatrix is cplx -> { .rows is number, .columns is number } -> complexmatrix,
+    at is complexmatrix -> number -> number -> cpx.complex_t,
+    getColumn is number -> complexmatrix -> array<cpx.complex_t>,
+    getRow is number -> complexmatrix -> array<cpx.complex_t>,
+    getDiagonal is number -> complexmatrix -> array<cpx.complex_t>,
+    asRows is complexmatrix -> list<array<cpx.complex_t>>,
+    asColumns is complexmatrix -> list<array<cpx.complex_t>>,
+    generate is (number -> number -> cpx.complex_t) -> { .rows is number, .columns is number } -> complexmatrix,
+    constMatrix is cpx.complex_t -> { .rows is number, .columns is number } -> complexmatrix,
     zeroMatrix is { .rows is number, .columns is number } -> complexmatrix,
     equal is complexmatrix -> complexmatrix -> boolean,
     conjugateTransposed is complexmatrix -> complexmatrix,
@@ -346,21 +348,21 @@ enumerate cm =
     scaled is number -> complexmatrix -> complexmatrix,
     sum is complexmatrix -> complexmatrix -> complexmatrix,
     difference is complexmatrix -> complexmatrix -> complexmatrix,
-    abs is complexmatrix -> matrix,
+    abs is complexmatrix -> mat.matrix_t,
     product is complexmatrix -> complexmatrix -> complexmatrix,
     entryWiseProduct is complexmatrix -> complexmatrix -> complexmatrix,
-    complex is matrix -> matrix -> complexmatrix,
-    fromReal is matrix -> complexmatrix,
-    fromImaginary is matrix -> complexmatrix,
-    real is complexmatrix -> matrix,
-    imaginary is complexmatrix -> matrix,
-    magnitudes is complexmatrix -> matrix,
-    angles is complexmatrix -> matrix,
+    complex is mat.matrix_t -> mat.matrix_t -> complexmatrix,
+    fromReal is mat.matrix_t -> complexmatrix,
+    fromImaginary is mat.matrix_t -> complexmatrix,
+    real is complexmatrix -> mat.matrix_t,
+    imaginary is complexmatrix -> mat.matrix_t,
+    magnitudes is complexmatrix -> mat.matrix_t,
+    angles is complexmatrix -> mat.matrix_t,
     rowSlice is complexmatrix -> number -> number -> complexmatrix,
     columnSlice is complexmatrix -> number -> number -> complexmatrix,
-    newComplexMatrix is (ColumnMajor () | RowMajor ()) -> list?<list?<cplx>> -> complexmatrix,
-    newComplexRowVector is list?<cplx> -> complexmatrix,
-    newComplexColumnVector is list?<cplx> -> complexmatrix,
-    enumerate is complexmatrix -> list<{ .i is number, .j is number, .v is cplx }>,
+    newComplexMatrix is (ColumnMajor () | RowMajor ()) -> list?<list?<cpx.complex_t>> -> complexmatrix,
+    newComplexRowVector is list?<cpx.complex_t> -> complexmatrix,
+    newComplexColumnVector is list?<cpx.complex_t> -> complexmatrix,
+    enumerate is complexmatrix -> list<{ .i is number, .j is number, .v is cpx.complex_t }>,
 }
 

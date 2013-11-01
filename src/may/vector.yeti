@@ -175,6 +175,7 @@ typedef opaque vector_t = ~double[];
     reverse,
     repeated,
     concat,
+    raw = id,
 } as {
     zeros is number -> vector_t,
     consts is number -> number -> vector_t,
@@ -196,6 +197,7 @@ typedef opaque vector_t = ~double[];
     reverse is vector_t -> vector_t,
     repeated is vector_t -> number -> vector_t,
     concat is list?<vector_t> -> vector_t,
+    raw is vector_t -> ~double[],
 }
 
 
