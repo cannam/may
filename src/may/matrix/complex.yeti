@@ -40,6 +40,26 @@ at cm row col =
         esac;
     cpx.complex (partAt cm.real row col) (partAt cm.imaginary row col));
 
+enumerate cm =
+   (enhash h p proto ix =
+       (e = maybe [] mat.enumerate p;
+        for e do { i, j, v }:
+            key = { i, j };
+            if not key in h then h[key] := proto (); fi;
+            h[key][ix] := v;
+        done);
+    h = [:];
+    proto = \(array[0,0]);
+    enhash h cm.real proto 0;
+    enhash h cm.imaginary proto 1;
+    sortBy
+        do a b:
+            if a.i == b.i then a.j < b.j else a.i < b.i fi
+        done
+           (map do k: k with { v = cpx.complex h[k][0] h[k][1] } done
+               (keys h))
+    );
+
 maybe' lambda f = // like maybe but with lazy default
    \case of
     Some v: f v;
@@ -239,19 +259,12 @@ product c1 c2 =
         imaginary = addParts (multiplyParts b c) (multiplyParts a d);
     });
 
+nonZeroValues cm =
+    fold do nnz { i, j, v }: if v != cpx.zero then nnz + 1 else nnz fi done
+        0 (enumerate cm);
+
 density cm =
-    case cm.real of
-    Some m1:
-        case cm.imaginary of
-        Some m2: (mat.density m1 + mat.density m2) / 2;
-        none: mat.density m1;
-        esac;
-    none:
-        case cm.imaginary of
-        Some m2: mat.density m2;
-        none: 0.0;
-        esac;
-    esac;
+    (nonZeroValues cm) / (width cm * height cm);
 
 newComplexMatrix type data =
    (newPart f =
@@ -267,31 +280,12 @@ newComplexColumnVector data =
    (newPart f = mat.newColumnVector (vec.fromList (map f data));
     complex (newPart cpx.real) (newPart cpx.imaginary));
 
-enumerate cm =
-   (enhash h p proto ix =
-       (e = maybe [] mat.enumerate p;
-        for e do { i, j, v }:
-            key = { i, j };
-            if not key in h then h[key] := proto (); fi;
-            h[key][ix] := v;
-        done);
-    h = [:];
-    proto = \(array[0,0]);
-    enhash h cm.real proto 0;
-    enhash h cm.imaginary proto 1;
-    sortBy
-        do a b:
-            if a.i == b.i then a.j < b.j else a.i < b.i fi
-        done
-           (map do k: k with { v = cpx.complex h[k][0] h[k][1] } done
-               (keys h))
-    );
-
 {
     size,
     width,
     height,
     density,
+    nonZeroValues,
     at,
     getColumn,
     getRow,
@@ -328,6 +322,7 @@ enumerate cm =
     width is complexmatrix -> number,
     height is complexmatrix -> number,
     density is complexmatrix -> number,
+    nonZeroValues is complexmatrix -> number,
     at is complexmatrix -> number -> number -> cplx,
     getColumn is number -> complexmatrix -> array<cplx>,
     getRow is number -> complexmatrix -> array<cplx>,

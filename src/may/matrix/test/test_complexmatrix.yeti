@@ -78,6 +78,33 @@ aTestMatrix () =
     mags = cm.magnitudes m;
     compare (map vec.list (mat.asRows mags)) [[1,2],[0,5]];
 ),
+
+"magnitudes-real": \(
+    reals = mat.newMatrix (RowMajor ()) (map vec.fromList [[1,0],[0,4]]);
+    m = cm.fromReal reals;
+    mags = cm.magnitudes m;
+    compare (map vec.list (mat.asRows mags)) (map vec.list (mat.asRows reals));
+),
+
+"magnitudes-imag": \(
+    reals = mat.newMatrix (RowMajor ()) (map vec.fromList [[1,0],[0,4]]);
+    m = cm.fromImaginary reals;
+    mags = cm.magnitudes m;
+    compare (map vec.list (mat.asRows mags)) (map vec.list (mat.asRows reals));
+),
+
+"density": \(
+    // 1+0i 0-2i
+    // 0+0i 4-3i
+    reals = mat.newMatrix (RowMajor ()) (map vec.fromList [[1,0],[0,4]]);
+    imags = mat.newMatrix (RowMajor ()) (map vec.fromList [[0,-2],[0,-3]]);
+    compare (cm.density (cm.complex reals imags)) 0.75 and
+        compare (cm.nonZeroValues (cm.complex reals imags)) 3 and
+        compare (cm.density (cm.fromReal reals)) 0.5 and
+        compare (cm.nonZeroValues (cm.fromReal reals)) 2 and
+        compare (cm.density (cm.fromImaginary imags)) 0.5 and
+        compare (cm.nonZeroValues (cm.fromImaginary imags)) 2
+),
  
 "angles": \(
     // 1+0i 0-2i
