@@ -7,8 +7,6 @@ vec = load may.vector;
 maths = load may.mathmisc;
 
 load may.stream.type;
-load may.vector.type;
-load may.matrix.type;
 
 //!!! todo: synchronized for everything with state assignment
 
