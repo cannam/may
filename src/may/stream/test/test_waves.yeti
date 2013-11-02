@@ -13,11 +13,12 @@ vec = load may.vector;
     compareMatrices 1e-8 ((wav.square 4 1).read 10)
        (mat.newRowVector (vec.fromList
            [0,1,0,-1,0,1,0,-1,0,1])) and
-    compareMatrices 1e-6 ((wav.square 8 1).read 10)
+    compareMatrices 1e-6 ((wav.square 8 1).read 14)
        (mat.newRowVector (vec.fromList
            [0, 0.942809, 0.666666, 0.942809,
             0,-0.942809,-0.666666,-0.942809,
-            0, 0.942809]))
+            0, 0.942809, 0.666666, 0.942809,
+            0,-0.942809]))
 ),
 
 "cycleLengthFor": \(
