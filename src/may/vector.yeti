@@ -46,8 +46,8 @@ array' a is ~double[] -> array<number> =
     array a;
 
 /// Return the length of the given vector.
-length' =
-    length . list';
+length' v is ~double[] -> number =
+    length v;
 
 /// Return true if the given vector is empty (has length 0).
 empty?' =
@@ -79,18 +79,18 @@ fromFloats ff is ~float[] -> ~double[] =
 
 /// Return true if the given vectors are equal, using the standard ==
 /// comparator on their elements.
-equal v1 v2 =
-    list' v1 == list' v2;
+equal v1 v2 is ~double[] -> ~double[] -> boolean =
+    list v1 == list v2;
 
 /// Return true if the given vectors are equal, when applying the
 /// given numerical comparator to each element.
 equalUnder comparator v1 v2 =
     length' v1 == length' v2 and
-        all id (map2 comparator (list' v1) (list' v2));
+        all id (map2 comparator (list v1) (list v2));
 
 /// Return another copy of the given vector.
 copyOf v is ~double[] -> ~double[] =
-    Arrays#copyOf(v, list' v |> length);
+    Arrays#copyOf(v, length v);
 
 /// Return the given vector as a primitive array. Modifying the
 /// array contents will not affect the original vector.
@@ -101,7 +101,7 @@ primitive = copyOf;
 /// (exclusive). (The function name and argument order are chosen for
 /// symmetry with the standard library slice and strSlice functions.)
 slice v start finish is ~double[] -> number -> number -> ~double[] =
-   (len = length' v;
+   (len = length v;
     if start == 0 and finish == len then v
     elif start < 0 then slice v 0 finish
     elif start > len then slice v len finish
@@ -115,7 +115,7 @@ slice v start finish is ~double[] -> number -> number -> ~double[] =
 /// vector v. If v is longer than n, the contents will be truncated;
 /// if shorter, they will be padded with zeros.
 resizedTo n v is number -> ~double[] -> ~double[] =
-    if n == length' v then v;
+    if n == length v then v;
     else Arrays#copyOf(v, n);
     fi;
 
@@ -123,7 +123,7 @@ resizedTo n v is number -> ~double[] -> ~double[] =
 /// chosen (in preference to passive "reversed") for symmetry with the
 /// standard library list reverse function.
 reverse v is ~double[] -> ~double[] =
-   (len = length (list v);
+   (len = length v;
     a = new double[len];
     for [0..len-1] do i:
         a[len-i-1] := v[i];
@@ -232,7 +232,7 @@ divideBy n v is number -> ~double[] -> ~double[] =
     // Not just "scaled (1/n)" -- this way we get exact rationals. In fact
     // the unit test for this function will fail if we use scaled (1/n)
     if n == 1 then v
-    else fromList (map (/ n) (list' v));
+    else fromList (map (/ n) (list v));
     fi;
 
 sqr v =
@@ -241,14 +241,14 @@ sqr v =
 rms =
     sqrt . mean . sqr;
 
-abs' =
-    fromList . (map abs) . list';
+abs' v is ~double[] -> ~double[] =
+    fromList (map abs (list v));
 
-negative =
-    fromList . (map (0-)) . list';
+negative v is ~double[] -> ~double[] =
+    fromList (map (0-) (list v));
 
-sqrt' =
-    fromList . (map sqrt) . list';
+sqrt' v is ~double[] -> ~double[] =
+    fromList (map sqrt (list v));
 
 unityNormalised v is ~double[] -> ~double[] = 
    (m = max' (abs' v);
