@@ -93,7 +93,7 @@ precalculatedRepeated rate data =
         get available () = Infinite (),
         get finished? () = false,
         read count = 
-           (result = mat.concat (Horizontal ()) (chunks count position);
+           (result = mat.concatHorizontal (chunks count position);
             position := position + count;
             result),
         close = \(),

@@ -665,44 +665,55 @@ sparseConcat direction first mm =
         if direction == Vertical () then entries 0 0 1 0 mm []
         else entries 0 0 0 1 mm [] fi);
 
-checkDimensionsFor direction first mm =
-   (counter = if direction == Horizontal () then (.rows) else (.columns) fi;
-    n = counter (size first);
+checkDimensions counter first mm =
+   (n = counter (size first);
     if not (all id (map do m: counter (size m) == n done mm)) then
         failWith "Matrix dimensions incompatible for concat (found \(map do m: counter (size m) done mm) not all of which are \(n))";
     fi);
 
-concat' direction mm = //!!! doc: storage order is taken from first matrix in sequence; concat is obviously not lazy (unlike std module)
-    case length mm of
-    0: zeroSizeMatrix ();
-    1: head mm;
-    _:
-        first = head mm;
-        checkDimensionsFor direction first mm;
+concatHorizontal' mm = //!!! doc: storage order is taken from first matrix in sequence; concat is obviously not lazy (unlike std module)
+    case mm of
+    [m]: m;
+    first::rest:
+       (checkDimensions (.rows) first mm;
         if all isSparse? mm then
-            sparseConcat direction first mm
+            sparseConcat (Horizontal ()) first mm
         else
             row = isRowMajor? first;
             // horizontal, row-major: against grain with rows
             // horizontal, col-major: with grain with cols
+            if row then concatAgainstGrain DenseRows getRow (.rows) mm;
+            else concatWithGrain DenseCols getColumn (.columns) mm;
+            fi;
+        fi);
+     _: zeroSizeMatrix ();
+    esac;
+
+concatVertical' mm = //!!! doc: storage order is taken from first matrix in sequence; concat is obviously not lazy (unlike std module)
+    case mm of
+    [m]: m;
+    first::rest:
+       (checkDimensions (.columns) first mm;
+        if all isSparse? mm then
+            sparseConcat (Vertical ()) first mm
+        else
+            row = isRowMajor? first;
             // vertical, row-major: with grain with rows
             // vertical, col-major: against grain with cols
-            case direction of
-            Horizontal ():
-                if row then concatAgainstGrain DenseRows getRow (.rows) mm;
-                else concatWithGrain DenseCols getColumn (.columns) mm;
-                fi;
-            Vertical ():
-                if row then concatWithGrain DenseRows getRow (.rows) mm;
-                else concatAgainstGrain DenseCols getColumn (.columns) mm;
-                fi;
-            esac;
-        fi;
+            if row then concatWithGrain DenseRows getRow (.rows) mm;
+            else concatAgainstGrain DenseCols getColumn (.columns) mm;
+            fi;
+        fi);
+     _: zeroSizeMatrix ();
     esac;
 
 //!!! doc this filter -- zero-size elts are ignored
-concat direction mm =
-    concat' direction (filter do mat: not (empty?' mat) done mm);
+concatHorizontal mm =
+    concatHorizontal' (filter do mat: not (empty?' mat) done mm);
+
+//!!! doc this filter -- zero-size elts are ignored
+concatVertical mm =
+    concatVertical' (filter do mat: not (empty?' mat) done mm);
 
 //!!! next two v. clumsy
 
@@ -764,10 +775,10 @@ resizedTo newsize m =
                 columnSlice m 0 newsize.columns
             else
                 if growrows > 0 then
-                    concat (Vertical ())
+                    concatVertical
                        [m, zeroMatrixWithTypeOf m ((size m) with { rows = growrows })]
                 else
-                    concat (Horizontal ())
+                    concatHorizontal
                        [m, zeroMatrixWithTypeOf m ((size m) with { columns = growcols })]
                 fi
             fi
@@ -834,7 +845,8 @@ maxValue m =
     any = any',
     product,
     entryWiseProduct,
-    concat,
+    concatHorizontal,
+    concatVertical,
     rowSlice,
     columnSlice,
     newMatrix,
@@ -888,7 +900,8 @@ as
     any is (number -> boolean) -> matrix_t -> boolean,
     product is matrix_t -> matrix_t -> matrix_t,
     entryWiseProduct is matrix_t -> matrix_t -> matrix_t,
-    concat is (Horizontal () | Vertical ()) -> list<matrix_t> -> matrix_t,
+    concatHorizontal is list<matrix_t> -> matrix_t,
+    concatVertical is list<matrix_t> -> matrix_t,
     rowSlice is matrix_t -> number -> number -> matrix_t, 
     columnSlice is matrix_t -> number -> number -> matrix_t,
     newMatrix is (ColumnMajor () | RowMajor ()) -> list<vec.vector_t> -> matrix_t, 

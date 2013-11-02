@@ -113,7 +113,7 @@ plainConvolvedWith ir s =
             // Remove from history a number of samples equal to the
             // number returned; add to it a number equal to the number
             // read from source
-            extended = mat.concat (Horizontal ()) [history, signal]; // -> 5
+            extended = mat.concatHorizontal [history, signal]; // -> 5
             newlen = (histlen + siglen) - convlen; // -> 0
             w = mat.width extended;
             history := mat.columnSlice extended (w - newlen) w;

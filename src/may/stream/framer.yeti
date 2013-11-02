@@ -88,7 +88,7 @@ streamContiguous rate framesize frames =
                     remaining := tail remaining;
                     framesFor (samples - mat.width this) (this :: acc)
                 fi;
-            source = mat.concat (Horizontal ()) (framesFor count [buffered]);
+            source = mat.concatHorizontal (framesFor count [buffered]);
             toReturn = mat.columnSlice source 0 count;
             position := position + mat.width toReturn;
             buffered := mat.columnSlice source count (mat.width source);
@@ -111,7 +111,7 @@ overlapAdd overlap frames =
         esac;
     case frames of
     first::rest:
-        mat.concat (Horizontal ()) (ola rest first []);
+        mat.concatHorizontal (ola rest first []);
      _: 
         mat.zeroSizeMatrix ();
     esac);
