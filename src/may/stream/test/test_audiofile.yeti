@@ -4,7 +4,6 @@ module may.stream.test.test_audiofile;
 af = load may.stream.audiofile;
 vec = load may.vector;
 mat = load may.matrix;
-bf = load may.vector.blockfuncs;
 
 ref = load may.stream.test.audiofile_reference;
 
@@ -29,7 +28,7 @@ bitdepthComparator depth =
     do test ref: abs (test - ref) < slack done);
 
 maxOf m =
-    bf.max (vec.fromList (map bf.max (mat.asRows m)));
+    vec.max (vec.fromList (map vec.max (mat.asRows m)));
 
 testReferenceFile rate channels bitdepth =
    (test = readAll (af.open (testfile "\(rate)-\(channels)-\(bitdepth)"));

@@ -3,7 +3,6 @@ module may.stream.resample;
 
 mat = load may.matrix;
 vec = load may.vector;
-bf = load may.vector.blockfuncs;
 win = load may.signal.window;
 manip = load may.stream.manipulate;
 convolve = load may.stream.convolve;
@@ -26,7 +25,7 @@ kaiserSincFilterFor { n, attenuation, bandwidth, samplerate } =
     length = if length > maxlength then maxlength else length fi;
     kw = win.kaiser (pp with { length });
     sw = win.sinc (n*2) length;
-    bf.multiply sw kw);
+    vec.multiply sw kw);
 
 durationAdjusterFor factor s =
     case s.available of
@@ -298,8 +297,8 @@ resampledDirectlyTo targetRate s =
                 pd = phaseData[phase];
 
                 for [0..s.channels-1] do ch:
-                    rowdata[ch][i] := bf.sum
-                       (bf.multiply (mat.getRow ch buffer) pd.filter);
+                    rowdata[ch][i] := vec.sum
+                       (vec.multiply (mat.getRow ch buffer) pd.filter);
                 done;
             
                 buffer := mat.concat (Horizontal ())
@@ -330,7 +329,7 @@ resampledDirectlyTo targetRate s =
             obtained = fill rowdata n;
             scaleFactor = (targetRate / g) / fparams.n;
             result = mat.newMatrix (RowMajor ())
-               (map do r: bf.scaled scaleFactor (vec.vector r) done rowdata);
+               (map do r: vec.scaled scaleFactor (vec.vector r) done rowdata);
             if obtained < n then mat.columnSlice result 0 obtained
             else result
             fi)

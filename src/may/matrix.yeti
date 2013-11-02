@@ -42,7 +42,6 @@
 module may.matrix;
 
 vec = load may.vector;
-bf = load may.vector.blockfuncs;
 
 typedef opaque matrix_t =
     DenseRows. array<vec.vector_t> | // array of rows
@@ -462,7 +461,7 @@ sum' m1 m2 =
     elif isSparse? m1 and isSparse? m2 then
         sparseSumOrDifference (+) m1 m2;
     else
-        add2 v1 v2 = bf.add [v1,v2];
+        add2 v1 v2 = vec.add [v1,v2];
         denseLinearOp add2 m1 m2;
     fi;
 
@@ -472,7 +471,7 @@ difference m1 m2 =
     elif isSparse? m1 and isSparse? m2 then
         sparseSumOrDifference (-) m1 m2;
     else
-        denseLinearOp bf.subtract m1 m2;
+        denseLinearOp vec.subtract m1 m2;
     fi;
 
 scaled factor m =
@@ -480,9 +479,9 @@ scaled factor m =
         makeSparse (typeOf m) (size m)
            (map do { i, j, v }: { i, j, v = factor * v } done (enumerate m))
     elif isRowMajor? m then
-        newMatrix (typeOf m) (map (bf.scaled factor) (asRows m));
+        newMatrix (typeOf m) (map (vec.scaled factor) (asRows m));
     else
-        newMatrix (typeOf m) (map (bf.scaled factor) (asColumns m));
+        newMatrix (typeOf m) (map (vec.scaled factor) (asColumns m));
     fi;
 
 abs' m =
@@ -490,9 +489,9 @@ abs' m =
         makeSparse (typeOf m) (size m)
            (map do { i, j, v }: { i, j, v = abs v } done (enumerate m))
     elif isRowMajor? m then
-        newMatrix (typeOf m) (map bf.abs (asRows m));
+        newMatrix (typeOf m) (map vec.abs (asRows m));
     else
-        newMatrix (typeOf m) (map bf.abs (asColumns m));
+        newMatrix (typeOf m) (map vec.abs (asColumns m));
     fi;
 
 negative m =
@@ -500,9 +499,9 @@ negative m =
         makeSparse (typeOf m) (size m)
            (map do { i, j, v }: { i, j, v = (-v) } done (enumerate m))
     elif isRowMajor? m then
-        newMatrix (typeOf m) (map bf.negative (asRows m));
+        newMatrix (typeOf m) (map vec.negative (asRows m));
     else
-        newMatrix (typeOf m) (map bf.negative (asColumns m));
+        newMatrix (typeOf m) (map vec.negative (asColumns m));
     fi;
 
 //!!! doc: filter by predicate, always returns sparse matrix
@@ -602,7 +601,7 @@ denseProduct size m1 m2 =
     for [0..size.rows - 1] do i:
         row = getRow i m1;
         for [0..size.columns - 1] do j:
-            data[j][i] := bf.sum (bf.multiply row (getColumn j m2));
+            data[j][i] := vec.sum (vec.multiply row (getColumn j m2));
         done;
     done;
     DenseCols (array (map vec.vector (list data))));

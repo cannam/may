@@ -6,7 +6,6 @@ program may.test.all;
 tests = [
 "mathmisc"   : load may.mathmisc.test.test_mathmisc,
 "vector"     : load may.vector.test.test_vector,
-"blockfuncs" : load may.vector.test.test_blockfuncs,
 "complex"    : load may.complex.test.test_complex,
 "framer"     : load may.stream.test.test_framer,
 "channels"   : load may.stream.test.test_channels,

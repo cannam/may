@@ -1,8 +1,8 @@
 
 module may.transform.test.test_fft;
 
-{ forward, inverse, realForward, realForwardMagnitude, realInverse } = load may.transform.fft;
-{ list, fromList } = load may.vector;
+{ forward, inverse, realForward, realForwardMagnitude, realInverse, fftshift, ifftshift } = load may.transform.fft;
+{ list, fromList, zeros } = load may.vector;
 { complex, magnitude, real, imaginary } = load may.complex;
 
 { compare } = load may.test.test;
@@ -65,6 +65,18 @@ testFFTComplex rin iin rout iout =
 
 "c_sineCosine": \(
     testFFTComplex [1,0,-1,0] [0,1,0,-1] [0,4,0,0] [0,0,0,0];
+),
+
+"fftshift": \(
+    compare ((list . fftshift . zeros) 0) [] and 
+        compare ((list . fftshift . fromList) [1,2,3,4]) [3,4,1,2] and
+        compare ((list . fftshift . fromList) [1,2,3,4,5]) [4,5,1,2,3]
+),
+
+"ifftshift": \(
+    compare ((list . ifftshift . zeros) 0) [] and 
+        compare ((list . ifftshift . fromList) [3,4,1,2]) [1,2,3,4] and
+        compare ((list . ifftshift . fromList) [4,5,1,2,3]) [1,2,3,4,5]
 ),
 
 ] is hash<string, () -> boolean>;

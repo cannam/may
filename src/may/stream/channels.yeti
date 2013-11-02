@@ -3,13 +3,12 @@ module may.stream.channels;
 
 vec = load may.vector;
 mat = load may.matrix;
-bf = load may.vector.blockfuncs;
 
 interleaved m =
-    bf.zipped (mat.asRows m);
+    vec.zipped (mat.asRows m);
 
 deinterleaved channels b =
-    mat.newMatrix (RowMajor ()) (list (bf.unzipped channels b));
+    mat.newMatrix (RowMajor ()) (list (vec.unzipped channels b));
 
 mixedDown m =  //!!!doc: average, not sum
    ({ columns, rows } = (mat.size m);
@@ -18,7 +17,7 @@ mixedDown m =  //!!!doc: average, not sum
     elif rows == 1 then
         mat.getRow 0 m
     else
-        bf.divideBy rows (bf.add (mat.asRows m));
+        vec.divideBy rows (vec.add (mat.asRows m));
     fi);
 
 mixedDownFromInterleaved channels b =
@@ -26,14 +25,13 @@ mixedDownFromInterleaved channels b =
         b;
     else
         columns = ((vec.length b) / channels);
-        v = vec.raw b;
         v' = new double[columns];
         for [0..channels-1] do row:
             for [0..columns-1] do col:
-                v'[col] := v'[col] + v[col * channels + row];
+                v'[col] := v'[col] + vec.at b (col * channels + row);
             done;
         done;
-        bf.divideBy channels (vec.vector v');
+        vec.divideBy channels (vec.vector v');
     fi;
 
 mixedFromInterleavedTo targetChannels channels b = 
@@ -43,14 +41,15 @@ mixedFromInterleavedTo targetChannels channels b =
         mixedDownFromInterleaved channels b;
     else
         columns = ((vec.length b) / channels);
-        v = vec.raw b;
         v' = new double[columns * targetChannels];
         for [0..targetChannels-1] do target:
             for [0..columns-1] do col:
                 if target < channels then
-                    v'[col * targetChannels + target] := v[col * channels + target];
+                    v'[col * targetChannels + target] := 
+                        vec.at b (col * channels + target);
                 elif channels == 1 and target == 1 then
-                    v'[col * targetChannels + target] := v[col * channels];
+                    v'[col * targetChannels + target] := 
+                        vec.at b (col * channels);
                 fi
             done
         done;

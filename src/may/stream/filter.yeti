@@ -3,7 +3,6 @@ module may.stream.filter;
 
 mat = load may.matrix;
 vec = load may.vector;
-bf = load may.vector.blockfuncs;
 win = load may.signal.window;
 convolve = load may.stream.convolve;
 manip = load may.stream.manipulate;
@@ -16,19 +15,19 @@ bandpassed f0 f1 attenuation bandwidth s =
     filterLength = vec.length kw;
     // First arg to sinc is the complete cycle length for the cutoff frequency
     idealFor freq =
-        bf.scaled (2 * freq / rate)
+        vec.scaled (2 * freq / rate)
            (win.sinc (rate / freq) filterLength);
     idealBandpass =
          if f1 < rate/2 then
-             if f0 > 0 then bf.subtract (idealFor f1) (idealFor f0)
+             if f0 > 0 then vec.subtract (idealFor f1) (idealFor f0)
              else idealFor f1
              fi
          else
-             if f0 > 0 then bf.subtract (win.dirac filterLength) (idealFor f0)
+             if f0 > 0 then vec.subtract (win.dirac filterLength) (idealFor f0)
              else win.dirac filterLength;
              fi;
          fi;
-    filter = bf.multiply idealBandpass kw;
+    filter = vec.multiply idealBandpass kw;
     filtered = convolve.convolvedWith [Framesize 1024]
        (mat.newMatrix (RowMajor ()) (map \filter [1..s.channels]))
         s;

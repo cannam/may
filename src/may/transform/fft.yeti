@@ -5,7 +5,6 @@ import edu.emory.mathcs.jtransforms.fft: DoubleFFT_1D;
 
 vec = load may.vector;
 complex = load may.complex;
-bf = load may.vector.blockfuncs;
 
 packedToComplex len p is number -> ~double[] -> array<complex.complex_t> =
    (n = len / 2;
@@ -32,11 +31,11 @@ complexToPacked arr is array<complex.complex_t> -> ~double[] =
     v);
 
 unpackedToComplex len unp is number -> vec.vector_t -> array<complex.complex_t> =
-   (vv = bf.unzipped 2 unp;
+   (vv = vec.unzipped 2 unp;
     array (map2 complex.complex (vec.list vv[0]) (vec.list vv[1])));
 
 complexToUnpacked cc is array<complex.complex_t> -> vec.vector_t =
-    bf.zipped [ vec.fromList (map complex.real cc),
+    vec.zipped [ vec.fromList (map complex.real cc),
                 vec.fromList (map complex.imaginary cc) ];
 
 //!!! doc: n separately as below
@@ -82,11 +81,23 @@ realInverse n =
         vec.vector arr;
     done);
 
+fftshift v =
+   (len = vec.length v;
+    half = int(len/2 + 0.5); // round up for odd-length sequences
+    vec.concat [vec.slice v half len, vec.slice v 0 half]);
+
+ifftshift v =
+   (len = vec.length v;
+    half = int(len/2); // round down for odd-length sequences
+    vec.concat [vec.slice v half len, vec.slice v 0 half]);
+
 {
 forward,
 inverse,
 realForward,
 realForwardMagnitude,
 realInverse,
+fftshift,
+ifftshift,
 }
 

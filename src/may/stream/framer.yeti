@@ -7,7 +7,6 @@ module may.stream.framer;
  */
 
 vec = load may.vector;
-bf = load may.vector.blockfuncs;
 af = load may.stream.audiofile;
 win = load may.signal.window;
 fft = load may.transform.fft;
@@ -123,7 +122,7 @@ streamOverlapping rate { framesize, hop, window } frames =
     var position = 0;
 
     factor = hop / (framesize/2);
-    w = bf.scaled factor (window framesize);
+    w = vec.scaled factor (window framesize);
     channels = mat.height (head frames); // so we don't need to keep a head ptr
 
     syncd = synchronized remaining;
@@ -137,7 +136,7 @@ streamOverlapping rate { framesize, hop, window } frames =
             else
                 this = mat.resizedTo { columns = framesize, rows = channels }
                    (mat.newMatrix (RowMajor ())
-                       (map (bf.multiply w) (mat.asRows (head remaining))));
+                       (map (vec.multiply w) (mat.asRows (head remaining))));
                 remaining := tail remaining;
                 framesFor (samples - hop) (this::acc)
             fi;
@@ -177,7 +176,7 @@ monoFrames params stream =
 
 windowedFrames { framesize, hop, window } stream =
    (win = window framesize;
-    map (bf.multiply win) (monoFrames { framesize, hop } stream));
+    map (vec.multiply win) (monoFrames { framesize, hop } stream));
 
 frequencyDomainFrames parameters stream =
    (f = fft.realForward parameters.framesize;

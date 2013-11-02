@@ -2,7 +2,6 @@
 module may.stream.test.test_resample;
 
 vec = load may.vector;
-bf = load may.vector.blockfuncs;
 mat = load may.matrix;
 syn = load may.stream.syntheticstream;
 manip = load may.stream.manipulate;
@@ -154,7 +153,7 @@ fft = load may.transform.fft;
     // Return magnitude spectrum, running fft at n points and then
     // truncating to m
     specOf sig n m =
-        vec.resizedTo m (bf.divideBy n (fft.realForwardMagnitude n sig));
+        vec.resizedTo m (vec.divideBy n (fft.realForwardMagnitude n sig));
 
     all id
        (map do { inrate, outrate }:
@@ -184,7 +183,7 @@ fft = load may.transform.fft;
     // Interpolating any signal by N should give a signal in which
     // every Nth sample is the original signal
     data = vec.fromList [ 0, 0.1, -0.3, -0.4, -0.3, 0, 0.5, 0.2, 0.8, -0.1 ];
-    data = vec.concat [ data, bf.scaled (5/4) data, bf.scaled (3/4) data, data ];
+    data = vec.concat [ data, vec.scaled (5/4) data, vec.scaled (3/4) data, data ];
     data = vec.concat [ data, data ];
     input = manip.withDuration (vec.length data) (syn.precalculatedMono 4 data);
     factor = 3;
@@ -198,7 +197,7 @@ fft = load may.transform.fft;
 "interpolated-rs-misc": \(
     // Just as above, but using resampledTo instead of interpolated
     data = vec.fromList [ 0, 0.1, -0.3, -0.4, -0.3, 0, 0.5, 0.2, 0.8, -0.1 ];
-    data = vec.concat [ data, bf.scaled (5/4) data, bf.scaled (3/4) data, data ];
+    data = vec.concat [ data, vec.scaled (5/4) data, vec.scaled (3/4) data, data ];
     data = vec.concat [ data, data ];
     input = manip.withDuration (vec.length data) (syn.precalculatedMono 4 data);
     factor = 3;
@@ -212,7 +211,7 @@ fft = load may.transform.fft;
 "same-rate": \(
     // Test that resample to the original rate leaves data unchanged
     data = vec.fromList [ 0, 0.1, -0.3, -0.4, -0.3, 0, 0.5, 0.2, 0.8, -0.1 ];
-    data = vec.concat [ data, bf.scaled (5/4) data, bf.scaled (3/4) data, data ];
+    data = vec.concat [ data, vec.scaled (5/4) data, vec.scaled (3/4) data, data ];
     data = vec.concat [ data, data ];
     input = syn.precalculatedMono 4 data;
     output = resample.resampledTo (input.sampleRate) input;

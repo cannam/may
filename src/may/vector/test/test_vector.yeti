@@ -124,6 +124,123 @@ vec = load may.vector;
         vec.equal (vec.concat [v,w,v]) (vec.fromList [1,2,3,4,5,6,1,2,3])
 ),
 
+"sum": \(
+    compare ((vec.sum . vec.zeros) 0) 0 and
+        compare ((vec.sum . vec.zeros) 5) 0 and
+        compare ((vec.sum . vec.ones) 5) 5 and
+        compare ((vec.sum . vec.fromList) [1,-2,3,0]) 2
+),
+
+"max": \(
+    compare ((vec.max . vec.fromList) [1,-2,3,0]) 3 and
+        compare ((vec.max . vec.fromList) [-1,-2,-3]) (-1) and
+        compare ((vec.max . vec.fromList) [4,1]) 4 and
+        compare ((vec.max . vec.fromList) []) 0
+),
+
+"min": \(
+    compare ((vec.min . vec.fromList) [1,-2,3,0]) (-2) and
+        compare ((vec.min . vec.fromList) [-1,-2,-3]) (-3) and
+        compare ((vec.min . vec.fromList) [4,1]) 1 and
+        compare ((vec.min . vec.fromList) []) 0
+),
+
+"maxindex": \(
+    compare ((vec.maxindex . vec.fromList) [1,-2,3,0]) 2 and
+        compare ((vec.maxindex . vec.fromList) [-1,-2,-3]) 0 and
+        compare ((vec.maxindex . vec.fromList) [4,1]) 0 and
+        compare ((vec.maxindex . vec.fromList) []) (-1)
+),
+
+"minindex": \(
+    compare ((vec.minindex . vec.fromList) [1,-2,3,0]) 1 and
+        compare ((vec.minindex . vec.fromList) [-1,-2,-3]) 2 and
+        compare ((vec.minindex . vec.fromList) [4,1]) 1 and
+        compare ((vec.minindex . vec.fromList) []) (-1)
+),
+
+"mean": \(
+    compare ((vec.mean . vec.zeros) 0) 0 and
+        compare ((vec.mean . vec.zeros) 5) 0 and
+        compare ((vec.mean . vec.ones) 5) 1 and
+        compare ((vec.mean . vec.fromList) [1,-2,3,0]) 0.5
+),
+
+"add": \(
+    compare (vec.list (vec.add [vec.zeros 0, vec.ones 5])) [] and
+        compare (vec.list (vec.add [vec.consts 3 4, vec.fromList [1,2,3] ])) [4,5,6] and
+        compare (vec.list (vec.add [vec.consts (-3) 4, vec.fromList [1,2,3] ])) [-2,-1,0] 
+),
+
+"subtract": \(
+    compare (vec.list (vec.subtract (vec.zeros 0) (vec.ones 5))) [] and
+        compare (vec.list (vec.subtract (vec.consts 3 4) (vec.fromList [1,2,3]))) [2,1,0] and
+        compare (vec.list (vec.subtract (vec.consts (-3) 4) (vec.fromList [1,2,3]))) [-4,-5,-6]
+),
+
+"multiply": \(
+    compare (vec.list (vec.multiply (vec.zeros 0) (vec.ones 5))) [] and
+        compare (vec.list (vec.multiply (vec.consts (-3) 4) (vec.fromList [1,2,3]))) [-3,-6,-9]
+),
+
+"divideBy": \(
+    compare (vec.list (vec.divideBy 5 (vec.ones 0))) [] and
+        compare (vec.list (vec.divideBy 5 (vec.fromList [1,2,-3]))) [0.2,0.4,-0.6]
+),
+
+"scaled": \(
+    compare (vec.list (vec.scaled 5 (vec.ones 0))) [] and
+        compare (vec.list (vec.scaled 5 (vec.fromList [1,2,-3]))) [5,10,-15]
+),
+
+"abs": \(
+    compare (vec.list (vec.abs (vec.ones 0))) [] and
+        compare (vec.list (vec.abs (vec.fromList [1,2,-3]))) [1,2,3]
+),
+
+"negative": \(
+    compare (vec.list (vec.negative (vec.ones 0))) [] and
+        compare (vec.list (vec.negative (vec.fromList [1,2,-3]))) [-1,-2,3]
+),
+
+"sqr": \(
+    compare ((vec.list . vec.sqr . vec.zeros) 0) [] and
+        compare ((vec.list . vec.sqr . vec.ones) 5) [1,1,1,1,1] and
+        compare ((vec.list . vec.sqr . vec.fromList) [0.5,-2,3,0]) [0.25,4,9,0]
+),
+
+"sqrt": \(
+    compare ((vec.list . vec.sqrt . vec.zeros) 0) [] and
+        compare ((vec.list . vec.sqrt . vec.ones) 5) [1,1,1,1,1] and
+        compare ((vec.list . vec.sqrt . vec.fromList) [0.25,4,9,0]) [0.5,2,3,0]
+),
+
+"rms": \(
+    compare ((vec.rms . vec.zeros) 0) 0 and
+        compare ((vec.rms . vec.ones) 5) 1 and
+        compare ((vec.rms . vec.fromList) [-1,2,2]) (sqrt 3)
+),
+
+"unityNormalised": \(
+    compare ((vec.list . vec.unityNormalised . vec.fromList) [1,-2,3,0]) [1/3,-2/3,1,0] and
+        compare ((vec.list . vec.unityNormalised . vec.fromList) [-1,-2,-3]) [-1/3,-2/3,-1] and
+        compare ((vec.list . vec.unityNormalised . vec.fromList) [4,1]) [1,1/4] and
+        compare ((vec.list . vec.unityNormalised . vec.fromList) []) []
+),
+
+"zipped": \(
+    compare (vec.list (vec.zipped (map vec.fromList []))) [] and
+        compare (vec.list (vec.zipped (map vec.fromList [[],[]]))) [] and
+        compare (vec.list (vec.zipped (map vec.fromList [[1,2]]))) [1,2] and
+        compare (vec.list (vec.zipped (map vec.fromList [[1,2],[3,4],[5,6]]))) [1,3,5,2,4,6]
+),
+
+"unzipped": \(
+    compare (map vec.list (vec.unzipped 1 (vec.fromList []))) [[]] and
+        compare (map vec.list (vec.unzipped 1 (vec.fromList [1,2,3]))) [[1,2,3]] and
+        compare (map vec.list (vec.unzipped 3 (vec.fromList [1,3,5,2,4,6]))) [[1,2],[3,4],[5,6]]
+),
+
 ] is hash<string, () -> boolean>;
 
 

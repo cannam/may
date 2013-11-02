@@ -16,9 +16,12 @@
 module may.vector;
 
 import java.util: Arrays;
+import may.bits: VectorBits;
+
+{ ceil } = load may.mathmisc;
 
 /// Return a vector of n zeros.
-zeros n =
+zeros n is number -> ~double[] =
     new double[n];
 
 /// Return a vector of length n, containing all m.
@@ -130,7 +133,7 @@ reverse v is ~double[] -> ~double[] =
 /// Return a single new vector that contains the contents of all the
 /// given vectors, in order. (Unlike the standard module list concat
 /// function, this one cannot be lazy.)
-concat vv is list?<~double[]> -> ~double[] =
+concat' vv is list?<~double[]> -> ~double[] =
     case vv of
         [v]: v;
         v0::rest:
@@ -150,7 +153,139 @@ concat vv is list?<~double[]> -> ~double[] =
 /// vector, repeated n times. The vector will therefore have length n
 /// times the length of v.
 repeated v n is ~double[] -> number -> ~double[] =
-    concat (map \(v) [1..n]);
+    concat' (map \(v) [1..n]);
+
+sum' v is ~double[] -> number = 
+    VectorBits#sum(v);
+
+max' v is ~double[] -> number = 
+   (var mx = 0;
+    for [0..length v - 1] do i:
+        if i == 0 or v[i] > mx then
+            mx := v[i];
+        fi
+    done;
+    mx);
+
+maxindex v is ~double[] -> number =
+   (var mx = 0;
+    var mi = -1;
+    for [0..length v - 1] do i:
+        if i == 0 or v[i] > mx then
+            mx := v[i];
+            mi := i;
+        fi
+    done;
+    mi);
+
+min' v is ~double[] -> number = 
+   (var mn = 0;
+    for [0..length v - 1] do i:
+        if i == 0 or v[i] < mn then
+            mn := v[i];
+        fi
+    done;
+    mn);
+
+minindex v is ~double[] -> number =
+   (var mn = 0;
+    var mi = -1;
+    for [0..length v - 1] do i:
+        if i == 0 or v[i] < mn then
+            mn := v[i];
+            mi := i;
+        fi
+    done;
+    mi);
+
+mean v is ~double[] -> number =
+    case length v of
+        0: 0;
+        len: sum' v / len
+    esac;
+
+add vv is list?<~double[]> -> ~double[] =
+   (len = head (sort (map length' vv));
+    out = new double[len];
+    for vv do v:
+        VectorBits#addTo(out, v, len);
+    done;
+    out);
+
+subtract v1 v2 is ~double[] -> ~double[] -> ~double[] =
+   (len = if length v1 < length v2 then length v1 else length v2 fi;
+    out = new double[len];
+    for [0..len-1] do i:
+        out[i] := v1[i] - v2[i]
+    done;
+    out);
+
+multiply b1 b2 is ~double[] -> ~double[] -> ~double[] = 
+    VectorBits#multiply(b1, b2);
+
+scaled n v is number -> ~double[] -> ~double[] =
+    if n == 1 then v
+    else VectorBits#scaled(v, n);
+    fi;
+
+divideBy n v is number -> ~double[] -> ~double[] =
+    // Not just "scaled (1/n)" -- this way we get exact rationals. In fact
+    // the unit test for this function will fail if we use scaled (1/n)
+    if n == 1 then v
+    else fromList (map (/ n) (list' v));
+    fi;
+
+sqr v =
+    multiply v v;
+
+rms =
+    sqrt . mean . sqr;
+
+abs' =
+    fromList . (map abs) . list';
+
+negative =
+    fromList . (map (0-)) . list';
+
+sqrt' =
+    fromList . (map sqrt) . list';
+
+unityNormalised v is ~double[] -> ~double[] = 
+   (m = max' (abs' v);
+    if m != 0 then
+        divideBy m v;
+    else
+        v;
+    fi);
+
+zipped vv is list?<~double[]> -> ~double[] =
+    case vv of
+    [v]: v;
+    first::rest:
+       (len = length' first;
+        if len != min' (fromList (map length' vv)) then
+            failWith "Vectors must all be of the same length";
+        fi;
+        fromList
+           (concat
+              (map do i:
+                   map do v:
+                       at' v i
+                       done vv
+                   done [0..len-1])));
+     _: zeros 0;
+    esac;
+
+unzipped n v is number -> ~double[] -> array<~double[]> =
+    if n == 1 then array [v]
+    else 
+        len = length' v;
+        vv = array (map \(new double[ceil(len / n)]) [1..n]);
+        for [0..len-1] do x:
+            vv[x % n][int (x / n)] := at' v x;
+        done;
+        array vv;
+    fi;
 
 typedef opaque vector_t = ~double[];
 
@@ -174,8 +309,26 @@ typedef opaque vector_t = ~double[];
     resizedTo,
     reverse,
     repeated,
-    concat,
-    raw = id,
+    concat = concat',
+    sum = sum',
+    mean,
+    add,
+    subtract,
+    multiply,
+    divideBy,
+    scaled,
+    abs = abs',
+    negative,
+    sqr,
+    sqrt = sqrt',
+    rms,
+    max = max',
+    min = min',
+    maxindex,
+    minindex,
+    unityNormalised,
+    zipped,
+    unzipped,
 } as {
     zeros is number -> vector_t,
     consts is number -> number -> vector_t,
@@ -197,8 +350,24 @@ typedef opaque vector_t = ~double[];
     reverse is vector_t -> vector_t,
     repeated is vector_t -> number -> vector_t,
     concat is list?<vector_t> -> vector_t,
-    raw is vector_t -> ~double[],
+    sum is vector_t -> number,
+    mean is vector_t -> number,
+    add is list?<vector_t> -> vector_t,
+    subtract is vector_t -> vector_t -> vector_t,
+    multiply is vector_t -> vector_t -> vector_t, 
+    divideBy is number -> vector_t -> vector_t, 
+    scaled is number -> vector_t -> vector_t,
+    abs is vector_t -> vector_t,
+    negative is vector_t -> vector_t,
+    sqr is vector_t -> vector_t,
+    sqrt is vector_t -> vector_t,
+    rms is vector_t -> number,
+    max is vector_t -> number,
+    min is vector_t -> number,
+    maxindex is vector_t -> number,
+    minindex is vector_t -> number,
+    unityNormalised is vector_t -> vector_t,
+    zipped is list?<vector_t> -> vector_t,
+    unzipped is number -> vector_t -> array<vector_t>,
 }
-
-
 
