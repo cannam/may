@@ -124,7 +124,7 @@ calculateKaiser { length, beta } =
        (half ++
             if even then reverse half else drop 1 (reverse half) fi));
 
-kaisers = [:];
+kaisers = concurrentHash ();
 
 kaiser params =
    (if not (params in kaisers)
