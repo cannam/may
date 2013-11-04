@@ -233,7 +233,7 @@ duplicated copies s =
 // (so maybe name is misleading?)
     array if copies < 2 then map \s [1..copies];
     else
-        pos = [:];
+        pos = concurrentHash ();
         lowtide () = head (sort (map (at pos) (keys pos)));
         var hightide = 0;
         var cache = mat.zeroSizeMatrix ();
