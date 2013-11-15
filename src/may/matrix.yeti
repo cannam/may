@@ -44,15 +44,15 @@ module may.matrix;
 vec = load may.vector;
 
 typedef opaque matrix_t =
-    DenseRows. array<vec.vector_t> | // array of rows
-    DenseCols. array<vec.vector_t> | // array of columns
-    SparseCSR. {
+    DenseRows array<vec.vector_t> | // array of rows
+    DenseCols array<vec.vector_t> | // array of columns
+    SparseCSR {
         .values is vec.vector_t,
         .indices is array<number>, // column index of each value
         .pointers is array<number>, // offset of first value in each row
         .extent is number // max possible index + 1, i.e. number of columns
         } |
-    SparseCSC. {
+    SparseCSC {
         .values is vec.vector_t,
         .indices is array<number>, // row index of each value
         .pointers is array<number>, // offset of first value in each column
