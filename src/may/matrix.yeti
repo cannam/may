@@ -798,6 +798,25 @@ maxValue m =
         maxv (map (.v) (enumerate m));
     fi;
 
+format m =
+    strJoin "\n"
+       (chunk = 8;
+        map do b:
+            c0 = b * chunk;
+            c1 = b * chunk + chunk - 1;
+            c1 = if c1 > width m then width m else c1 fi;
+            [ "\nColumns \(c0) to \(c1)\n",
+              (map do row:
+                   map do v:
+                       n = int (v * 10000);
+                       strPad ' ' 10 "\(n / 10000)";
+                   done (vec.list row);
+               done (asRows (columnSlice m c0 (c1 + 1))) |> concat |> strJoin "")
+            ];
+        done [0..width m / chunk - 1] |> concat);
+
+print' = print . format;
+
 //!!! todo: look at all occurrences of matrix (and complexmatrix)
 // construction and make sure we have good apis for those use cases.
 // in particular, constructing from literal data (list<list<number>>)
@@ -853,13 +872,13 @@ maxValue m =
     newRowVector,
     newColumnVector,
     newSparseMatrix,
-    enumerate
+    enumerate,
+    format,
+    print = print',
 }
 as
 {
-//!!! check whether these are right to be .selector rather than just selector
-
-    size is matrix_t -> { .rows is number, .columns is number },
+    size is matrix_t -> { rows is number, columns is number },
     width is matrix_t -> number,
     height is matrix_t -> number,
     density is matrix_t -> number,
@@ -870,11 +889,11 @@ as
     getDiagonal is number -> matrix_t -> vec.vector_t,
     isRowMajor? is matrix_t -> boolean,
     isSparse? is matrix_t -> boolean,
-    generate is (number -> number -> number) -> { .rows is number, .columns is number } -> matrix_t,
-    constMatrix is number -> { .rows is number, .columns is number } -> matrix_t,
-    randomMatrix is { .rows is number, .columns is number } -> matrix_t,
-    zeroMatrix is { .rows is number, .columns is number } -> matrix_t, 
-    identityMatrix is { .rows is number, .columns is number } -> matrix_t, 
+    generate is (number -> number -> number) -> { rows is number, columns is number } -> matrix_t,
+    constMatrix is number -> { rows is number, columns is number } -> matrix_t,
+    randomMatrix is { rows is number, columns is number } -> matrix_t,
+    zeroMatrix is { rows is number, columns is number } -> matrix_t, 
+    identityMatrix is { rows is number, columns is number } -> matrix_t, 
     zeroSizeMatrix is () -> matrix_t,
     empty? is matrix_t -> boolean,
     equal is matrix_t -> matrix_t -> boolean,
@@ -886,7 +905,7 @@ as
     toSparse is matrix_t -> matrix_t,
     toDense is matrix_t -> matrix_t,
     scaled is number -> matrix_t -> matrix_t,
-    resizedTo is { .rows is number, .columns is number } -> matrix_t -> matrix_t,
+    resizedTo is { rows is number, columns is number } -> matrix_t -> matrix_t,
     minValue is matrix_t -> number,
     maxValue is matrix_t -> number,
     asRows is matrix_t -> list<vec.vector_t>, 
@@ -907,7 +926,9 @@ as
     newMatrix is (ColumnMajor () | RowMajor ()) -> list<vec.vector_t> -> matrix_t, 
     newRowVector is vec.vector_t -> matrix_t, 
     newColumnVector is vec.vector_t -> matrix_t,
-    newSparseMatrix is (ColumnMajor () | RowMajor ()) -> { .rows is number, .columns is number } -> list<{ .i is number, .j is number, .v is number }> -> matrix_t,
-    enumerate is matrix_t -> list<{ .i is number, .j is number, .v is number }>
+    newSparseMatrix is (ColumnMajor () | RowMajor ()) -> { rows is number, columns is number } -> list<{ i is number, j is number, v is number }> -> matrix_t,
+    enumerate is matrix_t -> list<{ i is number, j is number, v is number }>,
+    format is matrix_t -> string,
+    print is matrix_t -> (),
 }
 

@@ -320,7 +320,7 @@ newComplexColumnVector data =
     newComplexColumnVector,
     enumerate,
 } as {
-    size is complexmatrix_t -> { .rows is number, .columns is number },
+    size is complexmatrix_t -> { rows is number, columns is number },
     width is complexmatrix_t -> number,
     height is complexmatrix_t -> number,
     density is complexmatrix_t -> number,
@@ -331,9 +331,9 @@ newComplexColumnVector data =
     getDiagonal is number -> complexmatrix_t -> array<cpx.complex_t>,
     asRows is complexmatrix_t -> list<array<cpx.complex_t>>,
     asColumns is complexmatrix_t -> list<array<cpx.complex_t>>,
-    generate is (number -> number -> cpx.complex_t) -> { .rows is number, .columns is number } -> complexmatrix_t,
-    constMatrix is cpx.complex_t -> { .rows is number, .columns is number } -> complexmatrix_t,
-    zeroMatrix is { .rows is number, .columns is number } -> complexmatrix_t,
+    generate is (number -> number -> cpx.complex_t) -> { rows is number, columns is number } -> complexmatrix_t,
+    constMatrix is cpx.complex_t -> { rows is number, columns is number } -> complexmatrix_t,
+    zeroMatrix is { rows is number, columns is number } -> complexmatrix_t,
     equal is complexmatrix_t -> complexmatrix_t -> boolean,
     conjugateTransposed is complexmatrix_t -> complexmatrix_t,
     transposed is complexmatrix_t -> complexmatrix_t,
@@ -358,6 +358,6 @@ newComplexColumnVector data =
     newComplexMatrix is (ColumnMajor () | RowMajor ()) -> list?<list?<cpx.complex_t>> -> complexmatrix_t,
     newComplexRowVector is list?<cpx.complex_t> -> complexmatrix_t,
     newComplexColumnVector is list?<cpx.complex_t> -> complexmatrix_t,
-    enumerate is complexmatrix_t -> list<{ .i is number, .j is number, .v is cpx.complex_t }>,
+    enumerate is complexmatrix_t -> list<{ i is number, j is number, v is cpx.complex_t }>,
 }
 
