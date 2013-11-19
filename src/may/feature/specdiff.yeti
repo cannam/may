@@ -9,8 +9,9 @@ load may.feature.feature;
 specdiff frames = 
     features magdiff (map cplx.magnitudes frames);
 
-specdiffOfFile parameters filename =
-    specdiff (fr.frequencyDomainFramesOfFile parameters filename);
+specdiffOfFile framesize w filename =
+    specdiff
+       (fr.framesOfFile framesize [ FrequencyDomain true, Window w ] filename);
 
 {
     specdiff,

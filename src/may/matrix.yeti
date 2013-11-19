@@ -799,6 +799,12 @@ maxValue m =
         maxv (map (.v) (enumerate m));
     fi;
 
+transformRows rf m =
+    newMatrix (RowMajor ()) (map rf (asRows m));
+
+transformColumns cf m =
+    newMatrix (ColumnMajor ()) (map cf (asColumns m));
+
 format m =
     strJoin "\n"
        (chunk = 8;
@@ -811,8 +817,8 @@ format m =
                    map do v:
                        n = mm.round (v * 10000);
                        strPad ' ' 10 "\(n / 10000)";
-                   done (vec.list row);
-               done (asRows (columnSlice m c0 (c1 + 1))) |> concat |> strJoin "")
+                   done (vec.list row) |> strJoin "";
+               done (asRows (columnSlice m c0 (c1 + 1))) |> strJoin "\n")
             ];
         done [0..width m / chunk - 1] |> concat);
 
@@ -869,6 +875,8 @@ print' = print . format;
     concatVertical,
     rowSlice,
     columnSlice,
+    transformRows,
+    transformColumns,
     newMatrix,
     newRowVector,
     newColumnVector,
@@ -924,6 +932,8 @@ as
     concatVertical is list<matrix_t> -> matrix_t,
     rowSlice is matrix_t -> number -> number -> matrix_t, 
     columnSlice is matrix_t -> number -> number -> matrix_t,
+    transformRows is (vec.vector_t -> vec.vector_t) -> matrix_t -> matrix_t,
+    transformColumns is (vec.vector_t -> vec.vector_t) -> matrix_t -> matrix_t,
     newMatrix is (ColumnMajor () | RowMajor ()) -> list<vec.vector_t> -> matrix_t, 
     newRowVector is vec.vector_t -> matrix_t, 
     newColumnVector is vec.vector_t -> matrix_t,

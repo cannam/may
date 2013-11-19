@@ -13,6 +13,7 @@ fft = load may.transform.fft;
 mat = load may.matrix;
 ch = load may.stream.channels;
 complex = load may.complex;
+cm = load may.matrix.complex;
 
 load may.stream.type;
 
@@ -52,13 +53,61 @@ overlappingBlockList size hop stream valid buffer =
             :. \(overlappingBlockList size hop stream remaining buffer);
     fi);
 
-frames { framesize, hop } stream =
+//!!! doc: if hop != framesize, stream will be padded at start with
+// framesize - hop zeros if padded is true. if hop == framesize, no
+// padding will occur at start regardless of the value of padded.  The
+// end will always be padded (...?)
+frames' framesize hop padded stream =
     if framesize == hop then
         blockList framesize stream
     else
-        overlappingBlockList framesize hop stream 
-            framesize (map \(vec.zeros framesize) [0..stream.channels-1]);
+        initialBuffer = 
+            if padded then
+                map \(vec.zeros framesize) [0..stream.channels-1];
+            else 
+                mat.asRows
+                   (mat.concatHorizontal
+                       [mat.zeroMatrix { rows = stream.channels, columns = hop },
+                        stream.read framesize]);
+            fi;
+        overlappingBlockList framesize hop stream framesize initialBuffer;
     fi;
+
+frames framesize options stream =
+   (var hop = framesize;
+    var padded = true;
+    var windower = id;
+    var transform = id;
+    for options \case of
+        Hop h: hop := h;
+        Padded p: padded := p;
+        Window w:
+            windower := mat.transformRows (vec.multiply (w framesize));
+        FrequencyDomain f:
+            transform := mat.transformRows (fft.realForwardMagnitude framesize);
+    esac;
+    map transform
+       (map windower
+           (frames' framesize hop padded stream)));
+
+complexFrames framesize options stream =
+   (var hop = framesize;
+    var padded = true;
+    var windower = id;
+    var rowTransform = do r: complex.complexArray r (vec.zeros (vec.length r)) done;
+    for options \case of
+        Hop h: hop := h;
+        Padded p: padded := p;
+        Window w:
+            windower := mat.transformRows (vec.multiply (w framesize));
+        FrequencyDomain f:
+            rowTransform := fft.realForward framesize;
+    esac;
+    map do m:
+        cm.newComplexMatrix (RowMajor ()) (map rowTransform (mat.asRows m))
+        done
+       (map windower
+           (frames' framesize hop padded stream)));
 
 streamContiguous rate framesize frames =
    (var remaining = frames;
@@ -170,41 +219,17 @@ streamed rate { framesize, hop } frames =
             frames
     fi;
 
-monoFrames params stream =
-    map ch.mixedDown (frames params stream);
-
-windowedFrames { framesize, hop, window } stream =
-   (win = window framesize;
-    map (vec.multiply win) (monoFrames { framesize, hop } stream));
-
-frequencyDomainFrames parameters stream =
-   (f = fft.realForward parameters.framesize;
-    map f (windowedFrames parameters stream));
-
-typedef params = { framesize is number, hop is number };
-typedef winparams = { framesize is number, hop is number, window is number -> vec.vector_t };
 
 { 
-    frames is params -> stream -> list<mat.matrix_t>,
-    monoFrames is params -> stream -> list<vec.vector_t>,
-    windowedFrames is winparams -> stream -> list<vec.vector_t>,
-    frequencyDomainFrames is winparams -> stream -> list<array<complex.complex_t> >,
+    frames,
+    complexFrames,
 
-    framesOfFile parameters filename =
-        frames parameters (af.open filename),
+    framesOfFile framesize options filename =
+        frames framesize options (af.open filename),
 
-    monoFramesOfFile parameters filename =
-        monoFrames parameters (af.open filename),
+    overlapAdd,
 
-    windowedFramesOfFile parameters filename = 
-        windowedFrames parameters (af.open filename),
-
-    frequencyDomainFramesOfFile parameters filename = 
-        frequencyDomainFrames parameters (af.open filename),
-
-    overlapAdd is number -> list<mat.matrix_t> -> mat.matrix_t,
-
-    streamed is number -> params -> list<mat.matrix_t> -> stream,
-    streamOverlapping is number -> winparams -> list<mat.matrix_t> -> stream,
+    streamed,
+    streamOverlapping,
 }
 
