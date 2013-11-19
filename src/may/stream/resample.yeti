@@ -67,7 +67,7 @@ decimated factor s = //!!! factor must be an integer [how to enforce this??]
         adjuster = durationAdjusterFor (1/factor) s;
         bandwidth = 0.02;
         fparams = {
-            n = factor / (1 - bandwidth/2),
+            n = factor, //!!! / (1 - bandwidth/2),
             attenuation = 80,
             bandwidth,
             samplerate = 1,
