@@ -29,8 +29,7 @@ blockList framesize stream =
     fi;
 
 overlappingBlockList size hop stream valid buffer =
-   (
-    m = stream.read hop;
+   (m = stream.read hop;
     obtained = mat.width m;
 
     // Retain framesize - hop samples from old buffer, add hop samples

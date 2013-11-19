@@ -42,6 +42,7 @@
 module may.matrix;
 
 vec = load may.vector;
+mm = load may.mathmisc;
 
 typedef opaque matrix_t =
     DenseRows array<vec.vector_t> | // array of rows
@@ -808,7 +809,7 @@ format m =
             [ "\nColumns \(c0) to \(c1)\n",
               (map do row:
                    map do v:
-                       n = int (v * 10000);
+                       n = mm.round (v * 10000);
                        strPad ' ' 10 "\(n / 10000)";
                    done (vec.list row);
                done (asRows (columnSlice m c0 (c1 + 1))) |> concat |> strJoin "")
