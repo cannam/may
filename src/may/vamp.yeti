@@ -265,8 +265,7 @@ processWith key p outputNo stream =
         p,
         sampleRate = stream.sampleRate, 
         channels = 1,
-        blockSize, // We refer to blockSize throughout because so does Vamp...
-        framesize = blockSize, // ... but the framer uses framesize
+        blockSize,
         hop = stepSize
     };
     if p.initialise params then
@@ -280,7 +279,7 @@ processWith key p outputNo stream =
                 sampleRate = stream.sampleRate
             },
             features = converted params outputNo
-               (processed params (fr.frames params stream) 0)
+               (processed params (fr.frames blockSize [ Hop stepSize ] stream) 0)
         };
         // If processing completed successfully, then p is
         // disposed by processed and stream is closed by the

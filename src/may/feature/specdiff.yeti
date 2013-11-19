@@ -2,12 +2,13 @@
 module may.feature.specdiff;
 
 fr = load may.stream.framer;
-cplx = load may.complex;
+ch = load may.stream.channels;
+cm = load may.matrix.complex;
 
 load may.feature.feature;
 
 specdiff frames = 
-    features magdiff (map cplx.magnitudes frames);
+    features magdiff (map ch.mixedDown frames);
 
 specdiffOfFile framesize w filename =
     specdiff

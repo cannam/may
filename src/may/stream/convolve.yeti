@@ -23,7 +23,7 @@ zeroPaddedFreqFrames framesize channels =
     do stream:
         padded = 
            (map (mat.resizedTo { rows = channels, columns = framesize * 2 })
-               (fr.frames { framesize, hop = framesize } stream));
+               (fr.frames framesize [ Hop framesize ] stream));
         map do fr: concat (map forwardTransform (mat.asRows fr)) done padded;
     done);
 
