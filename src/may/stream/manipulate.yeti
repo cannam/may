@@ -82,6 +82,38 @@ delayedBy nsamples s = //!!! doc: nsamples may be -ve
         close = s.close
     });
 
+extendedBy nsamples s = //!!! doc: nsamples may *not* be -ve
+   (var pos = 0;
+    var toAdd = nsamples;
+    {
+        get position () = pos,
+        get channels () = s.channels,
+        get sampleRate () = s.sampleRate,
+        get available () =
+            case s.available of 
+            Known a: Known (a + toAdd);
+            other: other;
+            esac,
+        get finished? () = (toAdd <= 0) and s.finished?,
+        read count =
+           (r = s.read count;
+            got = mat.width r;
+            pos := pos + got;
+            if got >= count then r
+            else
+                zc = min toAdd (count - got);
+                pos := pos + zc;
+                toAdd := toAdd - zc;
+                mat.concatHorizontal
+                   [r, mat.zeroMatrix { rows = s.channels, columns = zc }];
+            fi),
+        close = s.close
+    });
+
+// with nsamples zeros added at both start and end (if finite)
+paddedBy nsamples s =
+    delayedBy nsamples (extendedBy nsamples s);
+
 scaledBy factor s =
     s with
     {
@@ -337,6 +369,8 @@ picked frac s = //!!! frac must be an integer [how to enforce this??]
 {
     withDuration is number -> stream -> stream,
     delayedBy is number -> stream -> stream,
+    extendedBy is number -> stream -> stream,
+    paddedBy is number -> stream -> stream,
     scaledBy is number -> stream -> stream,
     inverted is stream -> stream,
     mixedTo is number -> stream -> stream,

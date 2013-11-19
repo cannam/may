@@ -63,7 +63,7 @@ makeTests name withUnknown =
         ( str.close (); true )
 ),
 
-"extendedTo-\(name)": \(
+"withDuration-\(name)": \(
     // not using withDuration wrapper above for the outer call, because
     // we're actually testing manip.withDuration here rather than just
     // generating a stream for use in another test. The inner call
@@ -219,6 +219,106 @@ makeTests name withUnknown =
         compare str.finished? false and
         ( str.close (); true )
 ),
+
+"extendedBy-0-3-\(name)": \(
+    str = manip.extendedBy 0 (maybeDuration 3 (syn.generated 2 id));
+    compare str.position 0 and
+        compare str.channels 1 and
+        compare str.sampleRate 2 and
+        compare str.available (maybeKnown 3) and
+        compare str.finished? false and
+        compare (vec.list (mat.getRow 0 (str.read 4))) [ 0,1,2 ] and
+        compare str.position 3 and
+        compare str.available (Known 0) and
+        compare str.finished? true and
+        ( str.close (); true )
+),
+
+"extendedBy-0-inf-\(name)": \(
+    str = manip.extendedBy 0 (syn.generated 2 id);
+    compare str.position 0 and
+        compare str.channels 1 and
+        compare str.sampleRate 2 and
+        compare str.available (Infinite ()) and
+        compare str.finished? false and
+        compare (vec.list (mat.getRow 0 (str.read 4))) [ 0,1,2,3 ] and
+        compare str.position 4 and
+        compare str.available (Infinite ()) and
+        compare str.finished? false and
+        ( str.close (); true )
+),
+
+"extendedBy-2-3-\(name)": \(
+    str = manip.extendedBy 2 (maybeDuration 3 (syn.generated 2 id));
+    compare str.position 0 and
+        compare str.channels 1 and
+        compare str.sampleRate 2 and
+        compare str.available (maybeKnown 5) and
+        compare str.finished? false and
+        compare (vec.list (mat.getRow 0 (str.read 4))) [ 0,1,2,0 ] and
+        compare str.position 4 and
+        compare str.available (Known 1) and // Known now, even if stream was Unknown
+        compare str.finished? false and
+        compare (vec.list (mat.getRow 0 (str.read 4))) [ 0 ] and
+        compare str.position 5 and
+        compare str.available (Known 0) and
+        compare str.finished? true and
+        ( str.close (); true )
+),
+
+"extendedBy-2-3b-\(name)": \(
+    str = manip.extendedBy 2 (maybeDuration 3 (syn.generated 2 id));
+    compare str.position 0 and
+        compare str.channels 1 and
+        compare str.sampleRate 2 and
+        compare str.available (maybeKnown 5) and
+        compare str.finished? false and
+        compare (vec.list (mat.getRow 0 (str.read 1))) [ 0 ] and
+        compare str.position 1 and
+        compare str.available (maybeKnown 4) and
+        compare str.finished? false and
+        compare (vec.list (mat.getRow 0 (str.read 4))) [ 1,2,0,0 ] and
+        compare str.position 5 and
+        compare str.available (Known 0) and
+        compare str.finished? true and
+        ( str.close (); true )
+),
+
+"extendedBy-2-3c-\(name)": \(
+    str = manip.extendedBy 2 (maybeDuration 3 (syn.generated 2 id));
+    compare str.position 0 and
+        compare str.channels 1 and
+        compare str.sampleRate 2 and
+        compare str.available (maybeKnown 5) and
+        compare str.finished? false and
+        compare (vec.list (mat.getRow 0 (str.read 7))) [ 0,1,2,0,0 ] and
+        compare str.position 5 and
+        compare str.available (Known 0) and
+        compare str.finished? true and
+        ( str.close (); true )
+),
+
+"extendedBy-2-inf-\(name)": \(
+    str = manip.extendedBy 2 (syn.generated 2 id);
+    compare str.position 0 and
+        compare str.channels 1 and
+        compare str.sampleRate 2 and
+        compare str.available (Infinite ()) and
+        compare str.finished? false and
+        compare (vec.list (mat.getRow 0 (str.read 2))) [ 0,1 ] and
+        compare str.position 2 and
+        compare str.finished? false and
+        compare (vec.list (mat.getRow 0 (str.read 2))) [ 2,3 ] and
+        compare str.position 4 and
+        compare str.finished? false and
+        compare (vec.list (mat.getRow 0 (str.read 2))) [ 4,5 ] and
+        compare str.position 6 and
+        compare str.finished? false and
+        ( str.close (); true )
+),
+
+
+
 
 "mixedTo-1-2-\(name)": \(
     str = manip.mixedTo 2 (maybeDuration 3 (syn.generated 2 id));
