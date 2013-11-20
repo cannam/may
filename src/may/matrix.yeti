@@ -257,7 +257,7 @@ enumerate m =
 
 // Make a sparse matrix from entries whose i, j values are known to be
 // within range
-makeSparse type size data =
+makeSparse size type data =
    (isRow = case type of RowMajor (): true; ColumnMajor (): false esac;
     ordered = 
         sortBy do a b:
@@ -302,8 +302,8 @@ makeSparse type size data =
 // resizedTo.
 //!!! doc: i is row number, j is column number (throughout, for sparse stuff). Would calling them row/column be better?
 //!!! what to do with this, now that it doesn't match the former newMatrix?
-newSparseMatrix type size data =
-    makeSparse type size
+newSparseMatrix size type data =
+    makeSparse size type
        (filter
             do { i, j, v }:
                 i == int i and i >= 0 and i < size.rows and 
@@ -313,12 +313,12 @@ newSparseMatrix type size data =
 toSparse m =
     if isSparse? m then m
     else
-        makeSparse (typeOf m) (size m) (enumerateDense m);
+        makeSparse (size m) (typeOf m) (enumerateDense m);
     fi;
 
 toDense m =
     {
-        size = m.size,
+        size = (size m),
         data = 
             if not (isSparse? m) then m.data
             elif isRowMajor? m then
@@ -334,7 +334,7 @@ identityMatrix = constMatrix 1;
 
 transposed m =
     {
-        size = flippedSize m.size,
+        size = flippedSize (size m),
         data = 
             case m.data of
             DenseRows d: DenseCols d;
@@ -346,7 +346,7 @@ transposed m =
 
 flipped m =
     if isSparse? m then
-        makeSparse (flippedTypeOf m) (size m) (enumerateSparse m)
+        makeSparse (size m) (flippedTypeOf m) (enumerateSparse m)
     else
         if isRowMajor? m then
             generate do row col: at' m row col done (size m);
@@ -407,7 +407,6 @@ equalUnder comparator =
 equal =
     equal' (==) vec.equal;
 
-//!!! nb makeSparse takes type,size while this currently takes size,type - fix
 newMatrixOfSize size type rowscols = //!!! NB does not copy data
     if type == RowMajor () then
         {
@@ -477,7 +476,7 @@ sparseSumOrDifference op m1 m2 =
             kk = keys h[i];
             map2 do j v: { i, j, v } done kk (map (at h[i]) kk)
             done (keys h));
-    makeSparse (typeOf m1) (size m1) entries);
+    makeSparse (size m1) (typeOf m1) entries);
 
 sum' m1 m2 =
     if (size m1) != (size m2)
@@ -500,37 +499,37 @@ difference m1 m2 =
 
 scaled factor m =
     if isSparse? m then
-        makeSparse (typeOf m) (size m)
+        makeSparse (size m) (typeOf m)
            (map do { i, j, v }: { i, j, v = factor * v } done (enumerate m))
     elif isRowMajor? m then
-        newMatrixOfSize m.size (typeOf m) (map (vec.scaled factor) (asRows m));
+        newMatrixOfSize (size m) (typeOf m) (map (vec.scaled factor) (asRows m));
     else
-        newMatrixOfSize m.size (typeOf m) (map (vec.scaled factor) (asColumns m));
+        newMatrixOfSize (size m) (typeOf m) (map (vec.scaled factor) (asColumns m));
     fi;
 
 abs' m =
     if isSparse? m then
-        makeSparse (typeOf m) (size m)
+        makeSparse (size m) (typeOf m)
            (map do { i, j, v }: { i, j, v = abs v } done (enumerate m))
     elif isRowMajor? m then
-        newMatrixOfSize m.size (typeOf m) (map vec.abs (asRows m));
+        newMatrixOfSize (size m) (typeOf m) (map vec.abs (asRows m));
     else
-        newMatrixOfSize m.size (typeOf m) (map vec.abs (asColumns m));
+        newMatrixOfSize (size m) (typeOf m) (map vec.abs (asColumns m));
     fi;
 
 negative m =
     if isSparse? m then
-        makeSparse (typeOf m) (size m)
+        makeSparse (size m) (typeOf m)
            (map do { i, j, v }: { i, j, v = (-v) } done (enumerate m))
     elif isRowMajor? m then
-        newMatrixOfSize m.size (typeOf m) (map vec.negative (asRows m));
+        newMatrixOfSize (size m) (typeOf m) (map vec.negative (asRows m));
     else
-        newMatrixOfSize m.size (typeOf m) (map vec.negative (asColumns m));
+        newMatrixOfSize (size m) (typeOf m) (map vec.negative (asColumns m));
     fi;
 
 //!!! doc: filter by predicate, always returns sparse matrix
 filter' f m =
-    makeSparse (typeOf m) (size m)
+    makeSparse (size m) (typeOf m) 
        (map do { i, j, v }: { i, j, v = if f v then v else 0 fi } done
            (enumerate m));
 
@@ -617,7 +616,7 @@ sparseProduct size m1 m2 =
                     { i, j = j', v = hout[i] }
                 done (keys hout);
             done (nonEmptySlices d));
-        makeSparse (ColumnMajor ()) size (concat entries));
+        makeSparse size (ColumnMajor ()) (concat entries));
     SparseCSR _:
         sparseProduct size m1 (flipped m2);
      _: failWith "sparseProduct called for non-sparse matrices";
@@ -688,7 +687,7 @@ sparseConcat direction first mm =
                  done (enumerate m)) ++ acc);
          _: acc;
         esac;
-    makeSparse (typeOf first) { rows, columns }
+    makeSparse { rows, columns } (typeOf first)
         if direction == Vertical () then entries 0 0 1 0 mm []
         else entries 0 0 0 1 mm [] fi);
 
@@ -792,7 +791,7 @@ resizedTo newsize m =
     elif isSparse? m then
         // don't call makeSparse directly: want to discard
         // out-of-range cells
-        newSparseMatrix (typeOf m) newsize (enumerateSparse m)
+        newSparseMatrix newsize (typeOf m) (enumerateSparse m)
     elif (height m) == 0 or (width m) == 0 then
         zeroMatrixWithTypeOf m newsize;
     else
@@ -834,10 +833,10 @@ maxValue m =
     fi;
 
 transformRows rf m =
-    newMatrixOfSize m.size (RowMajor ()) (map rf (asRows m));
+    newMatrixOfSize (size m) (RowMajor ()) (map rf (asRows m));
 
 transformColumns cf m =
-    newMatrixOfSize m.size (ColumnMajor ()) (map cf (asColumns m));
+    newMatrixOfSize (size m) (ColumnMajor ()) (map cf (asColumns m));
 
 format m =
     strJoin "\n"
@@ -969,7 +968,7 @@ as
     fromColumns is list<vec.vector_t> -> matrix_t, 
     newRowVector is vec.vector_t -> matrix_t, 
     newColumnVector is vec.vector_t -> matrix_t,
-    newSparseMatrix is (ColumnMajor () | RowMajor ()) -> { rows is number, columns is number } -> list<{ i is number, j is number, v is number }> -> matrix_t,
+    newSparseMatrix is { rows is number, columns is number } -> (ColumnMajor () | RowMajor ()) -> list<{ i is number, j is number, v is number }> -> matrix_t,
     enumerate is matrix_t -> list<{ i is number, j is number, v is number }>,
     format is matrix_t -> string,
     print is matrix_t -> (),
