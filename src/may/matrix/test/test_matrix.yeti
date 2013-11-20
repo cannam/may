@@ -245,28 +245,30 @@ makeTests name flipper =
 ),
 
 "sparseSum-\(name)": \(
-    s = mat.newSparseMatrix { rows = 2, columns = 3 } (ColumnMajor ()) [
-        { i = 0, j = 0, v = 1 },
-        { i = 0, j = 2, v = 2 },
-        { i = 1, j = 1, v = 4 },
-    ];
-    t = mat.newSparseMatrix { rows = 2, columns = 3 } (ColumnMajor ()) [
-        { i = 0, j = 1, v = 7 },
-        { i = 1, j = 0, v = 5 },
-        { i = 1, j = 1, v = -4 }, // NB this means [1,1] -> 0, sparse zero
-    ];
+    s = mat.newSparseMatrix { rows = 2, columns = 3 }
+       (Columns [
+            { i = 0, j = 0, v = 1 },
+            { i = 0, j = 2, v = 2 },
+            { i = 1, j = 1, v = 4 },
+        ]);
+    t = mat.newSparseMatrix { rows = 2, columns = 3 }
+        (Columns [
+            { i = 0, j = 1, v = 7 },
+            { i = 1, j = 0, v = 5 },
+            { i = 1, j = 1, v = -4 }, // NB this means [1,1] -> 0, sparse zero
+        ]);
     tot = mat.sum s t;
     mat.isSparse? tot and
         compareMatrices tot (mat.sum (mat.toDense s) t) and
         compareMatrices tot (mat.sum (mat.toDense s) (mat.toDense t)) and
         compareMatrices tot (mat.sum s (mat.toDense t)) and
         compareMatrices tot 
-           (mat.newSparseMatrix { rows = 2, columns = 3 } (RowMajor ()) [
+           (mat.newSparseMatrix { rows = 2, columns = 3 } (Rows [
                { i = 0, j = 0, v = 1 },
                { i = 0, j = 1, v = 7 },
                { i = 0, j = 2, v = 2 },
                { i = 1, j = 0, v = 5 },
-            ]) and
+            ])) and
         compare (mat.density tot) (4/6)
 ),
 
@@ -288,29 +290,29 @@ makeTests name flipper =
 ),
 
 "sparseDifference-\(name)": \(
-    s = mat.newSparseMatrix { rows = 2, columns = 3 } (ColumnMajor ()) [
+    s = mat.newSparseMatrix { rows = 2, columns = 3 } (Columns [
         { i = 0, j = 0, v = 1 },
         { i = 0, j = 2, v = 2 },
         { i = 1, j = 1, v = 4 },
-    ];
-    t = mat.newSparseMatrix { rows = 2, columns = 3 } (ColumnMajor ()) [
+    ]);
+    t = mat.newSparseMatrix { rows = 2, columns = 3 } (Columns [
         { i = 0, j = 1, v = 7 },
         { i = 1, j = 0, v = 5 },
         { i = 1, j = 1, v = 6 },
-    ];
+    ]);
     diff = mat.difference s t;
     mat.isSparse? diff and
         compareMatrices diff (mat.difference (mat.toDense s) t) and
         compareMatrices diff (mat.difference (mat.toDense s) (mat.toDense t)) and
         compareMatrices diff (mat.difference s (mat.toDense t)) and
         compareMatrices diff 
-           (mat.newSparseMatrix { rows = 2, columns = 3 } (RowMajor ()) [
+           (mat.newSparseMatrix { rows = 2, columns = 3 } (Rows [
                { i = 0, j = 0, v = 1 },
                { i = 0, j = 1, v = -7 },
                { i = 0, j = 2, v = 2 },
                { i = 1, j = 0, v = -5 },
                { i = 1, j = 1, v = -2 },
-            ])
+            ]))
 ),
 
 "abs-\(name)": \(
@@ -331,27 +333,27 @@ makeTests name flipper =
 ),
 
 "sparseProduct-\(name)": \(
-    s = mat.newSparseMatrix { rows = 2, columns = 3 } (ColumnMajor ()) [
+    s = mat.newSparseMatrix { rows = 2, columns = 3 } (Columns [
         { i = 0, j = 0, v = 1 },
         { i = 0, j = 2, v = 2 },
         { i = 1, j = 1, v = 4 },
-    ];
-    t = mat.newSparseMatrix { rows = 3, columns = 2 } (ColumnMajor ()) [
+    ]);
+    t = mat.newSparseMatrix { rows = 3, columns = 2 } (Columns [
         { i = 0, j = 1, v = 7 },
         { i = 1, j = 0, v = 5 },
         { i = 2, j = 0, v = 6 },
-    ];
+    ]);
     prod = mat.product s t;
     mat.isSparse? prod and
         compareMatrices prod (mat.product (mat.toDense s) t) and
         compareMatrices prod (mat.product (mat.toDense s) (mat.toDense t)) and
         compareMatrices prod (mat.product s (mat.toDense t)) and
         compareMatrices prod 
-           (mat.newSparseMatrix { rows = 2, columns = 2 } (RowMajor ()) [
+           (mat.newSparseMatrix { rows = 2, columns = 2 } (Rows [
                { i = 0, j = 0, v = 12 },
                { i = 0, j = 1, v = 7 },
                { i = 1, j = 0, v = 20 },
-            ])
+            ]))
 ),
 
 "productFail-\(name)": \(
@@ -397,10 +399,10 @@ makeTests name flipper =
                        (fromRows [[]])) and
         compareMatrices
            (mat.zeroMatrix { rows = 0, columns = 0 })
-           (mat.newSparseMatrix { rows = 0, columns = 0 } (ColumnMajor ()) []) and
+           (mat.newSparseMatrix { rows = 0, columns = 0 } (Columns [])) and
         compareMatrices
            (mat.zeroMatrix { rows = 1, columns = 0 })
-           (mat.newSparseMatrix { rows = 1, columns = 0 } (ColumnMajor ()) [])
+           (mat.newSparseMatrix { rows = 1, columns = 0 } (Columns []))
 ),
 
 "asRows-\(name)": \(
@@ -557,24 +559,24 @@ makeTests name flipper =
 ),
 
 "newSparseMatrix-\(name)": \(
-    s = mat.newSparseMatrix { rows = 2, columns = 3 } (ColumnMajor ()) [
+    s = mat.newSparseMatrix { rows = 2, columns = 3 } (Columns [
         { i = 0, j = 0, v = 1 },
         { i = 0, j = 2, v = 2 },
         { i = 1, j = 1, v = 4 },
-    ];
+    ]);
     // If there are zeros in the entries list, they should not end up
     // in the sparse data
-    t = mat.newSparseMatrix { rows = 2, columns = 3 } (ColumnMajor ()) [
+    t = mat.newSparseMatrix { rows = 2, columns = 3 } (Columns [
         { i = 0, j = 0, v = 1 },
         { i = 0, j = 2, v = 0 },
         { i = 1, j = 1, v = 4 },
-    ];
+    ]);
     // Any out-of-range or non-integer i, j should be ignored too
-    u = mat.newSparseMatrix { rows = 2, columns = 3 } (ColumnMajor ()) [
+    u = mat.newSparseMatrix { rows = 2, columns = 3 } (Columns [
         { i = -1, j = 0, v = 1 },
         { i = 0, j = 4, v = 3 },
         { i = 1, j = 1.5, v = 4 },
-    ];
+    ]);
     compare (mat.density s) (3/6) and
         compare (mat.density t) (2/6) and
         compareMatrices s (fromRows [[1,0,2],[0,4,0]]) and
