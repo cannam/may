@@ -16,7 +16,8 @@ makeTests name flipper =
     randomMatrix s = flipper (mat.randomMatrix s);
     identityMatrix s = flipper (mat.identityMatrix s);
     generate f s = flipper (mat.generate f s);
-    newMatrix t d = flipper (mat.newMatrix t (map vec.fromList d));
+    fromRows d = flipper (mat.fromRows (map vec.fromList d));
+    fromColumns d = flipper (mat.fromColumns (map vec.fromList d));
 [
 
 "constMatrixEmpty-\(name)": \(
@@ -95,11 +96,11 @@ makeTests name flipper =
 ),
 
 "equal-\(name)": \(
-    m = newMatrix (ColumnMajor ()) [[1,4],[0,5],[3,6]];
+    m = fromColumns [[1,4],[0,5],[3,6]];
     n = m;
-    p = newMatrix (RowMajor ()) [[1,0,3],[4,5,6]];
-    q = newMatrix (ColumnMajor ()) [[1,0,3],[4,5,6]];
-    r = newMatrix (ColumnMajor ()) [[1,4],[0,5]];
+    p = fromRows [[1,0,3],[4,5,6]];
+    q = fromColumns [[1,0,3],[4,5,6]];
+    r = fromColumns [[1,4],[0,5]];
     compareMatrices m n and
         compareMatrices m p and
         compareMatrices n p and
@@ -108,11 +109,11 @@ makeTests name flipper =
 ),
 
 "equalUnder-\(name)": \(
-    p = newMatrix (ColumnMajor ()) [[1,2,3],[4,5,6]];
-    q = newMatrix (ColumnMajor ()) [[1,2,3],[4,5,6]];
-    r = newMatrix (ColumnMajor ()) [[4,3,1],[3,1,2]];
-    s = newMatrix (ColumnMajor ()) [[1,4,5],[6,7,8]];
-    t = newMatrix (ColumnMajor ()) [[1,4,5],[6,7,9]];
+    p = fromColumns [[1,2,3],[4,5,6]];
+    q = fromColumns [[1,2,3],[4,5,6]];
+    r = fromColumns [[4,3,1],[3,1,2]];
+    s = fromColumns [[1,4,5],[6,7,8]];
+    t = fromColumns [[1,4,5],[6,7,9]];
     mat.equalUnder (==) p p and
         mat.equalUnder (==) p q and
         mat.equalUnder (!=) p r and
@@ -151,20 +152,20 @@ makeTests name flipper =
 ),
 
 "transposed-back-\(name)": \(
-    m = newMatrix (ColumnMajor ()) [[1,4],[2,5],[3,6]];
+    m = fromColumns [[1,4],[2,5],[3,6]];
     compareMatrices m (mat.transposed (mat.transposed m)) and
         not mat.equal m (mat.transposed m);
 ),
 
 "flipped-\(name)": \(
-    m = newMatrix (ColumnMajor ()) [[1,4],[0,5],[3,6]];
+    m = fromColumns [[1,4],[0,5],[3,6]];
     m' = mat.flipped m;
-    m'' = newMatrix (RowMajor ()) [[1,0,3],[4,5,6]];
+    m'' = fromRows [[1,0,3],[4,5,6]];
     compareMatrices m m' and compareMatrices m m'' and compareMatrices m' m'';
 ),
 
 "flipped-back-\(name)": \(
-    m = newMatrix (ColumnMajor ()) [[1,4],[0,5],[3,6]];
+    m = fromColumns [[1,4],[0,5],[3,6]];
     compareMatrices m (mat.flipped (mat.flipped m));
 ),
 
@@ -174,25 +175,25 @@ makeTests name flipper =
 ),
 
 "toRowMajor-\(name)": \(
-    m = newMatrix (ColumnMajor ()) [[1,4],[0,5],[3,6]];
+    m = fromColumns [[1,4],[0,5],[3,6]];
     m' = mat.toRowMajor m;
-    m'' = newMatrix (RowMajor ()) [[1,0,3],[4,5,6]];
+    m'' = fromRows [[1,0,3],[4,5,6]];
     m''' = mat.toRowMajor m'';
     compareMatrices m m' and compareMatrices m m'' and compareMatrices m' m''
         and compareMatrices m m''';
 ),
 
 "toColumnMajor-\(name)": \(
-    m = newMatrix (RowMajor ()) [[1,4],[0,5],[3,6]];
+    m = fromRows [[1,4],[0,5],[3,6]];
     m' = mat.toColumnMajor m;
-    m'' = newMatrix (ColumnMajor ()) [[1,0,3],[4,5,6]];
+    m'' = fromColumns [[1,0,3],[4,5,6]];
     m''' = mat.toColumnMajor m'';
     compareMatrices m m' and compareMatrices m m'' and compareMatrices m' m''
         and compareMatrices m m''';
 ),
 
 "diagonal-\(name)": \(
-    m = newMatrix (RowMajor ()) [[1,4],[0,5],[3,6]];
+    m = fromRows [[1,4],[0,5],[3,6]];
     compare (vec.list (mat.getDiagonal 0 m)) [1,5] and
         compare (vec.list (mat.getDiagonal 1 m)) [4] and
         compare (vec.list (mat.getDiagonal (-1) m)) [0,6]
@@ -211,17 +212,17 @@ makeTests name flipper =
 ),
 
 "transformRows-\(name)": \(
-    m = newMatrix (RowMajor ()) [[1,4],[0,5],[3,6]];
-    m' = newMatrix (ColumnMajor ()) [[1,0,3],[4,5,6]];
-    m'' = newMatrix (RowMajor ()) [[2,8],[0,10],[6,12]];
+    m = fromRows [[1,4],[0,5],[3,6]];
+    m' = fromColumns [[1,0,3],[4,5,6]];
+    m'' = fromRows [[2,8],[0,10],[6,12]];
     compareMatrices (mat.transformRows (vec.scaled 2) m) m'' and
         compareMatrices (mat.transformRows (vec.scaled 2) m') m''
 ),
 
 "transformColumns-\(name)": \(
-    m = newMatrix (RowMajor ()) [[1,4],[0,5],[3,6]];
-    m' = newMatrix (ColumnMajor ()) [[1,0,3],[4,5,6]];
-    m'' = newMatrix (RowMajor ()) [[2,8],[0,10],[6,12]];
+    m = fromRows [[1,4],[0,5],[3,6]];
+    m' = fromColumns [[1,0,3],[4,5,6]];
+    m'' = fromRows [[2,8],[0,10],[6,12]];
     compareMatrices (mat.transformColumns (vec.scaled 2) m) m'' and
         compareMatrices (mat.transformColumns (vec.scaled 2) m') m''
 ),
@@ -314,8 +315,8 @@ makeTests name flipper =
 
 "abs-\(name)": \(
     compareMatrices
-       (mat.abs (newMatrix (ColumnMajor ()) [[-1,4],[2,-5],[-3,0]]))
-       (newMatrix (ColumnMajor ()) [[1,4],[2,5],[3,0]])
+       (mat.abs (fromColumns [[-1,4],[2,-5],[-3,0]]))
+       (fromColumns [[1,4],[2,5],[3,0]])
 ),
 
 "product-\(name)": \(
@@ -324,9 +325,9 @@ makeTests name flipper =
                     (constMatrix 3 { rows = 2, columns = 3 }))
        (constMatrix 12 { rows = 4, columns = 3 }) and
         compareMatrices
-           (mat.product (newMatrix (ColumnMajor ()) [[1,4],[2,5],[3,6]])
-                        (newMatrix (ColumnMajor ()) [[7,9,11],[8,10,12]]))
-           (newMatrix (ColumnMajor ()) [[58,139],[64,154]])
+           (mat.product (fromColumns [[1,4],[2,5],[3,6]])
+                        (fromColumns [[7,9,11],[8,10,12]]))
+           (fromColumns [[58,139],[64,154]])
 ),
 
 "sparseProduct-\(name)": \(
@@ -366,34 +367,34 @@ makeTests name flipper =
 "resizedTo-\(name)": \(
     compareMatrices
        (mat.resizedTo { rows = 2, columns = 2 }
-           (newMatrix (ColumnMajor ()) [[1,4],[2,5],[3,6]]))
-       (newMatrix (ColumnMajor ()) [[1,4],[2,5]]) and
+           (fromColumns [[1,4],[2,5],[3,6]]))
+       (fromColumns [[1,4],[2,5]]) and
         compareMatrices
            (mat.resizedTo { rows = 3, columns = 4 }
-               (newMatrix (ColumnMajor ()) [[1,4],[2,5],[3,6]]))
-           (newMatrix (ColumnMajor ()) [[1,4,0],[2,5,0],[3,6,0],[0,0,0]]) and
+               (fromColumns [[1,4],[2,5],[3,6]]))
+           (fromColumns [[1,4,0],[2,5,0],[3,6,0],[0,0,0]]) and
         compareMatrices
            (mat.resizedTo { rows = 1, columns = 1 }
-               (newMatrix (ColumnMajor ()) [[1,4],[2,5],[3,6]]))
-           (newMatrix (RowMajor ()) [[1]]) and
+               (fromColumns [[1,4],[2,5],[3,6]]))
+           (fromRows [[1]]) and
         compareMatrices
            (mat.resizedTo { rows = 2, columns = 3 }
                (mat.zeroMatrix { rows = 0, columns = 0 }))
-           (newMatrix (RowMajor ()) [[0,0,0],[0,0,0]]) and
+           (fromRows [[0,0,0],[0,0,0]]) and
         mat.isSparse?
            (mat.resizedTo { rows = 1, columns = 1 }
-               (mat.toSparse (newMatrix (ColumnMajor ()) [[1,4],[2,5],[3,6]])))
+               (mat.toSparse (fromColumns [[1,4],[2,5],[3,6]])))
 ),
 
 "zeroSizeMatrix-\(name)": \(
     compareMatrices
        (mat.zeroMatrix { rows = 0, columns = 0 })
-       (newMatrix (ColumnMajor ()) []) and
+       (fromColumns []) and
         compareMatrices
            (mat.zeroMatrix { rows = 0, columns = 1 })
-           (newMatrix (ColumnMajor ()) [[]]) and
-        (not mat.equal (newMatrix (ColumnMajor ()) [[]])
-                       (newMatrix (RowMajor ()) [[]])) and
+           (fromColumns [[]]) and
+        (not mat.equal (fromColumns [[]])
+                       (fromRows [[]])) and
         compareMatrices
            (mat.zeroMatrix { rows = 0, columns = 0 })
            (mat.newSparseMatrix (ColumnMajor ()) { rows = 0, columns = 0 } []) and
@@ -405,45 +406,45 @@ makeTests name flipper =
 "asRows-\(name)": \(
     compare
        (map vec.list
-           (mat.asRows (newMatrix (ColumnMajor ()) [[1,4],[0,5],[3,6]])))
+           (mat.asRows (fromColumns [[1,4],[0,5],[3,6]])))
         [[1,0,3],[4,5,6]];
 ),
 
 "asColumns-\(name)": \(
     compare
        (map vec.list
-           (mat.asColumns (newMatrix (ColumnMajor ()) [[1,4],[0,5],[3,6]])))
+           (mat.asColumns (fromColumns [[1,4],[0,5],[3,6]])))
         [[1,4],[0,5],[3,6]];
 ),
 
 "concat-horiz-\(name)": \(
     compareMatrices
        (mat.concatHorizontal 
-          [(newMatrix (ColumnMajor ()) [[1,4],[0,5]]),
-           (newMatrix (RowMajor ()) [[3],[6]])])
-       (newMatrix (ColumnMajor ()) [[1,4],[0,5],[3,6]])
+          [(fromColumns [[1,4],[0,5]]),
+           (fromRows [[3],[6]])])
+       (fromColumns [[1,4],[0,5],[3,6]])
 ),
 
 "concatEmpty-horiz-\(name)": \(
     compareMatrices
        (mat.concatHorizontal 
-          [(newMatrix (ColumnMajor ()) [[]]),
-           (newMatrix (ColumnMajor ()) [[],[]]),
+          [(fromColumns [[]]),
+           (fromColumns [[],[]]),
            (mat.zeroMatrix { rows = 0, columns = 6 })])
        (mat.zeroMatrix { rows = 0, columns = 9 }) and
        compareMatrices
           (mat.concatHorizontal 
-             [(newMatrix (RowMajor ()) [[]]),
-              (newMatrix (RowMajor ()) [[1,2]]),
+             [(fromRows [[]]),
+              (fromRows [[1,2]]),
               (mat.zeroMatrix { rows = 1, columns = 0 })])
-          (newMatrix (RowMajor ()) [[1,2]])
+          (fromRows [[1,2]])
 ),
 
 "sparseConcat-horiz-\(name)": \(
     s = mat.concatHorizontal 
-          [mat.toSparse (newMatrix (ColumnMajor ()) [[1,4],[0,5]]),
-           mat.toSparse (newMatrix (RowMajor ()) [[3],[6]])];
-    compareMatrices s (newMatrix (ColumnMajor ()) [[1,4],[0,5],[3,6]]) and
+          [mat.toSparse (fromColumns [[1,4],[0,5]]),
+           mat.toSparse (fromRows [[3],[6]])];
+    compareMatrices s (fromColumns [[1,4],[0,5],[3,6]]) and
         compare (mat.isSparse? s) true and
         compare (mat.density s) (5/6)
 ),
@@ -451,8 +452,8 @@ makeTests name flipper =
 "concatFail-horiz-\(name)": \(
     try
         \() (mat.concatHorizontal 
-          [(newMatrix (ColumnMajor ()) [[1,4],[0,5]]),
-           (newMatrix (ColumnMajor ()) [[3],[6]])]);
+          [(fromColumns [[1,4],[0,5]]),
+           (fromColumns [[3],[6]])]);
         false
     catch FailureException e:
         true
@@ -462,16 +463,16 @@ makeTests name flipper =
 "concat-vert-\(name)": \(
     compareMatrices
        (mat.concatVertical 
-          [(newMatrix (ColumnMajor ()) [[1,4],[0,5]]),
-           (newMatrix (RowMajor ()) [[3,6]])])
-       (newMatrix (ColumnMajor ()) [[1,4,3],[0,5,6]])
+          [(fromColumns [[1,4],[0,5]]),
+           (fromRows [[3,6]])])
+       (fromColumns [[1,4,3],[0,5,6]])
 ),
 
 "sparseConcat-vert-\(name)": \(
     s = mat.concatVertical 
-          [mat.toSparse (newMatrix (ColumnMajor ()) [[1,4],[0,5]]),
-           mat.toSparse (newMatrix (RowMajor ()) [[3,6]])];
-    compareMatrices s (newMatrix (ColumnMajor ()) [[1,4,3],[0,5,6]]) and
+          [mat.toSparse (fromColumns [[1,4],[0,5]]),
+           mat.toSparse (fromRows [[3,6]])];
+    compareMatrices s (fromColumns [[1,4,3],[0,5,6]]) and
         compare (mat.isSparse? s) true and
         compare (mat.density s) (5/6)
 ),
@@ -479,8 +480,8 @@ makeTests name flipper =
 "concatFail-vert-\(name)": \(
     try
         \() (mat.concatVertical 
-          [(newMatrix (ColumnMajor ()) [[1,4],[0,5]]),
-           (newMatrix (RowMajor ()) [[3],[6]])]);
+          [(fromColumns [[1,4],[0,5]]),
+           (fromRows [[3],[6]])]);
         false
     catch FailureException e:
         true
@@ -489,58 +490,58 @@ makeTests name flipper =
 
 "rowSlice-\(name)": \(
     compareMatrices
-       (mat.rowSlice (newMatrix (RowMajor ()) [[1,0],[3,4],[0,6],[7,8]]) 1 3)
-       (newMatrix (RowMajor ()) [[3,4],[0,6]]) and
+       (mat.rowSlice (fromRows [[1,0],[3,4],[0,6],[7,8]]) 1 3)
+       (fromRows [[3,4],[0,6]]) and
         compareMatrices
-           (mat.rowSlice (newMatrix (RowMajor ()) [[1,0],[3,4],[0,6],[7,8]]) 3 6)
-           (newMatrix (RowMajor ()) [[7,8]])
+           (mat.rowSlice (fromRows [[1,0],[3,4],[0,6],[7,8]]) 3 6)
+           (fromRows [[7,8]])
 ),
 
 "columnSlice-\(name)": \(
     compareMatrices
-       (mat.columnSlice (newMatrix (RowMajor ()) [[1,0,3,4],[0,6,7,8]]) 1 3)
-       (newMatrix (RowMajor ()) [[0,3],[6,7]]) and
+       (mat.columnSlice (fromRows [[1,0,3,4],[0,6,7,8]]) 1 3)
+       (fromRows [[0,3],[6,7]]) and
         compareMatrices
-           (mat.columnSlice (newMatrix (RowMajor ()) [[1,0,3,4],[0,6,7,8]]) 2 5)
-           (newMatrix (RowMajor ()) [[3,4],[7,8]])
+           (mat.columnSlice (fromRows [[1,0,3,4],[0,6,7,8]]) 2 5)
+           (fromRows [[3,4],[7,8]])
 ),
 
 "density-\(name)": \(
-    compare (mat.density (newMatrix (ColumnMajor ()) [[1,2,0],[0,5,0]])) (3/6) and
-        compare (mat.density (newMatrix (ColumnMajor ()) [[1,2,3],[4,5,6]])) (6/6) and
-        compare (mat.density (newMatrix (ColumnMajor ()) [[0,0,0],[0,0,0]])) 0
+    compare (mat.density (fromColumns [[1,2,0],[0,5,0]])) (3/6) and
+        compare (mat.density (fromColumns [[1,2,3],[4,5,6]])) (6/6) and
+        compare (mat.density (fromColumns [[0,0,0],[0,0,0]])) 0
 ),
 
 "nonZeroValues-\(name)": \(
-    compare (mat.nonZeroValues (newMatrix (ColumnMajor ()) [[1,2,0],[0,5,0]])) 3 and
-        compare (mat.nonZeroValues (newMatrix (ColumnMajor ()) [[1,2,3],[4,5,6]])) 6 and
-        compare (mat.nonZeroValues (newMatrix (ColumnMajor ()) [[0,0,0],[0,0,0]])) 0
+    compare (mat.nonZeroValues (fromColumns [[1,2,0],[0,5,0]])) 3 and
+        compare (mat.nonZeroValues (fromColumns [[1,2,3],[4,5,6]])) 6 and
+        compare (mat.nonZeroValues (fromColumns [[0,0,0],[0,0,0]])) 0
 ),
 
 "toSparse-\(name)": \(
-    m = newMatrix (ColumnMajor ()) [[1,2,0],[-1,-4,6],[0,0,3]];
+    m = fromColumns [[1,2,0],[-1,-4,6],[0,0,3]];
     compareMatrices (mat.toSparse m) m and
         compareMatrices (mat.toDense (mat.toSparse m)) m and
         compare (mat.density (mat.toSparse m)) (6/9)
 ),
 
 "toDense-\(name)": \(
-    m = newMatrix (ColumnMajor ()) [[1,2,0],[-1,-4,6],[0,0,3]];
+    m = fromColumns [[1,2,0],[-1,-4,6],[0,0,3]];
     compareMatrices (mat.toDense m) m and
         compareMatrices (mat.toSparse (mat.toDense m)) m
 ),
 
 "filter-\(name)": \(
-    m = newMatrix (ColumnMajor ()) [[1,2,0],[-1,-4,6],[0,0,3]];
+    m = fromColumns [[1,2,0],[-1,-4,6],[0,0,3]];
     compareMatrices
        (mat.filter (> 2) m)
-       (newMatrix (ColumnMajor ()) [[0,0,0],[0,0,6],[0,0,3]]) and
+       (fromColumns [[0,0,0],[0,0,6],[0,0,3]]) and
         compare (mat.isSparse? (mat.filter (> 2) m)) true and
         compare (mat.density (mat.filter (> 2) m)) (2/9)
 ),
 
 "all-\(name)": \(
-    m = newMatrix (ColumnMajor ()) [[1,2,0],[-1,-4,6],[0,0,3]];
+    m = fromColumns [[1,2,0],[-1,-4,6],[0,0,3]];
     compare (mat.all (== 9) m) false and
     compare (mat.all (!= 9) m) true and
     compare (mat.all (== 2) m) false and
@@ -548,7 +549,7 @@ makeTests name flipper =
 ),
 
 "any-\(name)": \(
-    m = newMatrix (ColumnMajor ()) [[1,2,0],[-1,-4,6],[0,0,3]];
+    m = fromColumns [[1,2,0],[-1,-4,6],[0,0,3]];
     compare (mat.any (== 9) m) false and
     compare (mat.any (!= 9) m) true and
     compare (mat.any (== 2) m) true and
@@ -576,13 +577,13 @@ makeTests name flipper =
     ];
     compare (mat.density s) (3/6) and
         compare (mat.density t) (2/6) and
-        compareMatrices s (newMatrix (RowMajor ()) [[1,0,2],[0,4,0]]) and
-        compareMatrices t (newMatrix (RowMajor ()) [[1,0,0],[0,4,0]]) and
-        compareMatrices u (newMatrix (RowMajor ()) [[0,0,0],[0,0,0]])
+        compareMatrices s (fromRows [[1,0,2],[0,4,0]]) and
+        compareMatrices t (fromRows [[1,0,0],[0,4,0]]) and
+        compareMatrices u (fromRows [[0,0,0],[0,0,0]])
 ),
 
 "enumerate-\(name)": \(
-    m = newMatrix (ColumnMajor ()) [[1,2,0],[-1,-4,6],[0,0,3]];
+    m = fromColumns [[1,2,0],[-1,-4,6],[0,0,3]];
     all = [
         { i = 0, j = 0, v = 1 },
         { i = 1, j = 0, v = 2 },

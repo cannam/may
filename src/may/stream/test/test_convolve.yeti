@@ -85,11 +85,11 @@ makeTests name withUnknown =
 "convolvedImpulse-multichannel-\(name)": \(
     all id
        (map do opts:
-            ir = mat.newMatrix (RowMajor ())
+            ir = mat.fromRows
                (map vec.fromList [[0,0,0,1],[8,6,4,2],[1,0,-1,0]]);
             signal = maybeDuration 4
                (syn.precalculated 2 
-                   (mat.newMatrix (RowMajor ())
+                   (mat.fromRows
                        (map vec.fromList [[1,1,0,0],[0,1,1,0],[0,0,1,1]])));
             c = convolve.convolvedWith opts ir signal;
             if compareClose (map vec.list (mat.asRows (c.read 7)))

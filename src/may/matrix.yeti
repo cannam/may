@@ -301,6 +301,7 @@ makeSparse type size data =
 // makeSparse and is also used to discard out-of-range cells from
 // resizedTo.
 //!!! doc: i is row number, j is column number (throughout, for sparse stuff). Would calling them row/column be better?
+//!!! what to do with this, now that it doesn't match the former newMatrix?
 newSparseMatrix type size data =
     makeSparse type size
        (filter
@@ -406,6 +407,7 @@ equalUnder comparator =
 equal =
     equal' (==) vec.equal;
 
+//!!! nb makeSparse takes type,size while this currently takes size,type - fix
 newMatrixOfSize size type rowscols = //!!! NB does not copy data
     if type == RowMajor () then
         {
@@ -440,7 +442,7 @@ fromColumns cols =
                 else vec.length (head cols) 
                 fi,
         },
-        data = DenseRows (array cols)
+        data = DenseCols (array cols)
     };
 
 newRowVector data = //!!! NB does not copy data

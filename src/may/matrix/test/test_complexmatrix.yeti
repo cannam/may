@@ -11,8 +11,8 @@ complex = load may.complex;
 aTestMatrix () =
    (// 1+0i 0-2i 3.5+6i
     // 0+0i 4-3i 1-0.2i
-    reals = mat.newMatrix (RowMajor ()) (map vec.fromList [[1,0,3.5],[0,4,1]]);
-    imags = mat.newMatrix (RowMajor ()) (map vec.fromList [[0,-2,6],[0,-3,-0.2]]);
+    reals = mat.fromRows (map vec.fromList [[1,0,3.5],[0,4,1]]);
+    imags = mat.fromRows (map vec.fromList [[0,-2,6],[0,-3,-0.2]]);
     cm.complex reals imags);
 
 [
@@ -21,10 +21,10 @@ aTestMatrix () =
     // 1+0i 0-2i 3+0i
     // 4-1i 5-3i 0+0i
     reals = mat.toSparse
-       (mat.newMatrix (RowMajor ())
+       (mat.fromRows
            (map vec.fromList [[1,0,3],[4,5,0]]));
     imags = mat.toSparse
-       (mat.newMatrix (ColumnMajor ())
+       (mat.fromColumns
            (map vec.fromList [[0,-1],[-2,-3],[0,0]]));
     m = cm.complex reals imags;
     e = cm.enumerate m;
@@ -68,22 +68,22 @@ aTestMatrix () =
 "magnitudes": \(
     // 1+0i 0-2i
     // 0+0i 4-3i
-    reals = mat.newMatrix (RowMajor ()) (map vec.fromList [[1,0],[0,4]]);
-    imags = mat.newMatrix (RowMajor ()) (map vec.fromList [[0,-2],[0,-3]]);
+    reals = mat.fromRows (map vec.fromList [[1,0],[0,4]]);
+    imags = mat.fromRows (map vec.fromList [[0,-2],[0,-3]]);
     m = cm.complex reals imags;
     mags = cm.magnitudes m;
     compare (map vec.list (mat.asRows mags)) [[1,2],[0,5]];
 ),
 
 "magnitudes-real": \(
-    reals = mat.newMatrix (RowMajor ()) (map vec.fromList [[1,0],[0,4]]);
+    reals = mat.fromRows (map vec.fromList [[1,0],[0,4]]);
     m = cm.fromReal reals;
     mags = cm.magnitudes m;
     compare (map vec.list (mat.asRows mags)) (map vec.list (mat.asRows reals));
 ),
 
 "magnitudes-imag": \(
-    reals = mat.newMatrix (RowMajor ()) (map vec.fromList [[1,0],[0,4]]);
+    reals = mat.fromRows (map vec.fromList [[1,0],[0,4]]);
     m = cm.fromImaginary reals;
     mags = cm.magnitudes m;
     compare (map vec.list (mat.asRows mags)) (map vec.list (mat.asRows reals));
@@ -92,8 +92,8 @@ aTestMatrix () =
 "density": \(
     // 1+0i 0-2i
     // 0+0i 4-3i
-    reals = mat.newMatrix (RowMajor ()) (map vec.fromList [[1,0],[0,4]]);
-    imags = mat.newMatrix (RowMajor ()) (map vec.fromList [[0,-2],[0,-3]]);
+    reals = mat.fromRows (map vec.fromList [[1,0],[0,4]]);
+    imags = mat.fromRows (map vec.fromList [[0,-2],[0,-3]]);
     compare (cm.density (cm.complex reals imags)) 0.75 and
         compare (cm.nonZeroValues (cm.complex reals imags)) 3 and
         compare (cm.density (cm.fromReal reals)) 0.5 and
@@ -105,8 +105,8 @@ aTestMatrix () =
 "angles": \(
     // 1+0i 0-2i
     // 0+0i -4-4i
-    reals = mat.newMatrix (RowMajor ()) (map vec.fromList [[1,0],[0,-4]]);
-    imags = mat.newMatrix (RowMajor ()) (map vec.fromList [[0,-2],[0,-4]]);
+    reals = mat.fromRows (map vec.fromList [[1,0],[0,-4]]);
+    imags = mat.fromRows (map vec.fromList [[0,-2],[0,-4]]);
     m = cm.complex reals imags;
     mags = cm.angles m;
     compare (map vec.list (mat.asRows mags)) [[0,-pi/2],[0,-3*pi/4]];
