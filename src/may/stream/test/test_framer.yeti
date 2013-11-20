@@ -125,7 +125,7 @@ testFrames framesize opts length expected =
 ),
 
 "frames-2x5": \( 
-    testFramesInvertible framesize [ Hop 2 ] 5 [ [1,2], [3,4], [5,0] ];
+    testFramesInvertible 2 [ Hop 2 ] 5 [ [1,2], [3,4], [5,0] ];
 ),
 
 "frames-4.3x4": \( 
