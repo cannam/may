@@ -14,6 +14,9 @@ mat = load may.matrix;
 complex = load may.complex;
 cm = load may.matrix.complex;
 manip = load may.stream.manipulate;
+syn = load may.stream.syntheticstream;
+
+{ ceil } = load may.mathmisc;
 
 load may.stream.type;
 
@@ -213,6 +216,11 @@ streamOverlapping rate { framesize, hop, window } frames =
         close = \(),
     });
 
+//!!! doc: padded tells us whether the original framer was padding or
+//not. if not, and if the frames are overlapping, we won't reconstruct
+//the original stream exactly (scaling will be wrong for the first few
+//samples until we reach the point where each sample is being
+//reconstructed from the requisite number of frames)
 streamed rate framesize options frames =
    (var hop = framesize;
     var padded = true;
@@ -222,12 +230,6 @@ streamed rate framesize options frames =
         Padded p: padded := p;
         Window w: winopt := Some w;
     esac;
-    unpadder = 
-        if padded then
-            manip.delayedBy (- (framesize - hop))
-        else 
-            id 
-        fi;
     window =
         case winopt of
         Some w: w;
@@ -235,13 +237,16 @@ streamed rate framesize options frames =
             // NB periodic, not symmetric
             if framesize == hop then win.boxcar else win.hann fi
         esac;
-    unpadder
-       (if framesize == hop then
-       //!!! tidy this
-            streamContiguous rate framesize frames
-        else
-            streamOverlapping rate { framesize, hop, window } frames
-        fi));
+    if empty? frames then
+        syn.empty rate 1
+    elif framesize == hop then
+        streamContiguous rate framesize frames
+    elif padded then
+        manip.delayedBy (- (framesize - hop))
+           (streamOverlapping rate { framesize, hop, window } frames);
+    else
+        streamOverlapping rate { framesize, hop, window } frames;
+    fi);
 
 complexStreamed rate framesize options frames =
    (streamOptions = array [];

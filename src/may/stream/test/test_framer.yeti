@@ -16,12 +16,10 @@ compareFrames frames1 frames2 =
     all id (map2 do f1 f2: compareUsing mat.equal f1 f2 done frames1
        (map (mat.newRowVector . vec.fromList) frames2));
 
-testFramesWith framesize opts length expected firstChunkSize =
+testFramesInvertibleWith framesize opts length expected firstChunkSize =
    (f = fr.frames framesize opts (testStream length);
     str = fr.streamed rate framesize opts f;
     ts = testStream length; // newly initialised stream
-
-    compareFrames f expected and
 
        (firstChunk = str.read firstChunkSize;
         compareUsing mat.equal
@@ -45,12 +43,19 @@ testFramesWith framesize opts length expected firstChunkSize =
        compare str.finished? true and
        compare str.available (Known 0));
 
-testFramesInvertible framesize opts length expected =
-    all id (map (testFramesWith framesize opts length expected) [1..length]);
-
 testFrames framesize opts length expected =
    (f = fr.frames framesize opts (testStream length);
     compareFrames f expected);
+
+testFramesInvertible framesize opts length expected =
+    testFrames framesize opts length expected and
+       (all id
+           (map (testFramesInvertibleWith framesize opts length expected)
+                (reverse [1..length]))) and
+       (all id
+           (map (testFramesInvertibleWith framesize ((Padded false) :: opts)
+                    length expected)
+                (reverse [1..length])));
 
 [
 
