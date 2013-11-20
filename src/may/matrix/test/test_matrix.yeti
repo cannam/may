@@ -27,7 +27,9 @@ makeTests name flipper =
 "constMatrixEmpty2-\(name)": \(
     compare (mat.size (constMatrix 2 { rows = 0, columns = 4 })) { columns = 4, rows = 0 } and
         compare (mat.size (constMatrix 2 { rows = 4, columns = 0 })) { columns = 0, rows = 4 } and
-        compare (vec.list (mat.getColumn 2 (constMatrix 2 { rows = 0, columns = 4 }))) []
+        compare (vec.list (mat.getColumn 2 (constMatrix 2 { rows = 0, columns = 4 }))) [] and
+        compare (map vec.list (mat.asRows (constMatrix 2 { rows = 4, columns = 0 }))) [[],[],[],[]] and
+        compare (vec.list (mat.getRow 2 (constMatrix 2 { rows = 3, columns = 0 }))) []
 ),
 
 "constMatrix-\(name)": \(

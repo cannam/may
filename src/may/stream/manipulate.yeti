@@ -333,6 +333,8 @@ spaced mult s = //!!! mult must be an integer [how to enforce this??]
        (toRead = maths.ceil (n / mult);
         source = s.read toRead;
         targetWidth = min n (mult * mat.width source);
+
+//!!! here we need a better matrix construction api -- need to give it a size
         mat.newMatrix (ColumnMajor ())
            (map do i:
                 if i % mult == 0 then
