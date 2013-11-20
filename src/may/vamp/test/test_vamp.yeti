@@ -90,7 +90,7 @@ tests =
     case processTest "grid-oss" of //!!! test spacing?
     Grid g:
         compareUsing mat.equal g 
-           (mat.newMatrix (ColumnMajor ())
+           (mat.fromColumns
                (map do x:
                    (vec.fromList . floats) (map do y:
                         (x + y + 2) / 30
@@ -104,7 +104,7 @@ tests =
     case processTest "grid-fsr" of //!!! test spacing?
     Grid g:
         compareUsing mat.equal g 
-           (mat.newMatrix (ColumnMajor ())
+           (mat.fromColumns
                (map do x:
                    (vec.fromList . floats) (map do y:
                         (x + y + 2) / 20

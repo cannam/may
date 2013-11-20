@@ -7,7 +7,7 @@ vec = load may.vector;
 
 { compare, compareUsing } = load may.test.test;
 
-newMatrix data = mat.newMatrix (ColumnMajor ()) (map vec.fromList data);
+newMatrix data = mat.fromColumns (map vec.fromList data);
 
 compareBlocks b1 b2 =
     compare (vec.list b1) (vec.list b2);

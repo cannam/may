@@ -212,7 +212,7 @@ windowed windowFunc data =
 
 windowedRows windowFunc matrix = 
    (w = windowFunc (mat.width matrix);
-    mat.newMatrix (RowMajor ())
+    mat.fromRows
        (map (vec.multiply w) (mat.asRows matrix)));
 
 windowedFrames windowFunc frames =

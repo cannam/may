@@ -620,7 +620,7 @@ makeTests name withUnknown =
         compare s2.finished? false and
         compare s2.available (Known 1) and // when one is known, so is the other
 
-        compare (map vec.list (mat.asRows (s1.read 3))) [] and
+        compare (map vec.list (mat.asRows (s1.read 3))) [[]] and
 
         compare (map vec.list (mat.asRows (s2.read 1))) [[3]] and
         compare s1.position 3 and

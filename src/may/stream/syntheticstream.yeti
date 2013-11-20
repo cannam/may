@@ -106,20 +106,20 @@ empty rate channels = // degenerate stream with no data in it, occasionally usef
         get sampleRate () = rate,
         get available () = Known 0,
         get finished? () = true,
-        read count = mat.zeroSizeMatrix (),
+        read count = mat.zeroMatrix { rows = channels, columns = 0 },
         close = \(),
     };
 
 {
-    generated is number -> (number -> number) -> stream, 
-    precalculated is number -> mat.matrix_t -> stream,
-    precalculatedMono is number -> vec.vector_t -> stream,
-    precalculatedRepeated is number -> mat.matrix_t -> stream,
-    sinusoid is number -> number -> stream, 
-    whiteNoise is number -> stream,
-    pulseTrain is number -> number -> stream,
-    silent is number -> stream,
-    empty is number -> number -> stream,
+    generated is number -> (number -> number) -> stream_t, 
+    precalculated is number -> mat.matrix_t -> stream_t,
+    precalculatedMono is number -> vec.vector_t -> stream_t,
+    precalculatedRepeated is number -> mat.matrix_t -> stream_t,
+    sinusoid is number -> number -> stream_t, 
+    whiteNoise is number -> stream_t,
+    pulseTrain is number -> number -> stream_t,
+    silent is number -> stream_t,
+    empty is number -> number -> stream_t,
 }
 
 

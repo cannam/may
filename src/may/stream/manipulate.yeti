@@ -125,9 +125,7 @@ inverted s = //!!! todo: test
     {
         read count = 
            (m = s.read count;
-            if mat.empty? m then m
-            else mat.difference (mat.zeroMatrix (mat.size m)) m
-            fi)
+            mat.difference (mat.zeroMatrix (mat.size m)) m)
     };
 
 //!!! poor name, confusion with mixed, but consistent with channels.yeti
@@ -149,13 +147,14 @@ sum' streams =
        (sz = { rows = max (mat.height m1) (mat.height m2),
                columns = min (mat.width m1) (mat.width m2) };
         if sz.columns == 0 then
-            mat.zeroSizeMatrix ()
+            mat.zeroMatrix sz
         else
             mat.sum (mat.resizedTo sz m1) (mat.resizedTo sz m2);
         fi);
+    channels = head (sortBy (>) (map (.channels) streams));
     {
         get position () = head (sort (map (.position) streams)),
-        get channels () = head (sortBy (>) (map (.channels) streams)),
+        get channels () = channels,
         get sampleRate () = (head streams).sampleRate, //!!! document this
         get available () =
             fold do dur s: minDurationOf dur s.available done (Infinite ()) streams,
@@ -174,7 +173,7 @@ sum' streams =
                 _: acc;
                esac;
             case readTo (None ()) streams count of
-            None (): mat.zeroSizeMatrix ();
+            None (): mat.zeroMatrix { rows = channels, columns = 0 };
             Some m: m;
             esac),
         close () = for streams do s: s.close() done,
@@ -215,7 +214,7 @@ repeated s =
     if s.available == Infinite () then s
     else
         var pos = 0;
-        var cache = mat.zeroSizeMatrix ();
+        var cache = mat.zeroMatrix { rows = s.channels, columns = 0 };
         chunks = array [];
         cachedPartsFor count =
            (start = pos % (mat.width cache);
@@ -269,7 +268,8 @@ duplicated copies s =
         var lowtide = 0;
         var hightide = 0;
         var adcount = 0;
-        var cache = mat.toRowMajor (mat.zeroSizeMatrix ());
+        var cache = mat.toRowMajor
+           (mat.zeroMatrix { rows = s.channels, columns = 0 });
         syncd = synchronized pos;
         advance i n =
            (wasLow = (pos[i] == lowtide);
@@ -305,7 +305,8 @@ duplicated copies s =
                 read count = syncd
                   \(ready = hightide - pos[instance];
                     if s.finished? and ready <= 0 
-                    then mat.toRowMajor (mat.zeroSizeMatrix ())
+                    then mat.toRowMajor
+                       (mat.zeroMatrix { rows = s.channels, columns = 0 })
                     else
                         if count > ready then
                             more = s.read (count - ready);
@@ -332,14 +333,15 @@ spaced mult s = //!!! mult must be an integer [how to enforce this??]
        (toRead = maths.ceil (n / mult);
         source = s.read toRead;
         targetWidth = min n (mult * mat.width source);
-        mat.newMatrix (ColumnMajor ())
-           (map do i:
-                if i % mult == 0 then
-                    mat.getColumn (int (i / mult)) source
-                else
-                    vec.zeros s.channels
-                fi
-                done [0..targetWidth-1]));
+        mat.newMatrix { columns = targetWidth, rows = s.channels }
+           (Columns
+               (map do i:
+                    if i % mult == 0 then
+                        mat.getColumn (int (i / mult)) source
+                    else
+                        vec.zeros s.channels
+                    fi
+                    done [0..targetWidth-1])));
     var pos = 0;
     s with
     {
@@ -372,25 +374,25 @@ picked frac s = //!!! frac must be an integer [how to enforce this??]
            (m = s.read (n*frac);
             obtained = maths.ceil ((mat.width m) / frac);
             mat.flipped
-               (mat.newMatrix (ColumnMajor ())
+               (mat.fromColumns
                    (map do c: mat.getColumn (c*frac) m done [0..obtained-1])))
     };
 
 {
-    withDuration is number -> stream -> stream,
-    delayedBy is number -> stream -> stream,
-    extendedBy is number -> stream -> stream,
-    paddedBy is number -> stream -> stream,
-    scaledBy is number -> stream -> stream,
-    inverted is stream -> stream,
-    mixedTo is number -> stream -> stream,
-    sum is list<stream> -> stream = sum',
-    mean is list<stream> -> stream,
-    difference is stream -> stream -> stream,
-    multiplexed is list<stream> -> stream,
-    repeated is stream -> stream,
-    duplicated is number -> stream -> array<stream>,
-    spaced is number -> stream -> stream,
-    picked is number -> stream -> stream,
+    withDuration is number -> stream_t -> stream_t,
+    delayedBy is number -> stream_t -> stream_t,
+    extendedBy is number -> stream_t -> stream_t,
+    paddedBy is number -> stream_t -> stream_t,
+    scaledBy is number -> stream_t -> stream_t,
+    inverted is stream_t -> stream_t,
+    mixedTo is number -> stream_t -> stream_t,
+    sum is list<stream_t> -> stream_t = sum',
+    mean is list<stream_t> -> stream_t,
+    difference is stream_t -> stream_t -> stream_t,
+    multiplexed is list<stream_t> -> stream_t,
+    repeated is stream_t -> stream_t,
+    duplicated is number -> stream_t -> array<stream_t>,
+    spaced is number -> stream_t -> stream_t,
+    picked is number -> stream_t -> stream_t,
 }
 

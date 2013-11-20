@@ -11,8 +11,12 @@ af = load may.stream.audiofile;
 win = load may.signal.window;
 fft = load may.transform.fft;
 mat = load may.matrix;
-ch = load may.stream.channels;
 complex = load may.complex;
+cm = load may.matrix.complex;
+manip = load may.stream.manipulate;
+syn = load may.stream.syntheticstream;
+
+{ ceil } = load may.mathmisc;
 
 load may.stream.type;
 
@@ -48,28 +52,82 @@ overlappingBlockList size hop stream valid buffer =
         stream.close ();
         [];
     else
-        mat.newMatrix (RowMajor ()) buffer
+        mat.fromRows buffer
             :. \(overlappingBlockList size hop stream remaining buffer);
     fi);
 
-frames { framesize, hop } stream =
+//!!! doc: if hop != framesize, stream will be padded at start with
+// framesize - hop zeros if padded is true. if hop == framesize, no
+// padding will occur at start regardless of the value of padded.  The
+// end will always be padded (...?)
+frames' framesize hop padded stream =
     if framesize == hop then
         blockList framesize stream
     else
-        overlappingBlockList framesize hop stream 
-            framesize (map \(vec.zeros framesize) [0..stream.channels-1]);
+        initialBuffer = 
+            if padded then
+                map \(vec.zeros framesize) [0..stream.channels-1];
+            else 
+                mat.asRows
+                   (mat.concatHorizontal
+                       [mat.zeroMatrix { rows = stream.channels, columns = hop },
+                        stream.read (framesize - hop)]);
+            fi;
+        overlappingBlockList framesize hop stream framesize initialBuffer;
     fi;
+
+frames framesize options stream =
+   (var hop = framesize;
+    var padded = true;
+    var windower = id;
+    var transform = id;
+    for options \case of
+        Hop h: hop := h;
+        Padded p: padded := p;
+        Window w:
+            windower := mat.mapRows (vec.multiply (w framesize));
+        FrequencyDomain f:
+            if f then
+                transform := mat.mapRows (fft.realForwardMagnitude framesize);
+            fi;
+    esac;
+    map transform
+       (map windower
+           (frames' framesize hop padded stream)));
+
+complexFrames framesize options stream =
+   (var hop = framesize;
+    var padded = true;
+    var windower = id;
+    var rowTransform = 
+        do r: complex.complexArray r (vec.zeros (vec.length r)) done;
+    for options \case of
+        Hop h: hop := h;
+        Padded p: padded := p;
+        Window w:
+            windower := mat.mapRows (vec.multiply (w framesize));
+        FrequencyDomain f:
+        //!!! what if both f and not-f provided in one options list? need reset
+            if f then 
+                rowTransform := fft.realForward framesize;
+            fi;
+    esac;
+    map do m:
+        cm.fromRows (map rowTransform (mat.asRows m))
+        done
+       (map windower
+           (frames' framesize hop padded stream)));
 
 streamContiguous rate framesize frames =
    (var remaining = frames;
-    var buffered = mat.zeroSizeMatrix ();
     var position = 0;
     channels = mat.height (head frames); // so we don't need to keep a head ptr
+    var buffered = mat.zeroMatrix { rows = channels, columns = 0 };
     {
         get position () = position,
         get channels () = channels,
         get sampleRate () = rate,
-        get finished? () = empty? remaining and mat.empty? buffered,
+        get finished? () = empty? remaining and mat.width buffered == 0,
         get available () = 
             // Don't take length of frames -- we don't want to lose laziness.
             // If the caller cares that much, they can measure frames themselves
@@ -112,21 +170,22 @@ overlapAdd overlap frames =
     first::rest:
         mat.concatHorizontal (ola rest first []);
      _: 
-        mat.zeroSizeMatrix ();
+        mat.zeroMatrix { rows = 0, columns = 0 };
     esac);
 
 streamOverlapping rate { framesize, hop, window } frames =
    (var remaining = frames;
-    var buffered = mat.zeroSizeMatrix ();
     var position = 0;
 
     factor = hop / (framesize/2);
     w = vec.scaled factor (window framesize);
     channels = mat.height (head frames); // so we don't need to keep a head ptr
 
+    var buffered = mat.zeroMatrix { rows = channels, columns = 0 };
+
     syncd = synchronized remaining;
 
-    finished' () = syncd \(empty? remaining and mat.empty? buffered);
+    finished' () = syncd \(empty? remaining and mat.width buffered == 0);
 
     read' count = 
        (framesFor samples acc =
@@ -134,8 +193,7 @@ streamOverlapping rate { framesize, hop, window } frames =
                 reverse acc
             else
                 this = mat.resizedTo { columns = framesize, rows = channels }
-                   (mat.newMatrix (RowMajor ())
-                       (map (vec.multiply w) (mat.asRows (head remaining))));
+                   (mat.mapRows (vec.multiply w) (head remaining));
                 remaining := tail remaining;
                 framesFor (samples - hop) (this::acc)
             fi;
@@ -143,9 +201,6 @@ streamOverlapping rate { framesize, hop, window } frames =
            (framesFor count [buffered]);
         buffered := mat.columnSlice source count (mat.width source);
         mat.columnSlice source 0 count);
-
-    // lose initial padding
-    \() (read' (framesize - hop));
     
     {
         get position () = syncd \(position),
@@ -159,52 +214,69 @@ streamOverlapping rate { framesize, hop, window } frames =
             data),
         close = \(),
     });
-    
-//!!! doc: convert frames back to a stream
-streamed rate { framesize, hop } frames =
-    if framesize == hop then
+
+//!!! doc: padded tells us whether the original framer was padding or
+//not. if not, and if the frames are overlapping, we won't reconstruct
+//the original stream exactly (scaling will be wrong for the first few
+//samples until we reach the point where each sample is being
+//reconstructed from the requisite number of frames)
+streamed rate framesize options frames =
+   (var hop = framesize;
+    var padded = true;
+    var winopt = None ();
+    for options \case of
+        Hop h: hop := h;
+        Padded p: padded := p;
+        Window w: winopt := Some w;
+    esac;
+    window =
+        case winopt of
+        Some w: w;
+        None (): 
+            // NB periodic, not symmetric
+            if framesize == hop then win.boxcar else win.hann fi
+        esac;
+    if empty? frames then
+        syn.empty rate 1
+    elif framesize == hop then
         streamContiguous rate framesize frames
+    elif padded then
+        manip.delayedBy (- (framesize - hop))
+           (streamOverlapping rate { framesize, hop, window } frames);
     else
-        streamOverlapping rate
-            { framesize, hop, window = win.hann } // periodic, not symmetric
-            frames
-    fi;
+        streamOverlapping rate { framesize, hop, window } frames;
+    fi);
 
-monoFrames params stream =
-    map ch.mixedDown (frames params stream);
+complexStreamed rate framesize options frames =
+   (streamOptions = array [];
+    var rowTransform = complex.magnitudes;
+    for options \case of
+        FrequencyDomain f:
+        //!!! what if both f and not-f provided in one options list? need reset
+            if f then
+                rowTransform := fft.realInverse framesize;
+            fi;
+        other: push streamOptions other;
+    esac;
+    transformed = map do c:
+        mat.fromRows (map rowTransform (cm.asRows c))
+        done frames;
+    streamed rate framesize streamOptions transformed);    
 
-windowedFrames { framesize, hop, window } stream =
-   (win = window framesize;
-    map (vec.multiply win) (monoFrames { framesize, hop } stream));
-
-frequencyDomainFrames parameters stream =
-   (f = fft.realForward parameters.framesize;
-    map f (windowedFrames parameters stream));
-
-typedef params = { framesize is number, hop is number };
-typedef winparams = { framesize is number, hop is number, window is number -> vec.vector_t };
+typedef opt_t = 
+    Hop number | Padded boolean | 
+    Window (number -> vec.vector_t) | FrequencyDomain boolean;
 
 { 
-    frames is params -> stream -> list<mat.matrix_t>,
-    monoFrames is params -> stream -> list<vec.vector_t>,
-    windowedFrames is winparams -> stream -> list<vec.vector_t>,
-    frequencyDomainFrames is winparams -> stream -> list<array<complex.complex_t> >,
+    frames is number -> list?<opt_t> -> stream_t -> list<mat.matrix_t>,
+    complexFrames is number -> list?<opt_t> -> stream_t -> list<cm.complexmatrix_t>,
 
-    framesOfFile parameters filename =
-        frames parameters (af.open filename),
+    framesOfFile framesize options filename =
+        frames framesize options (af.open filename),
 
-    monoFramesOfFile parameters filename =
-        monoFrames parameters (af.open filename),
+    overlapAdd,
 
-    windowedFramesOfFile parameters filename = 
-        windowedFrames parameters (af.open filename),
-
-    frequencyDomainFramesOfFile parameters filename = 
-        frequencyDomainFrames parameters (af.open filename),
-
-    overlapAdd is number -> list<mat.matrix_t> -> mat.matrix_t,
-
-    streamed is number -> params -> list<mat.matrix_t> -> stream,
-    streamOverlapping is number -> winparams -> list<mat.matrix_t> -> stream,
+    streamed,
+    complexStreamed,
 }
 

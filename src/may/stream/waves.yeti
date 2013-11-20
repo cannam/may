@@ -65,9 +65,9 @@ saw = cached saw';
 triangle = cached triangle';
 
 {
-    square is number -> number -> stream,
-    saw is number -> number -> stream, 
-    triangle is number -> number -> stream,
+    square is number -> number -> stream_t,
+    saw is number -> number -> stream_t, 
+    triangle is number -> number -> stream_t,
     cycleLengthFor is number -> number -> number,
 }
 

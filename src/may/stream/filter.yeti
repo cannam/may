@@ -29,7 +29,7 @@ bandpassed f0 f1 attenuation bandwidth s =
          fi;
     filter = vec.multiply idealBandpass kw;
     filtered = convolve.convolvedWith [Framesize 1024]
-       (mat.newMatrix (RowMajor ()) (map \filter [1..s.channels]))
+       (mat.fromRows (map \filter [1..s.channels]))
         s;
     manip.delayedBy (- (int (filterLength / 2))) filtered);
 
