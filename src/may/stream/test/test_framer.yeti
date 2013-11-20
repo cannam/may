@@ -136,6 +136,14 @@ testFrames framesize opts length expected =
     testFrames 3 [ Hop 2 ] 4 [ [0,1,2], [2,3,4], [4,0,0] ];
 ),
 
+"frames-4.3x4np": \( 
+    testFrames 4 [ Hop 3, Padded false ] 4 [ [1,2,3,4], [4,0,0,0] ];
+),
+
+"frames-3.2x4np": \(
+    testFrames 3 [ Hop 2, Padded false ] 4 [ [1,2,3], [3,4,0], [0,0,0] ];
+),
+
 "frames-3.1x6": \(
     testFramesInvertible 3 [ Hop 1 ] 6
         [ [0,0,1], [0,1,2], [1,2,3], [2,3,4],

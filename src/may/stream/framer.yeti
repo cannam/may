@@ -11,7 +11,6 @@ af = load may.stream.audiofile;
 win = load may.signal.window;
 fft = load may.transform.fft;
 mat = load may.matrix;
-ch = load may.stream.channels;
 complex = load may.complex;
 cm = load may.matrix.complex;
 manip = load may.stream.manipulate;
@@ -69,7 +68,7 @@ frames' framesize hop padded stream =
                 mat.asRows
                    (mat.concatHorizontal
                        [mat.zeroMatrix { rows = stream.channels, columns = hop },
-                        stream.read framesize]);
+                        stream.read (framesize - hop)]);
             fi;
         overlappingBlockList framesize hop stream framesize initialBuffer;
     fi;
