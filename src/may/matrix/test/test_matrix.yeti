@@ -211,20 +211,20 @@ makeTests name flipper =
           (constMatrix 5 { rows = 0, columns = 2 })
 ),
 
-"transformRows-\(name)": \(
+"mapRows-\(name)": \(
     m = fromRows [[1,4],[0,5],[3,6]];
     m' = fromColumns [[1,0,3],[4,5,6]];
     m'' = fromRows [[2,8],[0,10],[6,12]];
-    compareMatrices (mat.transformRows (vec.scaled 2) m) m'' and
-        compareMatrices (mat.transformRows (vec.scaled 2) m') m''
+    compareMatrices (mat.mapRows (vec.scaled 2) m) m'' and
+        compareMatrices (mat.mapRows (vec.scaled 2) m') m''
 ),
 
-"transformColumns-\(name)": \(
+"mapColumns-\(name)": \(
     m = fromRows [[1,4],[0,5],[3,6]];
     m' = fromColumns [[1,0,3],[4,5,6]];
     m'' = fromRows [[2,8],[0,10],[6,12]];
-    compareMatrices (mat.transformColumns (vec.scaled 2) m) m'' and
-        compareMatrices (mat.transformColumns (vec.scaled 2) m') m''
+    compareMatrices (mat.mapColumns (vec.scaled 2) m) m'' and
+        compareMatrices (mat.mapColumns (vec.scaled 2) m') m''
 ),
 
 "sum-\(name)": \(
