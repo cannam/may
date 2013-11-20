@@ -717,23 +717,29 @@ sparseConcat direction first mm =
            (if direction == Vertical () then entries 0 0 1 0 mm []
             else entries 0 0 0 1 mm [] fi)));
 
-checkDimensions counter first mm =
-   (n = counter (size first);
-    if not (all id (map do m: counter (size m) == n done mm)) then
-        failWith "Matrix dimensions incompatible for concat (found \(map do m: counter (size m) done mm) not all of which are \(n))";
-    fi);
+sumDimensions sumCounter checkCounter mm =
+   (check = checkCounter (size (head mm));
+    sum
+       (map do m:
+            s = size m;
+            if (checkCounter s) != check then
+                failWith "Matrix dimensions incompatible for concat (found \(map do m: checkCounter (size m) done mm) not all of which are \(check))";
+            else
+                sumCounter s;
+            fi
+        done mm));
 
 concatHorizontal mm = //!!! doc: storage order is taken from first matrix in sequence; concat is obviously not lazy (unlike std module)
     case mm of
     [m]: m;
     first::rest:
-       (checkDimensions (.rows) first mm;
+       (w = sumDimensions (.columns) (.rows) mm;
         if all isSparse? mm then
             sparseConcat (Horizontal ()) first mm
         else
             row = isRowMajor? first;
             {
-                size = { rows = height first, columns = sum (map width mm) },
+                size = { rows = height first, columns = w },
                 data =
                     // horizontal, row-major: against grain with rows
                     // horizontal, col-major: with grain with cols
@@ -749,13 +755,13 @@ concatVertical mm = //!!! doc: storage order is taken from first matrix in seque
     case mm of
     [m]: m;
     first::rest:
-       (checkDimensions (.columns) first mm;
+       (h = sumDimensions (.rows) (.columns) mm;
         if all isSparse? mm then
             sparseConcat (Vertical ()) first mm
         else
             row = isRowMajor? first;
             {
-                size = { rows = sum (map height mm), columns = width first },
+                size = { rows = h, columns = width first },
                 data = 
                     // vertical, row-major: with grain with rows
                     // vertical, col-major: against grain with cols
