@@ -30,29 +30,50 @@
   </target>
 
   <target name="yeticlasses" depends="taskdef">
-    <yetic srcdir="${basedir}/src" destdir="${basedir}/classes"
-	   includes="**/*.yeti" excludes="**/test/*.yeti" preload="yeti/lang/std:yeti/lang/io"/>
+    <yetic srcdir="${basedir}/src" 
+	   destdir="${basedir}/classes"
+	   includes="**/*.yeti"
+	   preload="yeti/lang/std:yeti/lang/io"/>
   </target>
 
   <target name="javaclasses">
-    <javac srcdir="${basedir}/src" destdir="${basedir}/classes"
-	   includes="**/*.java" includeantruntime="false"/>
+    <javac srcdir="${basedir}/src"
+	   destdir="${basedir}/classes"
+	   includes="**/*.java" 
+	   includeantruntime="false"/>
   </target>
 
   <target name="classes" depends="prepare,javaclasses,yeticlasses"/>
 
   <target name="jar" depends="classes,taskdef">
     <jar jarfile="${basedir}/may.jar">
-      <fileset dir="${basedir}/classes"/>
+      <fileset dir="${basedir}/classes" 
+	       includes="**/*.class" 
+	       excludes="**/test/*.class"/>
     </jar>
   </target>
 
-  <target name="test" depends="jar,taskdef">
-    <java classpath="${basedir}/../yeti/yeti.jar:${basedir}/may.jar;${extjars}"
-	  classname="yeti.lang.compiler.yeti"
+  <target name="testjar" depends="classes,taskdef">
+    <jar jarfile="${basedir}/maytests.jar">
+      <fileset dir="${basedir}/classes" 
+	       includes="**/test/*.class"/>
+    </jar>
+  </target>
+
+  <target name="test" depends="jar,testjar,taskdef">
+    <java classpath="${basedir}/maytests.jar:${basedir}/may.jar:${basedir}/../yeti/yeti.jar:${extjars}"
+	  classname="may.test.all"
 	  fork="true" failonerror="true">
       <sysproperty key="java.library.path" path="${basedir}/ext/native/${archtag}"/>
-      <arg value="src/may/test/all.yeti"/>
+    </java>
+  </target>
+
+  <target name="coverage" depends="jar,testjar,taskdef">
+    <java classpath="${basedir}/../emma-2.0.5312/lib/emma.jar:${basedir}/maytests.jar:${basedir}/may.jar:${basedir}/../yeti/yeti.jar:${extjars}"
+	  classname="emma"
+	  fork="true" failonerror="true">
+      <sysproperty key="java.library.path" path="${basedir}/ext/native/${archtag}"/>
+      <arg value="may.test.all"/>
     </java>
   </target>
 
