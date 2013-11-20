@@ -52,7 +52,7 @@ overlappingBlockList size hop stream valid buffer =
         stream.close ();
         [];
     else
-        mat.newMatrix (RowMajor ()) buffer
+        mat.fromRows buffer
             :. \(overlappingBlockList size hop stream remaining buffer);
     fi);
 
@@ -113,7 +113,7 @@ complexFrames framesize options stream =
             fi;
     esac;
     map do m:
-        cm.newComplexMatrix (RowMajor ()) (map rowTransform (mat.asRows m))
+        cm.fromRows (map rowTransform (mat.asRows m))
         done
        (map windower
            (frames' framesize hop padded stream)));
@@ -193,7 +193,7 @@ streamOverlapping rate { framesize, hop, window } frames =
                 reverse acc
             else
                 this = mat.resizedTo { columns = framesize, rows = channels }
-                   (mat.newMatrix (RowMajor ())
+                   (mat.fromRows
 //!!! use mat.transformRows (and rename it mapRows?)
                        (map (vec.multiply w) (mat.asRows (head remaining))));
                 remaining := tail remaining;
@@ -261,7 +261,7 @@ complexStreamed rate framesize options frames =
         other: push streamOptions other;
     esac;
     transformed = map do c:
-        mat.newMatrix (RowMajor ()) (map rowTransform (cm.asRows c))
+        mat.fromRows (map rowTransform (cm.asRows c))
         done frames;
     streamed rate framesize streamOptions transformed);    
 

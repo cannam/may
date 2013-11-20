@@ -268,10 +268,12 @@ nonZeroValues cm =
 density cm =
     (nonZeroValues cm) / (width cm * height cm);
 
-newComplexMatrix type data =
-   (newPart f =
-        mat.newMatrix type 
-           (map do cc: vec.fromList (map f cc) done data);
+fromRows data =
+   (newPart f = mat.fromRows (map do cc: vec.fromList (map f cc) done data);
+    complex (newPart cpx.real) (newPart cpx.imaginary));
+
+fromColumns data =
+   (newPart f = mat.fromColumns (map do cc: vec.fromList (map f cc) done data);
     complex (newPart cpx.real) (newPart cpx.imaginary));
 
 newComplexRowVector data =
@@ -315,7 +317,8 @@ newComplexColumnVector data =
     angles,
     rowSlice,
     columnSlice,
-    newComplexMatrix,
+    fromRows,
+    fromColumns,
     newComplexRowVector,
     newComplexColumnVector,
     enumerate,
@@ -355,7 +358,8 @@ newComplexColumnVector data =
     angles is complexmatrix_t -> mat.matrix_t,
     rowSlice is complexmatrix_t -> number -> number -> complexmatrix_t,
     columnSlice is complexmatrix_t -> number -> number -> complexmatrix_t,
-    newComplexMatrix is (ColumnMajor () | RowMajor ()) -> list?<list?<cpx.complex_t>> -> complexmatrix_t,
+    fromRows is list?<list?<cpx.complex_t>> -> complexmatrix_t,
+    fromColumns is list?<list?<cpx.complex_t>> -> complexmatrix_t,
     newComplexRowVector is list?<cpx.complex_t> -> complexmatrix_t,
     newComplexColumnVector is list?<cpx.complex_t> -> complexmatrix_t,
     enumerate is complexmatrix_t -> list<{ i is number, j is number, v is cpx.complex_t }>,

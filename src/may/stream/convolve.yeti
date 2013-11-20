@@ -59,7 +59,7 @@ fastConvolvedWith ir framesize s =
     cframes = doFastConvolve irfr extended; 
     rframes = (mat.zeroMatrix { rows = ch, columns = framesize * 2}) ::
         map do fr:
-            mat.newMatrix (RowMajor ())
+            mat.fromRows
                (map inverseTransform (splitInto (framesize+1) fr))
             done cframes;
     fr.streamed s.sampleRate (framesize * 2)
@@ -117,7 +117,7 @@ plainConvolvedWith ir s =
             newlen = (histlen + siglen) - convlen; // -> 0
             w = mat.width extended;
             history := mat.columnSlice extended (w - newlen) w;
-            mat.newMatrix (RowMajor ()) (map vec.vector output)),
+            mat.fromRows (map vec.vector output)),
     });
 
 nextPowerOfTwo n =

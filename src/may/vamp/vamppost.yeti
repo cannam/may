@@ -58,7 +58,7 @@ structureGrid binCount features =
     if empty? features then
         mat.zeroMatrix { rows = binCount, columns = 0 };
     else
-        mat.newMatrix (ColumnMajor ()) (map (.values) features);
+        mat.fromColumns (map (.values) features);
     fi;
 
 timeOf f =

@@ -52,7 +52,7 @@ interpolated factor s = //!!! factor must be an integer [how to enforce this??]
         out = adjuster
            (manip.delayedBy delay
                (convolve.convolvedWith [Framesize 1024]
-                   (mat.newMatrix (RowMajor ()) (map \filter [1..s.channels]))
+                   (mat.fromRows (map \filter [1..s.channels]))
                    (manip.spaced factor s)));
         out with { get sampleRate () = s.sampleRate * factor };
     fi;
@@ -75,7 +75,7 @@ decimated factor s = //!!! factor must be an integer [how to enforce this??]
         filter = kaiserSincFilterFor fparams;
         filtered =
            (convolve.convolvedWith [Framesize 1024]
-               (mat.newMatrix (RowMajor ()) (map \filter [1..s.channels])) s);
+               (mat.fromRows (map \filter [1..s.channels])) s);
         delay = -(int ((vec.length filter) / 4));
         scaleFactor = 1 / fparams.n;
         out = adjuster
@@ -328,7 +328,7 @@ resampledDirectlyTo targetRate s =
            (rowdata = array (map \(new double[n]) [1..s.channels]);
             obtained = fill rowdata n;
             scaleFactor = (targetRate / g) / fparams.n;
-            result = mat.newMatrix (RowMajor ())
+            result = mat.fromRows
                (map do r: vec.scaled scaleFactor (vec.vector r) done rowdata);
             if obtained < n then mat.columnSlice result 0 obtained
             else result

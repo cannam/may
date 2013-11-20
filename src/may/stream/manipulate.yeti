@@ -335,7 +335,7 @@ spaced mult s = //!!! mult must be an integer [how to enforce this??]
         targetWidth = min n (mult * mat.width source);
 
 //!!! here we need a better matrix construction api -- need to give it a size
-        mat.newMatrix (ColumnMajor ())
+        mat.fromColumns
            (map do i:
                 if i % mult == 0 then
                     mat.getColumn (int (i / mult)) source
@@ -375,7 +375,7 @@ picked frac s = //!!! frac must be an integer [how to enforce this??]
            (m = s.read (n*frac);
             obtained = maths.ceil ((mat.width m) / frac);
             mat.flipped
-               (mat.newMatrix (ColumnMajor ())
+               (mat.fromColumns
                    (map do c: mat.getColumn (c*frac) m done [0..obtained-1])))
     };
 

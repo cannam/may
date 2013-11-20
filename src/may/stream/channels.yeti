@@ -8,7 +8,7 @@ interleaved m =
     vec.zipped (mat.asRows m);
 
 deinterleaved channels b =
-    mat.newMatrix (RowMajor ()) (list (vec.unzipped channels b));
+    mat.fromRows (list (vec.unzipped channels b));
 
 mixedDown m =  //!!!doc: average, not sum
    ({ columns, rows } = (mat.size m);
@@ -62,7 +62,7 @@ mixedTo targetChannels m =
     elif targetChannels == 1 then            // n -> 1: mix down
         deinterleaved 1 (mixedDown m)
     elif mat.height m == 1 then              // 1 -> n: copy to all channels
-        mat.newMatrix (RowMajor ()) (map \(mat.getRow 0 m) [1..targetChannels])
+        mat.fromRows (map \(mat.getRow 0 m) [1..targetChannels])
     else                                     // n -> m: truncate or add zeros
         mat.resizedTo { rows = targetChannels, columns = mat.width m } m
     fi;
