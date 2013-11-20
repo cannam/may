@@ -62,8 +62,8 @@ fastConvolvedWith ir framesize s =
             mat.newMatrix (RowMajor ())
                (map inverseTransform (splitInto (framesize+1) fr))
             done cframes;
-    fr.streamOverlapping s.sampleRate
-        { framesize = framesize * 2, hop = framesize, window = win.boxcar }
+    fr.streamed s.sampleRate (framesize * 2)
+        [ Window win.boxcar, Hop framesize ]
         rframes;
 );
 

@@ -14,6 +14,7 @@ mat = load may.matrix;
 ch = load may.stream.channels;
 complex = load may.complex;
 cm = load may.matrix.complex;
+manip = load may.stream.manipulate;
 
 load may.stream.type;
 
@@ -84,7 +85,9 @@ frames framesize options stream =
         Window w:
             windower := mat.transformRows (vec.multiply (w framesize));
         FrequencyDomain f:
-            transform := mat.transformRows (fft.realForwardMagnitude framesize);
+            if f then
+                transform := mat.transformRows (fft.realForwardMagnitude framesize);
+            fi;
     esac;
     map transform
        (map windower
@@ -94,14 +97,18 @@ complexFrames framesize options stream =
    (var hop = framesize;
     var padded = true;
     var windower = id;
-    var rowTransform = do r: complex.complexArray r (vec.zeros (vec.length r)) done;
+    var rowTransform = 
+        do r: complex.complexArray r (vec.zeros (vec.length r)) done;
     for options \case of
         Hop h: hop := h;
         Padded p: padded := p;
         Window w:
             windower := mat.transformRows (vec.multiply (w framesize));
         FrequencyDomain f:
-            rowTransform := fft.realForward framesize;
+        //!!! what if both f and not-f provided in one options list? need reset
+            if f then 
+                rowTransform := fft.realForward framesize;
+            fi;
     esac;
     map do m:
         cm.newComplexMatrix (RowMajor ()) (map rowTransform (mat.asRows m))
@@ -184,6 +191,7 @@ streamOverlapping rate { framesize, hop, window } frames =
             else
                 this = mat.resizedTo { columns = framesize, rows = channels }
                    (mat.newMatrix (RowMajor ())
+//!!! use mat.transformRows (and rename it mapRows?)
                        (map (vec.multiply w) (mat.asRows (head remaining))));
                 remaining := tail remaining;
                 framesFor (samples - hop) (this::acc)
@@ -192,9 +200,6 @@ streamOverlapping rate { framesize, hop, window } frames =
            (framesFor count [buffered]);
         buffered := mat.columnSlice source count (mat.width source);
         mat.columnSlice source 0 count);
-
-    // lose initial padding
-    \() (read' (framesize - hop));
     
     {
         get position () = syncd \(position),
@@ -208,17 +213,52 @@ streamOverlapping rate { framesize, hop, window } frames =
             data),
         close = \(),
     });
-    
-//!!! doc: convert frames back to a stream
-streamed rate { framesize, hop } frames =
-    if framesize == hop then
-        streamContiguous rate framesize frames
-    else
-        streamOverlapping rate
-            { framesize, hop, window = win.hann } // periodic, not symmetric
-            frames
-    fi;
 
+streamed rate framesize options frames =
+   (var hop = framesize;
+    var padded = true;
+    var winopt = None ();
+    for options \case of
+        Hop h: hop := h;
+        Padded p: padded := p;
+        Window w: winopt := Some w;
+    esac;
+    unpadder = 
+        if padded then
+            manip.delayedBy (- (framesize - hop))
+        else 
+            id 
+        fi;
+    window =
+        case winopt of
+        Some w: w;
+        None (): 
+            // NB periodic, not symmetric
+            if framesize == hop then win.boxcar else win.hann fi
+        esac;
+    unpadder
+       (if framesize == hop then
+       //!!! tidy this
+            streamContiguous rate framesize frames
+        else
+            streamOverlapping rate { framesize, hop, window } frames
+        fi));
+
+complexStreamed rate framesize options frames =
+   (streamOptions = array [];
+    var rowTransform = complex.magnitudes;
+    for options \case of
+        FrequencyDomain f:
+        //!!! what if both f and not-f provided in one options list? need reset
+            if f then
+                rowTransform := fft.realInverse framesize;
+            fi;
+        other: push streamOptions other;
+    esac;
+    transformed = map do c:
+        mat.newMatrix (RowMajor ()) (map rowTransform (cm.asRows c))
+        done frames;
+    streamed rate framesize streamOptions transformed);    
 
 { 
     frames,
@@ -230,6 +270,6 @@ streamed rate { framesize, hop } frames =
     overlapAdd,
 
     streamed,
-    streamOverlapping,
+    complexStreamed,
 }
 
