@@ -193,9 +193,7 @@ streamOverlapping rate { framesize, hop, window } frames =
                 reverse acc
             else
                 this = mat.resizedTo { columns = framesize, rows = channels }
-                   (mat.fromRows
-//!!! use mat.mapRows
-                       (map (vec.multiply w) (mat.asRows (head remaining))));
+                   (mat.mapRows (vec.multiply w) (head remaining));
                 remaining := tail remaining;
                 framesFor (samples - hop) (this::acc)
             fi;
