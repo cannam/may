@@ -333,16 +333,15 @@ spaced mult s = //!!! mult must be an integer [how to enforce this??]
        (toRead = maths.ceil (n / mult);
         source = s.read toRead;
         targetWidth = min n (mult * mat.width source);
-
-//!!! here we need a better matrix construction api -- need to give it a size
-        mat.fromColumns
-           (map do i:
-                if i % mult == 0 then
-                    mat.getColumn (int (i / mult)) source
-                else
-                    vec.zeros s.channels
-                fi
-                done [0..targetWidth-1]));
+        mat.newMatrix { columns = targetWidth, rows = s.channels }
+           (Columns
+               (map do i:
+                    if i % mult == 0 then
+                        mat.getColumn (int (i / mult)) source
+                    else
+                        vec.zeros s.channels
+                    fi
+                    done [0..targetWidth-1])));
     var pos = 0;
     s with
     {
