@@ -25,8 +25,9 @@ makeTests name flipper =
 ),
 
 "constMatrixEmpty2-\(name)": \(
-    compare (mat.size (constMatrix 2 { rows = 0, columns = 4 })) { columns = 0, rows = 0 } and
-        compare (mat.size (constMatrix 2 { rows = 4, columns = 0 })) { columns = 0, rows = 0 }
+    compare (mat.size (constMatrix 2 { rows = 0, columns = 4 })) { columns = 4, rows = 0 } and
+        compare (mat.size (constMatrix 2 { rows = 4, columns = 0 })) { columns = 0, rows = 4 } and
+        compare (vec.list (mat.getColumn 2 (constMatrix 2 { rows = 0, columns = 4 }))) []
 ),
 
 "constMatrix-\(name)": \(
@@ -71,8 +72,13 @@ makeTests name flipper =
 ),
 
 "generateEmpty-\(name)": \(
-    m = generate do row col: 0 done { rows = 0, columns = 0 };
+    m = generate do row col: 6 done { rows = 0, columns = 0 };
     compare (mat.size m) { columns = 0, rows = 0 }
+),
+
+"generateEmpty2-\(name)": \(
+    m = generate do row col: 6 done { rows = 4, columns = 0 };
+    compare (mat.size m) { columns = 0, rows = 4 }
 ),
 
 "generate-\(name)": \(
@@ -123,8 +129,8 @@ makeTests name flipper =
 
 "transposedEmpty-\(name)": \(
     compare (mat.size (mat.transposed (constMatrix 2 { rows = 0, columns = 0 }))) { columns = 0, rows = 0 } and
-        compare (mat.size (mat.transposed (constMatrix 2 { rows = 0, columns = 4 }))) { columns = 0, rows = 0 } and
-        compare (mat.size (mat.transposed (constMatrix 2 { rows = 4, columns = 0 }))) { columns = 0, rows = 0 }
+        compare (mat.size (mat.transposed (constMatrix 2 { rows = 0, columns = 4 }))) { columns = 0, rows = 4 } and
+        compare (mat.size (mat.transposed (constMatrix 2 { rows = 4, columns = 0 }))) { columns = 4, rows = 0 }
 ),
 
 "transposedSize-\(name)": \(
@@ -162,7 +168,7 @@ makeTests name flipper =
 
 "flipped-empty-\(name)": \(
     m = constMatrix 2 { rows = 0, columns = 4 };
-    compareMatrices (mat.flipped m) (mat.flipped (constMatrix 0 { rows = 0, columns = 0 }));
+    compareMatrices (mat.flipped m) (mat.flipped (constMatrix 0 { rows = 0, columns = 4 }));
 ),
 
 "toRowMajor-\(name)": \(
@@ -199,7 +205,7 @@ makeTests name flipper =
           (constMatrix (-1.5) { rows = 3, columns = 4 }) and
        compareMatrices
           (mat.scaled 0.5 (constMatrix 2 { rows = 0, columns = 2 }))
-          (constMatrix 5 { rows = 0, columns = 0 })
+          (constMatrix 5 { rows = 0, columns = 2 })
 ),
 
 "transformRows-\(name)": \(
@@ -370,7 +376,7 @@ makeTests name flipper =
            (newMatrix (RowMajor ()) [[1]]) and
         compareMatrices
            (mat.resizedTo { rows = 2, columns = 3 }
-               (mat.zeroSizeMatrix ()))
+               (mat.zeroMatrix { rows = 0, columns = 0 }))
            (newMatrix (RowMajor ()) [[0,0,0],[0,0,0]]) and
         mat.isSparse?
            (mat.resizedTo { rows = 1, columns = 1 }
@@ -379,19 +385,18 @@ makeTests name flipper =
 
 "zeroSizeMatrix-\(name)": \(
     compareMatrices
-       (mat.zeroSizeMatrix ())
+       (mat.zeroMatrix { rows = 0, columns = 0 })
        (newMatrix (ColumnMajor ()) []) and
         compareMatrices
-           (mat.zeroSizeMatrix ())
+           (mat.zeroMatrix { rows = 0, columns = 1 })
            (newMatrix (ColumnMajor ()) [[]]) and
+        (not mat.equal (newMatrix (ColumnMajor ()) [[]])
+                       (newMatrix (RowMajor ()) [[]])) and
         compareMatrices
-           (newMatrix (ColumnMajor ()) [[]])
-           (newMatrix (RowMajor ()) [[]]) and
+           (mat.zeroMatrix { rows = 0, columns = 0 })
+           (mat.newSparseMatrix (ColumnMajor ()) { rows = 0, columns = 0 } []) and
         compareMatrices
-           (mat.zeroSizeMatrix ())
-           (mat.newSparseMatrix (ColumnMajor ()) { rows = 0, columns = 1 } []) and
-        compareMatrices
-           (mat.zeroSizeMatrix ())
+           (mat.zeroMatrix { rows = 1, columns = 0 })
            (mat.newSparseMatrix (ColumnMajor ()) { rows = 1, columns = 0 } [])
 ),
 
@@ -421,14 +426,14 @@ makeTests name flipper =
     compareMatrices
        (mat.concatHorizontal 
           [(newMatrix (ColumnMajor ()) [[]]),
-           (newMatrix (RowMajor ()) [[]]),
-           (mat.zeroSizeMatrix ())])
-       (mat.zeroSizeMatrix ()) and
+           (newMatrix (ColumnMajor ()) [[],[]]),
+           (mat.zeroMatrix { rows = 0, columns = 6 })])
+       (mat.zeroMatrix { rows = 0, columns = 9 }) and
        compareMatrices
           (mat.concatHorizontal 
-             [(newMatrix (ColumnMajor ()) [[]]),
+             [(newMatrix (RowMajor ()) [[]]),
               (newMatrix (RowMajor ()) [[1,2]]),
-              (mat.zeroSizeMatrix ())])
+              (mat.zeroMatrix { rows = 1, columns = 0 })])
           (newMatrix (RowMajor ()) [[1,2]])
 ),
 

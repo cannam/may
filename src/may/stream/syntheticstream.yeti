@@ -106,7 +106,7 @@ empty rate channels = // degenerate stream with no data in it, occasionally usef
         get sampleRate () = rate,
         get available () = Known 0,
         get finished? () = true,
-        read count = mat.zeroSizeMatrix (),
+        read count = mat.zeroMatrix { rows = channels, columns = 0 },
         close = \(),
     };
 

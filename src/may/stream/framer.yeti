@@ -120,14 +120,14 @@ complexFrames framesize options stream =
 
 streamContiguous rate framesize frames =
    (var remaining = frames;
-    var buffered = mat.zeroSizeMatrix ();
     var position = 0;
     channels = mat.height (head frames); // so we don't need to keep a head ptr
+    var buffered = mat.zeroMatrix { rows = channels, columns = 0 };
     {
         get position () = position,
         get channels () = channels,
         get sampleRate () = rate,
-        get finished? () = empty? remaining and mat.empty? buffered,
+        get finished? () = empty? remaining and mat.width buffered == 0,
         get available () = 
             // Don't take length of frames -- we don't want to lose laziness.
             // If the caller cares that much, they can measure frames themselves
@@ -170,21 +170,22 @@ overlapAdd overlap frames =
     first::rest:
         mat.concatHorizontal (ola rest first []);
      _: 
-        mat.zeroSizeMatrix ();
+        mat.zeroMatrix { rows = 0, columns = 0 };
     esac);
 
 streamOverlapping rate { framesize, hop, window } frames =
    (var remaining = frames;
-    var buffered = mat.zeroSizeMatrix ();
     var position = 0;
 
     factor = hop / (framesize/2);
     w = vec.scaled factor (window framesize);
     channels = mat.height (head frames); // so we don't need to keep a head ptr
 
+    var buffered = mat.zeroMatrix { rows = channels, columns = 0 };
+
     syncd = synchronized remaining;
 
-    finished' () = syncd \(empty? remaining and mat.empty? buffered);
+    finished' () = syncd \(empty? remaining and mat.width buffered == 0);
 
     read' count = 
        (framesFor samples acc =

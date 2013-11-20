@@ -125,9 +125,7 @@ inverted s = //!!! todo: test
     {
         read count = 
            (m = s.read count;
-            if mat.empty? m then m
-            else mat.difference (mat.zeroMatrix (mat.size m)) m
-            fi)
+            mat.difference (mat.zeroMatrix (mat.size m)) m)
     };
 
 //!!! poor name, confusion with mixed, but consistent with channels.yeti
@@ -149,13 +147,14 @@ sum' streams =
        (sz = { rows = max (mat.height m1) (mat.height m2),
                columns = min (mat.width m1) (mat.width m2) };
         if sz.columns == 0 then
-            mat.zeroSizeMatrix ()
+            mat.zeroMatrix sz
         else
             mat.sum (mat.resizedTo sz m1) (mat.resizedTo sz m2);
         fi);
+    channels = head (sortBy (>) (map (.channels) streams));
     {
         get position () = head (sort (map (.position) streams)),
-        get channels () = head (sortBy (>) (map (.channels) streams)),
+        get channels () = channels,
         get sampleRate () = (head streams).sampleRate, //!!! document this
         get available () =
             fold do dur s: minDurationOf dur s.available done (Infinite ()) streams,
@@ -174,7 +173,7 @@ sum' streams =
                 _: acc;
                esac;
             case readTo (None ()) streams count of
-            None (): mat.zeroSizeMatrix ();
+            None (): mat.zeroMatrix { rows = channels, columns = 0 };
             Some m: m;
             esac),
         close () = for streams do s: s.close() done,
@@ -215,7 +214,7 @@ repeated s =
     if s.available == Infinite () then s
     else
         var pos = 0;
-        var cache = mat.zeroSizeMatrix ();
+        var cache = mat.zeroMatrix { rows = s.channels, columns = 0 };
         chunks = array [];
         cachedPartsFor count =
            (start = pos % (mat.width cache);
@@ -269,7 +268,8 @@ duplicated copies s =
         var lowtide = 0;
         var hightide = 0;
         var adcount = 0;
-        var cache = mat.toRowMajor (mat.zeroSizeMatrix ());
+        var cache = mat.toRowMajor
+           (mat.zeroMatrix { rows = s.channels, columns = 0 });
         syncd = synchronized pos;
         advance i n =
            (wasLow = (pos[i] == lowtide);
@@ -305,7 +305,8 @@ duplicated copies s =
                 read count = syncd
                   \(ready = hightide - pos[instance];
                     if s.finished? and ready <= 0 
-                    then mat.toRowMajor (mat.zeroSizeMatrix ())
+                    then mat.toRowMajor
+                       (mat.zeroMatrix { rows = s.channels, columns = 0 })
                     else
                         if count > ready then
                             more = s.read (count - ready);

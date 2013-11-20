@@ -74,7 +74,7 @@ plainConvolvedWith ir s =
     s with 
     {
         get finished? () =
-            s.finished? and (mat.empty? history),
+            s.finished? and mat.width history == 0,
         get available () = 
             case s.available of
             Known n: Known (n + mat.width history);

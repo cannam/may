@@ -55,7 +55,8 @@ select f = fold do r x: if f x then x::r else r fi done [];
 
 failedTests testHash =
     select (!= "")
-       (mapHash do name f:
+       (map do name:
+            f = testHash[name];
             try
                 if f () then "" else
                     println "Test \(name) failed";
@@ -65,7 +66,7 @@ failedTests testHash =
                 println "Test \(name) threw exception: \(e)";
                 name;
             yrt;
-        done testHash);
+        done (sort (keys testHash)));
         
 runTests group testHash =
    (start = System#currentTimeMillis();
