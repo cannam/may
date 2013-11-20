@@ -16,9 +16,9 @@ compareFrames frames1 frames2 =
     all id (map2 do f1 f2: compareUsing mat.equal f1 f2 done frames1
        (map (mat.newRowVector . vec.fromList) frames2));
 
-testFramesWith params length expected firstChunkSize =
-   (f = fr.frames params (testStream length);
-    str = fr.streamed rate params f;
+testFramesWith framesize opts length expected firstChunkSize =
+   (f = fr.frames framesize opts (testStream length);
+    str = fr.streamed rate framesize opts f;
     ts = testStream length; // newly initialised stream
 
     compareFrames f expected and
@@ -35,100 +35,115 @@ testFramesWith params length expected firstChunkSize =
             restChunk (ts.read (length - firstChunkSize))) and
         compare str.position length and
 
-       (trailingZeros = str.read (params.framesize + 1);
+       (trailingZeros = str.read (framesize + 1);
         compareUsing mat.equal
             trailingZeros
                (mat.zeroMatrix
                 { rows = str.channels, columns = mat.width trailingZeros }) and
-           (mat.width trailingZeros < params.framesize)) and
+           (mat.width trailingZeros < framesize)) and
 
        compare str.finished? true and
        compare str.available (Known 0));
 
-testFramesInvertible params length expected =
-    all id (map (testFramesWith params length expected) [1..length]);
+testFramesInvertible framesize opts length expected =
+    all id (map (testFramesWith framesize opts length expected) [1..length]);
 
-testFrames params length expected =
-   (f = fr.frames params (testStream length);
+testFrames framesize opts length expected =
+   (f = fr.frames framesize opts (testStream length);
     compareFrames f expected);
 
 [
 
 "framecount-2x2": \( 
-    fr = fr.frames { framesize = 2, hop = 2 } (testStream 2);
+    fr = fr.frames 2 [] (testStream 2);
     compare (length fr) 1
 ),
 
 "framecount-2x3": \( 
-    fr = fr.frames { framesize = 2, hop = 2 } (testStream 3);
+    fr = fr.frames 2 [] (testStream 3);
     compare (length fr) 2
 ),
 
 "framecount-2x4": \( 
-    fr = fr.frames { framesize = 2, hop = 2 } (testStream 4);
+    fr = fr.frames 2 [] (testStream 4);
+    compare (length fr) 2
+),
+
+"framecount-2x2b": \( 
+    fr = fr.frames 2 [ Hop 2 ] (testStream 2);
+    compare (length fr) 1
+),
+
+"framecount-2x3b": \( 
+    fr = fr.frames 2 [ Hop 2 ] (testStream 3);
+    compare (length fr) 2
+),
+
+"framecount-2x4b": \( 
+    fr = fr.frames 2 [ Hop 2 ] (testStream 4);
     compare (length fr) 2
 ),
 
 "framecount-2.1x0": \( 
-    fr = fr.frames { framesize = 2, hop = 1 } (testStream 0);
+    fr = fr.frames 2 [ Hop 1 ] (testStream 0);
     compare (length fr) 1
 ),
 
 "framecount-2.1x1": \( 
-    fr = fr.frames { framesize = 2, hop = 1 } (testStream 1);
+    fr = fr.frames 2 [ Hop 1 ] (testStream 1);
     compare (length fr) 2
 ),
 
 "framecount-2.1x2": \( 
-    fr = fr.frames { framesize = 2, hop = 1 } (testStream 2);
+    fr = fr.frames 2 [ Hop 1 ] (testStream 2);
     compare (length fr) 3
 ),
 
 "framecount-2.1x3": \( 
-    fr = fr.frames { framesize = 2, hop = 1 } (testStream 3);
+    fr = fr.frames 2 [ Hop 1 ] (testStream 3);
     compare (length fr) 4
 ),
 
 "framecount-4.1x4": \( 
-    fr = fr.frames { framesize = 4, hop = 1 } (testStream 4);
+    fr = fr.frames 4 [ Hop 1 ] (testStream 4);
     compare (length fr) 7
 ),
 
 "framecount-4.3x4": \( 
-    fr = fr.frames { framesize = 4, hop = 3 } (testStream 4);
+    fr = fr.frames 4 [ Hop 3 ] (testStream 4);
     compare (length fr) 2 
 ),
 
 "framecount-4.4x4": \( 
-    fr = fr.frames { framesize = 4, hop = 4 } (testStream 4);
+    fr = fr.frames 4 [ Hop 4 ] (testStream 4);
     compare (length fr) 1
 ),
 
 "framecount-3.2x4": \(
-    fr = fr.frames { framesize = 3, hop = 2 } (testStream 4);
+    fr = fr.frames 3 [ Hop 2 ] (testStream 4);
     compare (length fr) 3
 ),
 
 "frames-2x5": \( 
-    testFramesInvertible { framesize = 2, hop = 2 } 5 [ [1,2], [3,4], [5,0] ];
+    testFramesInvertible framesize [ Hop 2 ] 5 [ [1,2], [3,4], [5,0] ];
 ),
 
 "frames-4.3x4": \( 
-    testFrames { framesize = 4, hop = 3 } 4 [ [0,1,2,3], [3,4,0,0] ];
+    testFrames 4 [ Hop 3 ] 4 [ [0,1,2,3], [3,4,0,0] ];
 ),
 
 "frames-3.2x4": \(
-    testFrames { framesize = 3, hop = 2 } 4 [ [0,1,2], [2,3,4], [4,0,0] ];
+    testFrames 3 [ Hop 2 ] 4 [ [0,1,2], [2,3,4], [4,0,0] ];
 ),
 
 "frames-3.1x6": \(
-    testFramesInvertible { framesize = 3, hop = 1 } 6
+    testFramesInvertible 3 [ Hop 1 ] 6
         [ [0,0,1], [0,1,2], [1,2,3], [2,3,4],
           [3,4,5], [4,5,6], [5,6,0], [6,0,0] ];
 ),
 
 "frames-4.2x8": \(
-    testFramesInvertible { framesize = 4, hop = 2 } 8
+    testFramesInvertible 4 [ Hop 2 ] 8
         [ [0,0,1,2], [1,2,3,4], [3,4,5,6], [5,6,7,8], [7,8,0,0] ];
 ),
 

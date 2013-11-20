@@ -260,9 +260,13 @@ complexStreamed rate framesize options frames =
         done frames;
     streamed rate framesize streamOptions transformed);    
 
+typedef opt_t = 
+    Hop number | Padded boolean | 
+    Window (number -> vec.vector_t) | FrequencyDomain boolean;
+
 { 
-    frames,
-    complexFrames,
+    frames is number -> list?<opt_t> -> stream_t -> list<mat.matrix_t>,
+    complexFrames is number -> list?<opt_t> -> stream_t -> list<cm.complexmatrix_t>,
 
     framesOfFile framesize options filename =
         frames framesize options (af.open filename),
