@@ -266,16 +266,26 @@ duplicated copies s =
     array if copies < 2 then map \s [1..copies];
     else
         pos = concurrentHash ();
-        lowtide () = head (sort (map (at pos) (keys pos)));
+        var lowtide = 0;
         var hightide = 0;
-        var cache = mat.zeroSizeMatrix ();
+        var adcount = 0;
+        var cache = mat.toRowMajor (mat.zeroSizeMatrix ());
         syncd = synchronized pos;
         advance i n =
-           (formerLow = lowtide ();
+           (wasLow = (pos[i] == lowtide);
             pos[i] := pos[i] + n;
-            encroachment = lowtide () - formerLow;
-            if encroachment > 0 then
-                cache := mat.columnSlice cache encroachment (mat.width cache);
+            if wasLow then
+                adcount := adcount + 1;
+                if adcount >= copies then
+                    adcount := 0;
+                    formerLow = lowtide;
+                    lowtide := head (sort (map (at pos) (keys pos)));
+                    encroachment = lowtide - formerLow;
+                    if encroachment > 0 then
+                        cache := mat.columnSlice cache encroachment
+                           (mat.width cache);
+                    fi
+                fi
             fi);
         map do instance:
             pos[instance] := 0;
@@ -295,14 +305,14 @@ duplicated copies s =
                 read count = syncd
                   \(ready = hightide - pos[instance];
                     if s.finished? and ready <= 0 
-                    then mat.zeroSizeMatrix ()
+                    then mat.toRowMajor (mat.zeroSizeMatrix ())
                     else
                         if count > ready then
                             more = s.read (count - ready);
                             cache := mat.concatHorizontal [cache, more];
                             hightide := hightide + (mat.width more);
                         fi;
-                        offset = pos[instance] - (lowtide ());
+                        offset = pos[instance] - lowtide;
                         chunk = mat.columnSlice cache offset (offset + count);
                         advance instance (mat.width chunk);
                         chunk;
