@@ -30,6 +30,7 @@ bad = sum (mapHash do name testHash: runTests name testHash done tests);
 
 if (bad > 0) then
     println "\n** \(bad) test(s) failed!";
+    threadExit 1
 else
     ()
 fi
