@@ -147,6 +147,6 @@ convolvedWith options ir s = //!!! cheap mono thing here
     esac);
 
 {
-    convolvedWith is list<Fast boolean | Framesize number> -> mat.matrix_t -> stream -> stream,
+    convolvedWith is list<Fast boolean | Framesize number> -> mat.matrix_t -> stream_t -> stream_t,
 }
 

@@ -55,7 +55,7 @@ available' { format is ~AudioFormat, aistream is ~AudioInputStream } =
 close' { aistream is ~AudioInputStream } =
     aistream#close();
 
-openWithReader reader ch name is 'a -> number -> string -> stream =
+openWithReader reader ch name is 'a -> number -> string -> stream_t =
    (f = new File(name);
     aistream = AudioSystem#getAudioInputStream(f);
     format = aistream#getFormat();
@@ -95,7 +95,7 @@ openMono = openWithReader readMono' 1;
  * : str = audiofile.open "in.wav";
  * : n = audiofile.write str "out.wav";
  */
-write str name is stream -> string -> number =
+write str name is stream_t -> string -> number =
    (var tot = 0;
     case str.available of
     Infinite (): failWith "Cannot write infinite stream to file";
@@ -161,8 +161,8 @@ write str name is stream -> string -> number =
     openMono,
     write,
 } as {
-    open is string -> stream,
-    openMono is string -> stream,
-    write is stream -> string -> number,
+    open is string -> stream_t,
+    openMono is string -> stream_t,
+    write is stream_t -> string -> number,
 } 
 

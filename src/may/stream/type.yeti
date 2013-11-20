@@ -3,7 +3,7 @@ module may.stream.type;
 
 mat = load may.matrix;
 
-typedef stream =
+typedef stream_t =
     {
         position is number,
         channels is number,
