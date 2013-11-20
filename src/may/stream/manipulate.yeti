@@ -262,29 +262,32 @@ repeated s =
 duplicated copies s = 
 //!!! doc fact that original s cannot be used independently of this afterward
 // (so maybe name is misleading?)
-    array if copies < 2 then map \s [1..copies];
+    array if copies < 2 then map \s [0..copies-1];
     else
-        pos = concurrentHash ();
+        pos = array (map \0 [0..copies-1]);
+        extant = mapIntoHash id id [0..copies-1];
         var lowtide = 0;
         var hightide = 0;
-        var adcount = 0;
         var cache = mat.toRowMajor
            (mat.zeroMatrix { rows = s.channels, columns = 0 });
+        var cacheStart = 0;
+        slack = 2000; // samples at cache start we pass before we advance it
         syncd = synchronized pos;
         advance i n =
-           (wasLow = (pos[i] == lowtide);
+           (formerPos = pos[i];
             pos[i] := pos[i] + n;
-            if wasLow then
-                adcount := adcount + 1;
-                if adcount >= copies then
-                    adcount := 0;
-                    formerLow = lowtide;
-                    lowtide := head (sort (map (at pos) (keys pos)));
-                    encroachment = lowtide - formerLow;
-                    if encroachment > 0 then
-                        cache := mat.columnSlice cache encroachment
-                           (mat.width cache);
-                    fi
+            if formerPos == lowtide then
+                lowtide := pos[i];
+                for pos do p: if p < lowtide then lowtide := p fi done;
+                encroachment = lowtide - cacheStart;
+                // Don't advance the cache start for every tiny read,
+                // because it's relatively expensive. The comparator
+                // here is fairly arbitrary, affecting performance
+                // rather than results.
+                if encroachment > slack then
+                    cache := mat.columnSlice cache 
+                        encroachment (mat.width cache);
+                    cacheStart := lowtide;
                 fi
             fi);
         map do instance:
@@ -313,18 +316,18 @@ duplicated copies s =
                             cache := mat.concatHorizontal [cache, more];
                             hightide := hightide + (mat.width more);
                         fi;
-                        offset = pos[instance] - lowtide;
+                        offset = pos[instance] - cacheStart;
                         chunk = mat.columnSlice cache offset (offset + count);
                         advance instance (mat.width chunk);
                         chunk;
                     fi),
                 close () = syncd
-                  \(delete pos instance;
-                    if empty? pos then
+                  \(delete extant instance;
+                    if empty? extant then
                         s.close ()
                     fi),
             }
-            done [1..copies];
+            done [0..copies-1];
     fi;
 
 spaced mult s = //!!! mult must be an integer [how to enforce this??]
