@@ -4,7 +4,8 @@ program may.stream.test.speedtest;
 af = load may.stream.audiofile;
 vec = load may.vector;
 mat = load may.matrix;
-filt = load may.stream.filter;
+convolve = load may.stream.convolve;
+resample = load may.stream.resample;
 
 import java.lang: StackOverflowError;
 
@@ -14,7 +15,7 @@ before = System#currentTimeMillis();
 
 str = time "open audio file" \(af.openMono "shortish.wav");
 
-conv = time "prepare convolve" \(filt.convolvedWith [ Framesize 256 ] (mat.newRowVector (vec.fromList [ 1, 0.8, 0.5 ])) str);
+conv = time "prepare convolve" \(convolve.convolvedWith [ Framesize 256 ] (mat.newRowVector (vec.fromList [ 1, 0.8, 0.5 ])) str);
 
 var len = 0;
 time "read convolve" \((not conv.finished?) loop len := len + mat.width (conv.read 65536));
@@ -32,7 +33,7 @@ before = System#currentTimeMillis();
 
 str = time "open audio file" \(af.openMono "shortish.wav");
 
-res = time "prepare resample" \(filt.resampledTo 44100 str);
+res = time "prepare resample" \(resample.resampledTo 44100 str);
 
 len := 0;
 time "read resampled" \((not res.finished?) loop len := len + mat.width (res.read 65536));

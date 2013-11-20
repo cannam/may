@@ -179,8 +179,8 @@ entries = time \(e = map \({ i = int (Math#random() * sz),
                  e);
 
 print "Making \(sz) * \(sz) random matrix with \(nnz) entries...";
-rms = time \(mat.newSparseMatrix (RowMajor ()) { rows = sz, columns = sz }
-             entries);
+rms = time \(mat.newSparseMatrix { rows = sz, columns = sz }
+             (Rows entries));
 println "Reported density: \(mat.density rms) (non-zero values: \(mat.nonZeroValues rms))";
 
 print "Making col-major copy...";
