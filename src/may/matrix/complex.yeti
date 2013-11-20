@@ -276,6 +276,16 @@ fromColumns data =
    (newPart f = mat.fromColumns (map do cc: vec.fromList (map f cc) done data);
     complex (newPart cpx.real) (newPart cpx.imaginary));
 
+newMatrix size d =
+   ({ tagger, data } = 
+        case d of
+        Rows data: { tagger = Rows, data };
+        Columns data: { tagger = Columns, data };
+        esac;
+    newPart f = mat.newMatrix size
+       (tagger (map do cc: vec.fromList (map f cc) done data));
+    complex (newPart cpx.real) (newPart cpx.imaginary));
+
 newComplexRowVector data =
    (newPart f = mat.newRowVector (vec.fromList (map f data));
     complex (newPart cpx.real) (newPart cpx.imaginary));
@@ -319,6 +329,7 @@ newComplexColumnVector data =
     columnSlice,
     fromRows,
     fromColumns,
+    newMatrix,
     newComplexRowVector,
     newComplexColumnVector,
     enumerate,
@@ -360,6 +371,7 @@ newComplexColumnVector data =
     columnSlice is complexmatrix_t -> number -> number -> complexmatrix_t,
     fromRows is list?<list?<cpx.complex_t>> -> complexmatrix_t,
     fromColumns is list?<list?<cpx.complex_t>> -> complexmatrix_t,
+    newMatrix is { rows is number, columns is number } -> (Rows list?<list?<cpx.complex_t>> | Columns list?<list?<cpx.complex_t>>) -> complexmatrix_t,
     newComplexRowVector is list?<cpx.complex_t> -> complexmatrix_t,
     newComplexColumnVector is list?<cpx.complex_t> -> complexmatrix_t,
     enumerate is complexmatrix_t -> list<{ i is number, j is number, v is cpx.complex_t }>,
