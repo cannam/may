@@ -407,6 +407,7 @@ equalUnder comparator =
 equal =
     equal' (==) vec.equal;
 
+//!!! when external api has settled, revise this internal function to look more like it
 newMatrixOfSize size type rowscols = //!!! NB does not copy data
     if type == RowMajor () then
         {
@@ -832,11 +833,17 @@ maxValue m =
         maxv (map (.v) (enumerate m));
     fi;
 
-transformRows rf m =
+mapRows rf m =
     newMatrixOfSize (size m) (RowMajor ()) (map rf (asRows m));
 
-transformColumns cf m =
+mapColumns cf m =
     newMatrixOfSize (size m) (ColumnMajor ()) (map cf (asColumns m));
+
+newMatrix size d =
+    case d of
+    Rows rr: newMatrixOfSize size (RowMajor ()) (map vec.fromList rr);
+    Columns cc: newMatrixOfSize size (ColumnMajor ()) (map vec.fromList cc);
+    esac;
 
 format m =
     strJoin "\n"
@@ -906,12 +913,13 @@ print' = print . format;
     concatVertical,
     rowSlice,
     columnSlice,
-    transformRows,
-    transformColumns,
+    mapRows,
+    mapColumns,
     fromRows,
     fromColumns,
     newRowVector,
     newColumnVector,
+    newMatrix,
     newSparseMatrix,
     enumerate,
     format,
@@ -962,12 +970,13 @@ as
     concatVertical is list<matrix_t> -> matrix_t,
     rowSlice is matrix_t -> number -> number -> matrix_t, 
     columnSlice is matrix_t -> number -> number -> matrix_t,
-    transformRows is (vec.vector_t -> vec.vector_t) -> matrix_t -> matrix_t,
-    transformColumns is (vec.vector_t -> vec.vector_t) -> matrix_t -> matrix_t,
+    mapRows is (vec.vector_t -> vec.vector_t) -> matrix_t -> matrix_t,
+    mapColumns is (vec.vector_t -> vec.vector_t) -> matrix_t -> matrix_t,
     fromRows is list<vec.vector_t> -> matrix_t, 
     fromColumns is list<vec.vector_t> -> matrix_t, 
     newRowVector is vec.vector_t -> matrix_t, 
     newColumnVector is vec.vector_t -> matrix_t,
+    newMatrix is { rows is number, columns is number } -> (Rows list?<list?<number>> | Columns list?<list?<number>>) -> matrix_t,
     newSparseMatrix is { rows is number, columns is number } -> (ColumnMajor () | RowMajor ()) -> list<{ i is number, j is number, v is number }> -> matrix_t,
     enumerate is matrix_t -> list<{ i is number, j is number, v is number }>,
     format is matrix_t -> string,
