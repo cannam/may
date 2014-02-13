@@ -4,7 +4,7 @@ module may.signal.test.test_window;
 win = load may.signal.window;
 vec = load may.vector;
 
-{ compare, compareUsing } = load may.test.test;
+{ compare, compareUsing } = load may.test;
 
 functions = [
     Hann () : win.hann,

@@ -8,7 +8,7 @@ fft = load may.transform.fft;
 syn = load may.stream.syntheticstream;
 filt = load may.stream.filter;
 
-{ compare, compareUsing, assert } = load may.test.test;
+{ compare, compareUsing, assert } = load may.test;
 
 logSpectrumFrom output n =
    (outdata = mat.getRow 0 (output.read n);

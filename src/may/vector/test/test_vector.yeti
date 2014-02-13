@@ -3,7 +3,7 @@ module may.vector.test.test_vector;
 
 vec = load may.vector;
 
-{ compare } = load may.test.test;
+{ compare } = load may.test;
 
 [
 

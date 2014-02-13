@@ -2,7 +2,7 @@ module may.plot.test.test_plot;
 
 ch = load may.plot.chart;
 
-{ compare } = load may.test.test;
+{ compare } = load may.test;
 
 [
 

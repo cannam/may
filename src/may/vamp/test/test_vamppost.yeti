@@ -2,7 +2,7 @@ module may.vamp.test.test_vamppost;
 
 vp = load may.vamp.vamppost;
 
-{ compare } = load may.test.test;
+{ compare } = load may.test;
 
 untimed n = { timestamp = Untimed (), values = [n] };
 timed t n = { timestamp = Time t, values = [n] };

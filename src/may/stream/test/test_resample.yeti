@@ -10,7 +10,7 @@ win = load may.signal.window;
 waves = load may.stream.waves;
 fft = load may.transform.fft;
 
-{ compare, compareUsing, compareMatrices, assert, time } = load may.test.test;
+{ compare, compareUsing, compareMatrices, assert, time } = load may.test;
 
 [
 

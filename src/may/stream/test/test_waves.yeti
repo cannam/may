@@ -5,7 +5,7 @@ wav = load may.stream.waves;
 mat = load may.matrix;
 vec = load may.vector;
 
-{ compare, compareUsing, compareMatrices, assert } = load may.test.test;
+{ compare, compareUsing, compareMatrices, assert } = load may.test;
 
 [
 

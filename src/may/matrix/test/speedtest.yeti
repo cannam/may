@@ -4,7 +4,7 @@ program may.matrix.test.speedtest;
 mat = load may.matrix;
 vec = load may.vector;
 
-{ compare, compareUsing, time } = load may.test.test;
+{ compare, compareUsing, time } = load may.test;
 
 norec time f = time "" f;
 

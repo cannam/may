@@ -9,7 +9,7 @@ resample = load may.stream.resample;
 
 import java.lang: StackOverflowError;
 
-{ compare, compareUsing, time } = load may.test.test;
+{ compare, compareUsing, time } = load may.test;
 
 before = System#currentTimeMillis();
 

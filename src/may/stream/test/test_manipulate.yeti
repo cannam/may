@@ -6,7 +6,7 @@ mat = load may.matrix;
 syn = load may.stream.syntheticstream;
 manip = load may.stream.manipulate;
 
-{ compare, compareUsing, assert } = load may.test.test;
+{ compare, compareUsing, assert } = load may.test;
 
 makeTests name withUnknown =
    (maybeDuration n str =

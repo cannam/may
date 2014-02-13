@@ -2,7 +2,7 @@ module may.signal.test.test_signal;
 
 { acf, acfNormalised, acfUnityNormalised } = load may.signal.autocorrelation;
 
-{ compare } = load may.test.test;
+{ compare } = load may.test;
 
 [
 

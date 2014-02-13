@@ -3,7 +3,7 @@ module may.mathmisc.test.test_mathmisc;
 
 mm = load may.mathmisc;
 
-{ compare, compareUsing, assert } = load may.test.test;
+{ compare, compareUsing, assert } = load may.test;
 
 [
 

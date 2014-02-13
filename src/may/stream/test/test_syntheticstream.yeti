@@ -5,7 +5,7 @@ vec = load may.vector;
 mat = load may.matrix;
 syn = load may.stream.syntheticstream;
 
-{ compare, compareUsing } = load may.test.test;
+{ compare, compareUsing } = load may.test;
 
 compareApprox eps =
     compareUsing do v1 v2: all id (map2 do f1 f2: abs (f1 - f2) < eps done v1 v2) done;

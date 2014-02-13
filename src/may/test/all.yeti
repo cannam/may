@@ -1,7 +1,7 @@
 
 program may.test.all;
 
-{ runTests } = load may.test.test;
+{ runTests } = load may.test;
 
 tests = [
 "mathmisc"   : load may.mathmisc.test.test_mathmisc,

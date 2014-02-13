@@ -6,7 +6,7 @@ vec = load may.vector;
 mat = load may.matrix;
 syn = load may.stream.syntheticstream;
 
-{ compare, compareUsing } = load may.test.test;
+{ compare, compareUsing } = load may.test;
 
 rate = 10;
 

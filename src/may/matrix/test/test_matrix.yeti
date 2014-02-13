@@ -6,7 +6,7 @@ vec = load may.vector;
 
 import yeti.lang: FailureException;
 
-{ compare, compareUsing } = load may.test.test;
+{ compare, compareUsing } = load may.test;
 
 compareMatrices = compareUsing mat.equal;
 

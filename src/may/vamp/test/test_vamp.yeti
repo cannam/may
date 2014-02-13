@@ -6,7 +6,7 @@ manip = load may.stream.manipulate;
 mat = load may.matrix;
 vec = load may.vector;
 
-{ compare, compareUsing } = load may.test.test;
+{ compare, compareUsing } = load may.test;
 
 testPluginKey = "vamp-test-plugin:vamp-test-plugin";
 

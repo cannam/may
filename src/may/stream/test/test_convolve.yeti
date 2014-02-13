@@ -7,7 +7,7 @@ syn = load may.stream.syntheticstream;
 manip = load may.stream.manipulate;
 convolve = load may.stream.convolve;
 
-{ compare, compareUsing, assert } = load may.test.test;
+{ compare, compareUsing, assert } = load may.test;
 
 compareClose = compareUsing 
     do m1 m2:

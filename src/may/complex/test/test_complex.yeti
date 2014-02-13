@@ -3,7 +3,7 @@ module may.complex.test.test_complex;
 { real, imaginary, complex, magnitude, angle, sum, scale, zeros, magnitudes, angles, complexArray, zero }
    = load may.complex;
 
-{ compare } = load may.test.test;
+{ compare } = load may.test;
 
 vec = load may.vector;
 

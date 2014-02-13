@@ -6,7 +6,7 @@ vec = load may.vector;
 cm = load may.matrix.complex;
 complex = load may.complex;
 
-{ compare, compareUsing } = load may.test.test;
+{ compare, compareUsing } = load may.test;
 
 aTestMatrix () =
    (// 1+0i 0-2i 3.5+6i

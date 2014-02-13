@@ -5,7 +5,7 @@ module may.transform.test.test_fft;
 { list, fromList, zeros } = load may.vector;
 { complex, magnitude, real, imaginary } = load may.complex;
 
-{ compare } = load may.test.test;
+{ compare } = load may.test;
 
 testFFT orig reals imags =
    (out = realForward (length orig) (fromList orig);

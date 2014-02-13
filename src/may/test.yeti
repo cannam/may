@@ -1,4 +1,4 @@
-module may.test.test;
+module may.test;
 
 mat = load may.matrix;
 
