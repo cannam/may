@@ -294,6 +294,21 @@ newComplexColumnVector data =
    (newPart f = mat.newColumnVector (vec.fromList (map f data));
     complex (newPart cpx.real) (newPart cpx.imaginary));
 
+format m =
+    strJoin "\n"
+       (chunk = 8;
+        map do b:
+            c0 = b * chunk;
+            c1 = b * chunk + chunk - 1;
+            c1 = if c1 > width m then width m else c1 fi;
+            [ "\nColumns \(c0) to \(c1)\n",
+              (map do row: map cpx.format row |> strJoin "";
+               done (asRows (columnSlice m c0 (c1 + 1))) |> strJoin "\n")
+            ];
+        done [0..width m / chunk - 1] |> concat);
+
+print' = print . format;
+
 {
     size,
     width,
@@ -333,6 +348,8 @@ newComplexColumnVector data =
     newComplexRowVector,
     newComplexColumnVector,
     enumerate,
+    format,
+    print = print',
 } as {
     size is complexmatrix_t -> { rows is number, columns is number },
     width is complexmatrix_t -> number,
@@ -375,5 +392,7 @@ newComplexColumnVector data =
     newComplexRowVector is list?<cpx.complex_t> -> complexmatrix_t,
     newComplexColumnVector is list?<cpx.complex_t> -> complexmatrix_t,
     enumerate is complexmatrix_t -> list<{ i is number, j is number, v is cpx.complex_t }>,
+    format is complexmatrix_t -> string,
+    print is complexmatrix_t -> (),
 }
 

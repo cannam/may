@@ -2,6 +2,7 @@
 module may.complex;
 
 vec = load may.vector;
+mm = load may.mathmisc;
 
 import java.lang: ClassCastException;
 
@@ -28,6 +29,20 @@ class Cplx(double real, double imag)
                 " \(real) + \(imag)i"
             fi
         fi,
+    String format()
+       (f v r =
+           (n = mm.round (v * 10000);
+            s = "\(n / 10000)";
+            if r then
+               (strPad ' ' (8 - strLength s) '') ^ s
+            else
+                strPad ' ' 7 "\(s)i";
+            fi);
+        if imag < 0 then
+            " \(f real true)-\(f (-imag) false)"
+        else 
+            " \(f real true)+\(f imag false)"
+        fi),
     int hashCode()
         Double#valueOf(real)#hashCode() + Double#valueOf(imag)#hashCode(),
     boolean equals(Object other)
@@ -90,6 +105,8 @@ angles cc is list?<~Cplx> -> 'a =
 complexArray reals imags =
     array (map2 complex (vec.list reals) (vec.list imags));
 
+format c is ~Cplx -> string = c#format();
+
 typedef opaque complex_t = ~may.Cplx;
 
 {
@@ -108,7 +125,8 @@ typedef opaque complex_t = ~may.Cplx;
    imaginaries,
    magnitudes,
    angles,
-   complexArray
+   complexArray,
+   format
 } as {
    real is complex_t -> number,
    imaginary is complex_t -> number,
@@ -125,6 +143,7 @@ typedef opaque complex_t = ~may.Cplx;
    imaginaries is list?<complex_t> -> vec.vector_t,
    magnitudes is list?<complex_t> -> vec.vector_t,
    angles is list?<complex_t> -> vec.vector_t,
-   complexArray is vec.vector_t -> vec.vector_t -> array<complex_t>
+   complexArray is vec.vector_t -> vec.vector_t -> array<complex_t>,
+   format is complex_t -> string,
 }
 
