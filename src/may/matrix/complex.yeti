@@ -307,7 +307,8 @@ format m =
             ];
         done [0..width m / chunk - 1] |> concat);
 
-print' = print . format;
+print' = println . format;
+eprint' = eprintln . format;
 
 {
     size,
@@ -350,6 +351,7 @@ print' = print . format;
     enumerate,
     format,
     print = print',
+    eprint = eprint',
 } as {
     size is complexmatrix_t -> { rows is number, columns is number },
     width is complexmatrix_t -> number,
@@ -394,5 +396,6 @@ print' = print . format;
     enumerate is complexmatrix_t -> list<{ i is number, j is number, v is cpx.complex_t }>,
     format is complexmatrix_t -> string,
     print is complexmatrix_t -> (),
+    eprint is complexmatrix_t -> (),
 }
 

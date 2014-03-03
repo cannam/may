@@ -880,14 +880,16 @@ format m =
             [ "\nColumns \(c0) to \(c1)\n",
               (map do row:
                    map do v:
-                       n = mm.round (v * 10000);
-                       strPad ' ' 10 "\(n / 10000)";
+                   //!!! not right -- want to round to 1dp of exp notation if less than 1e-4
+                       n = mm.round (v * 100000);
+                       strPad ' ' 10 "\(n / 100000)";
                    done (vec.list row) |> strJoin "";
                done (asRows (columnSlice m c0 (c1 + 1))) |> strJoin "\n")
             ];
         done [0..width m / chunk - 1] |> concat);
 
-print' = print . format;
+print' = println . format;
+eprint' = eprintln . format;
 
 //!!! todo: look at all occurrences of matrix (and complexmatrix)
 // construction and make sure we have good apis for those use cases.
@@ -950,6 +952,7 @@ print' = print . format;
     enumerate,
     format,
     print = print',
+    eprint = eprint',
 }
 as
 {
@@ -1008,5 +1011,6 @@ as
     enumerate is matrix_t -> list<{ i is number, j is number, v is number }>,
     format is matrix_t -> string,
     print is matrix_t -> (),
+    eprint is matrix_t -> (),
 }
 
