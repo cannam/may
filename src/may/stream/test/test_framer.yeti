@@ -18,8 +18,8 @@ compareFrames frames1 frames2 =
 
 testFramesInvertibleWith framesize opts length expected firstChunkSize =
    (f = fr.frames framesize opts (testStream length);
-    str = fr.streamed rate framesize opts f;
-    ts = testStream length; // newly initialised stream
+    str = fr.streamed rate framesize opts f; // inversion (framed -> streamed)
+    ts = testStream length; // newly initialised stream to compare with
 
        (firstChunk = str.read firstChunkSize;
         compareUsing mat.equal
