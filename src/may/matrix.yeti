@@ -880,9 +880,12 @@ format m =
             [ "\nColumns \(c0) to \(c1)\n",
               (map do row:
                    map do v:
-                   //!!! not right -- want to round to 1dp of exp notation if less than 1e-4
-                       n = mm.round (v * 100000);
-                       strPad ' ' 10 "\(n / 100000)";
+                       strPad ' ' 10
+                          (if abs v >= 1000.0 or abs v < 0.01 then
+                               String#format("%.2E", [v as ~Double])
+                           else
+                               String#format("%5f", [v as ~Double])
+                           fi);
                    done (vec.list row) |> strJoin "";
                done (asRows (columnSlice m c0 (c1 + 1))) |> strJoin "\n")
             ];
