@@ -881,7 +881,8 @@ format m =
               (map do row:
                    map do v:
                        strPad ' ' 10
-                          (if abs v >= 1000.0 or abs v < 0.01 then
+                          (if v == 0 then "0.0"
+                           elif abs v >= 1000.0 or abs v < 0.01 then
                                String#format("%.2E", [v as ~Double])
                            else
                                String#format("%5f", [v as ~Double])
