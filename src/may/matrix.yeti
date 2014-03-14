@@ -895,11 +895,6 @@ format m =
 print' = println . format;
 eprint' = eprintln . format;
 
-//!!! todo: look at all occurrences of matrix (and complexmatrix)
-// construction and make sure we have good apis for those use cases.
-// in particular, constructing from literal data (list<list<number>>)
-// is much too hard at the moment.
-
 {
     size,
     width,
