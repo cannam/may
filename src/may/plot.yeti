@@ -19,6 +19,7 @@ import org.jzy3d.plot3d.primitives: FlatLine2d, Point;
 import org.jzy3d.plot3d.primitives.axes: ContourAxeBox;
 import org.jzy3d.contour: DefaultContourColoringPolicy;
 import org.jzy3d.contour: MapperContourPictureGenerator;
+import org.jzy3d.chart.factories.AWTChartComponentFactory;
 
 import javax.imageio: ImageIO;
 
@@ -138,7 +139,7 @@ plotSeries chart colour depth { start, step, values } is ~Chart -> ~Color -> num
 plot structures =
    (quality = Quality#Nicest;
     quality#setAnimated(false);
-    chart = new Chart(quality);
+    chart = AWTChartComponentFactory#chart(quality, "awt");
     var j = 0;
     for structures do s:
         colour = distinctColour j;
