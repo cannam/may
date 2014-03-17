@@ -2,7 +2,6 @@
 module may.complex;
 
 vec = load may.vector;
-mm = load may.mathmisc;
 
 import java.lang: ClassCastException;
 

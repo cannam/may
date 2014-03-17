@@ -69,7 +69,7 @@ plotContour chart colour matrix is ~Chart -> ~Color -> 'a -> () =
     //!!! doesn't work if either rows or columns is 1
     xrange = new Range(0, size.columns - 1);
     yrange = new Range(0, size.rows - 1);
-    grid = new OrthonormalGrid(xrange, size.columns, yrange, size.rows);
+//    grid = new OrthonormalGrid(xrange, size.columns, yrange, size.rows);
     eprintln "Matrix size: \(size)";
 //    surface = Builder#buildOrthonormal(grid, mapper); //??? big?
 //    println "Z Bounds: \(surface#getBounds()#getZmin()) -> \(surface#getBounds()#getZmax())";

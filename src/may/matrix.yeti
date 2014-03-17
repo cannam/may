@@ -41,7 +41,6 @@
 module may.matrix;
 
 vec = load may.vector;
-mm = load may.mathmisc;
 
 typedef opaque matrix_t = {
     size is { rows is number, columns is number },
