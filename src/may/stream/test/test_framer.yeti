@@ -5,12 +5,37 @@ fr = load may.stream.framer;
 vec = load may.vector;
 mat = load may.matrix;
 syn = load may.stream.syntheticstream;
+win = load may.signal.window;
 
 { compare, compareUsing } = load may.test;
 
 rate = 10;
 
 testStream n is number -> 'a  = syn.precalculatedMono rate (vec.fromList [1..n]);
+
+expectedStream framesize opts n =
+   (var padded = true;
+    var hop = framesize;
+    for opts \case of
+        Padded p: padded := p;
+        Hop h: hop := h;
+        _: ();
+    esac;
+    if padded or (hop == framesize) then
+        testStream n
+    else 
+        // Unpadded streams can't be perfectly reconstructed from
+        // windowed frames: the first framesize-hop samples will
+        // remain windowed (and scaled by the overlap-add)
+        m = framesize - hop;
+        factor = hop / (framesize/2);
+        w = vec.scaled factor (win.hann framesize);
+        syn.precalculatedMono rate
+           (vec.concat [
+                vec.multiply (vec.fromList [1..m]) (vec.slice w 0 m),
+                vec.fromList [m+1..n]
+            ])
+    fi);
 
 compareFrames frames1 frames2 =
     all id (map2 do f1 f2: compareUsing mat.equal f1 f2 done frames1
@@ -19,7 +44,7 @@ compareFrames frames1 frames2 =
 testFramesInvertibleWith framesize opts length expected firstChunkSize =
    (f = fr.frames framesize opts (testStream length);
     str = fr.streamed rate framesize opts f;
-    ts = testStream length; // newly initialised stream
+    ts = expectedStream framesize opts length;
 
        (firstChunk = str.read firstChunkSize;
         compareUsing mat.equal
