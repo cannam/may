@@ -5,6 +5,7 @@ vec = load may.vector;
 mat = load may.matrix;
 af = load may.stream.audiofile;
 ch = load may.stream.channels;
+manip = load may.stream.manipulate;
 
 import javax.sound.sampled:
     AudioSystem, AudioFormat, AudioFormat$Encoding, SourceDataLine;
@@ -45,18 +46,26 @@ playMatrix rate m =
     line.close());
 
 playStream stream =
-   (line = open { rate = stream.sampleRate, channels = stream.channels };
-    blocksize = 10240;
-    not stream.finished? loop 
-        line.play [(ch.mixedAndInterleavedTo line.channels 
-                    (stream.read blocksize))];
-    line.close();
-    stream.close());
+    case stream.available of
+    Infinite ():
+        failWith "Refusing to play infinite stream. Use playStreamFor <sec> to limit playback duration";
+    _:
+        line = open { rate = stream.sampleRate, channels = stream.channels };
+        blocksize = 10240;
+        not stream.finished? loop 
+            line.play [(ch.mixedAndInterleavedTo line.channels 
+                        (stream.read blocksize))];
+        line.close();
+        stream.close();
+    esac;
+
+playStreamFor seconds stream =
+    playStream (manip.withDuration (seconds * stream.sampleRate) stream);
 
 playFile filename = 
     playStream (af.open filename);
 
 {
-    open, playMatrix, playStream, playFile,
+    open, playMatrix, playStream, playStreamFor, playFile,
 }
 

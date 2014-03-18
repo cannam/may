@@ -4,60 +4,87 @@
 
 module may.stream.waves;
 
-{ sinusoid } = load may.stream.syntheticstream;
+{ sinusoid, generated } = load may.stream.syntheticstream;
 { sum, scaledBy } = load may.stream.manipulate;
 { precalculatedRepeated } = load may.stream.syntheticstream;
-{ gcd } = load may.mathmisc;
+{ resampledTo } = load may.stream.resample;
+{ gcd, floor, ceil } = load may.mathmisc;
 
 load may.stream.type;
 
-cycleLengthFor rate freq = 
+cycleLengthFor sampleRate freq = 
     // The number of samples we can cache and repeat from a wavetable,
     // in order to exactly reproduce a signal of the given frequency
     // at the given samplerate. 
-   (if rate == int rate and freq == int freq and rate > 0 and freq > 0 then
-        rate / (gcd rate freq)
+   (if sampleRate == int sampleRate and
+       freq == int freq and
+       sampleRate > 0 and freq > 0 then
+        sampleRate / (gcd sampleRate freq)
     else
-        period = rate / freq;
-        m = find do i: i * period == int (i * period) done [1..rate];
+        period = sampleRate / freq;
+        m = find do i: i * period == int (i * period) done [1..sampleRate];
         if empty? m then 0
         else period * (head m)
         fi
     fi);
 
-square' rate freq = 
+square' sampleRate freq = 
     sum
        (map do n: 
             m = n*2 + 1;
             scaledBy (1/m)
-               (sinusoid rate (m * freq))
-            done (0 :: [1 .. int (rate/4 / freq) - 1]));
+               (sinusoid sampleRate (m * freq))
+            done (0 :: [1 .. int (sampleRate/4 / freq) - 1]));
 
-saw' rate freq =
+saw' sampleRate freq =
     sum
        (map do n:
             scaledBy if n % 2 == 0 then -1/n else 1/n fi
-               (sinusoid rate (n * freq))
-            done [1 .. int (rate/2 / freq)]);
+               (sinusoid sampleRate (n * freq))
+            done [1 .. int (sampleRate/2 / freq)]);
 
-triangle' rate freq = 
+triangle' sampleRate freq = 
     sum
        (map do n: 
             m = n*2 + 1;
             scaledBy if n % 2 == 0 then -1/(m*m) else 1/(m*m) fi
-               (sinusoid rate (m * freq))
-            done (0 :: [1 .. int (rate/4 / freq) - 1]));
+               (sinusoid sampleRate (m * freq))
+            done (0 :: [1 .. int (sampleRate/4 / freq) - 1]));
 
-cached f rate freq =
-   (n = cycleLengthFor rate freq;
+// Bandlimited impulse train: produce naive pulse train at a frequency
+// that is an integer fraction of the sample rate (so as to have exact
+// sample locations), then resample so as to place the impulses at the
+// requested frequency
+impulseTrain sampleRate freq =
+    if freq > sampleRate/2 then
+        failWith "Can't generate impulse train with frequency > half the sample rate (\(freq) > \(sampleRate)/2)"
+    else
+        naiveTrain f =
+           (spacing = int (sampleRate / f);
+            generated sampleRate
+                do n: if n % spacing == 0 then 1 else 0 fi done);
+        ratio = sampleRate / freq;
+        if ratio == int ratio then
+            naiveTrain freq
+        else
+            integerRatio = floor ratio;
+            naiveFreq = sampleRate / integerRatio;
+            n = naiveTrain (sampleRate / integerRatio);
+            resampled = resampledTo (sampleRate * naiveFreq / freq) n;
+            resampled with { sampleRate };
+        fi;
+    fi;
+
+cached f sampleRate freq =
+   (n = cycleLengthFor sampleRate freq;
     if n == 0 then
-        f rate freq;
+        f sampleRate freq;
     else
         // one could alternatively do
-        //   repeated (precalculated rate ((f rate freq).read n))
+        //   repeated (precalculated sampleRate ((f sampleRate freq).read n))
         // or
-        //   repeated (withDuration n (f rate freq))
-        precalculatedRepeated rate ((f rate freq).read n);
+        //   repeated (withDuration n (f sampleRate freq))
+        precalculatedRepeated sampleRate ((f sampleRate freq).read n);
     fi);
 
 square = cached square';
@@ -68,6 +95,7 @@ triangle = cached triangle';
     square is number -> number -> stream_t,
     saw is number -> number -> stream_t, 
     triangle is number -> number -> stream_t,
+    impulseTrain is number -> number -> stream_t,
     cycleLengthFor is number -> number -> number,
 }
 

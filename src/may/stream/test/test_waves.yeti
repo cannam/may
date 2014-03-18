@@ -5,7 +5,14 @@ wav = load may.stream.waves;
 mat = load may.matrix;
 vec = load may.vector;
 
+plt = load may.plot;
+
 { compare, compareUsing, compareMatrices, assert } = load may.test;
+
+compareApprox eps =
+    compareUsing do v1 v2: all id (map2 do f1 f2: abs (f1 - f2) < eps done v1 v2) done;
+
+epsilon = 0.000001;
 
 [
 
@@ -19,6 +26,49 @@ vec = load may.vector;
             0,-0.942809,-0.666666,-0.942809,
             0, 0.942809, 0.666666, 0.942809,
             0,-0.942809]))
+),
+
+"impulseTrain-naive": \(
+    // 2 pulses a second sampled 8 times a second (naive pulse train)
+    str = wav.impulseTrain 8 2;
+    compare str.position 0 and
+        compare str.channels 1 and
+        compare str.sampleRate 8 and
+        compare str.available (Infinite ()) and
+        compare str.finished? false and
+        compareApprox epsilon (vec.list (mat.getRow 0 (str.read 9))) [ 1, 0, 0, 0, 1, 0, 0, 0, 1 ] and
+        compare str.position 9
+),
+
+"impulseTrain-naive-frac": \(
+    // 2.5 pulses a second sampled 10 times a second (still a naive
+    // pulse train even though the pulse rate is non-integer)
+    str = wav.impulseTrain 10 2.5;
+    compare str.position 0 and
+        compare str.channels 1 and
+        compare str.sampleRate 10 and
+        compare str.available (Infinite ()) and
+        compare str.finished? false and
+        compareApprox epsilon (vec.list (mat.getRow 0 (str.read 11))) [ 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0 ] and
+        compare str.position 11
+),
+
+"impulseTrain-bandlimited": \(
+    // 3 pulses a second sampled 10 times a second
+    str = wav.impulseTrain 100 3;
+
+    x = mat.getRow 0 (str.read 200);
+false; //!!! todo
+/*
+    compare str.position 0 and
+        compare str.channels 1 and
+        compare str.sampleRate 8 and
+        compare str.available (Infinite ()) and
+        compare str.finished? false and
+        compareApprox epsilon (vec.list (mat.getRow 0 (str.read 14)))
+            [ 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0 ] and
+        compare str.position 14
+*/
 ),
 
 "cycleLengthFor": \(

@@ -26,25 +26,22 @@ generated sampleRate generator =
         close = \(),
     });
 
-sinusoid rate freq =
-    generated rate (sin . (* (2 * pi * freq / rate)));
+sinusoid sampleRate freq =
+    generated sampleRate (sin . (* (2 * pi * freq / sampleRate)));
 
-whiteNoise rate =
-    generated rate \((Math#random() * 2.0) - 1.0);
+whiteNoise sampleRate =
+    generated sampleRate \((Math#random() * 2.0) - 1.0);
 
-pulseTrain rate freq =
-    generated rate do n: if n % int (rate / freq) == 0 then 1 else 0 fi done;
+silent sampleRate =
+    generated sampleRate \0;
 
-silent rate =
-    generated rate \0;
-
-precalculatedMono rate data =
+precalculatedMono sampleRate data =
    (n = vec.length data;
     var position = 0;
     {
         get position () = position,
         get channels () = 1,
-        get sampleRate () = rate,
+        get sampleRate () = sampleRate,
         get available () = Known (n - position),
         get finished? () = not (n > position),
         read count = ch.deinterleaved 1
@@ -55,14 +52,14 @@ precalculatedMono rate data =
         close = \(),
     });
 
-precalculated rate data =
+precalculated sampleRate data =
    (n = mat.width data;
     c = mat.height data;
     var position = 0;
     {
         get position () = position,
         get channels () = c,
-        get sampleRate () = rate,
+        get sampleRate () = sampleRate,
         get available () = Known (n - position),
         get finished? () = not (n > position),
         read count = 
@@ -73,7 +70,7 @@ precalculated rate data =
         close = \(),
     });
 
-precalculatedRepeated rate data =
+precalculatedRepeated sampleRate data =
    (n = mat.width data;
     c = mat.height data;
     chunks count pos =
@@ -89,7 +86,7 @@ precalculatedRepeated rate data =
     {
         get position () = position,
         get channels () = c,
-        get sampleRate () = rate,
+        get sampleRate () = sampleRate,
         get available () = Infinite (),
         get finished? () = false,
         read count = 
@@ -99,11 +96,11 @@ precalculatedRepeated rate data =
         close = \(),
     });
 
-empty rate channels = // degenerate stream with no data in it, occasionally useful
+empty sampleRate channels = // degenerate stream with no data in it, occasionally useful
     {
         get position () = 0,
         get channels () = channels,
-        get sampleRate () = rate,
+        get sampleRate () = sampleRate,
         get available () = Known 0,
         get finished? () = true,
         read count = mat.zeroMatrix { rows = channels, columns = 0 },
@@ -117,7 +114,6 @@ empty rate channels = // degenerate stream with no data in it, occasionally usef
     precalculatedRepeated is number -> mat.matrix_t -> stream_t,
     sinusoid is number -> number -> stream_t, 
     whiteNoise is number -> stream_t,
-    pulseTrain is number -> number -> stream_t,
     silent is number -> stream_t,
     empty is number -> number -> stream_t,
 }

@@ -262,6 +262,7 @@ repeated s =
 duplicated copies s = 
 //!!! doc fact that original s cannot be used independently of this afterward
 // (so maybe name is misleading?)
+//!!! also of course "duplicated" means two of them, while we could have lots
     array if copies < 2 then map \s [0..copies-1];
     else
         pos = array (map \0 [0..copies-1]);
