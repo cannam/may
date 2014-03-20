@@ -70,7 +70,8 @@ frames' framesize hop padded stream =
             else 
                 mat.asRows
                    (mat.concatHorizontal
-                       [mat.zeroMatrix { rows = stream.channels, columns = hop },
+                       [mat.toRowMajor
+                           (mat.zeroMatrix { rows = stream.channels, columns = hop }),
                         stream.read (framesize - hop)]);
             fi;
         overlappingBlockList framesize hop stream framesize initialBuffer;
@@ -122,7 +123,8 @@ streamContiguous rate framesize frames =
    (var remaining = frames;
     var position = 0;
     channels = mat.height (head frames); // so we don't need to keep a head ptr
-    var buffered = mat.zeroMatrix { rows = channels, columns = 0 };
+    var buffered = mat.toRowMajor
+       (mat.zeroMatrix { rows = channels, columns = 0 });
     {
         get position () = position,
         get channels () = channels,
@@ -170,7 +172,7 @@ overlapAdd overlap frames =
     first::rest:
         mat.concatHorizontal (ola rest first []);
      _: 
-        mat.zeroMatrix { rows = 0, columns = 0 };
+        mat.toRowMajor (mat.zeroMatrix { rows = 0, columns = 0 });
     esac);
 
 streamOverlapping rate { framesize, hop, window } frames =
@@ -181,7 +183,8 @@ streamOverlapping rate { framesize, hop, window } frames =
     w = vec.scaled factor (window framesize);
     channels = mat.height (head frames); // so we don't need to keep a head ptr
 
-    var buffered = mat.zeroMatrix { rows = channels, columns = 0 };
+    var buffered = 
+        mat.toRowMajor (mat.zeroMatrix { rows = channels, columns = 0 });
 
     syncd = synchronized remaining;
 

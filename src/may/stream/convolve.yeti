@@ -19,6 +19,7 @@ zeroPaddedFreqFrames framesize channels =
     // framesize*2, in which each frame contains all channels one
     // after another (not interleaved) [because we lack a complex
     // matrix type]
+    //!!! we now have a complex matrix type, revisit this
    (forwardTransform = fft.realForward (framesize * 2);
     do stream:
         padded = 
@@ -46,29 +47,36 @@ splitInto n fr =
     else parts.fst :: splitInto n parts.snd;
     fi);
 
-fastConvolvedWith ir framesize s =
+fastConvolvedWith ir framesize =
     // prerequisite: ir and s have same number of channels
    (framer = zeroPaddedFreqFrames framesize (mat.height ir);
-    ch = s.channels;
+    ch = mat.height ir;
     irfr = framer (syn.precalculated 1 ir); // rate arg is irrelevant here
-    sigfr = framer s;
     inverseTransform = fft.realInverse (framesize * 2);
-    extended = sigfr ++
-        map do _: list (cplx.zeros (ch * (framesize + 1))) done
-           [1..length irfr-1];
-    cframes = doFastConvolve irfr extended; 
-    rframes = (mat.zeroMatrix { rows = ch, columns = framesize * 2}) ::
-        map do fr:
-            mat.fromRows
-               (map inverseTransform (splitInto (framesize+1) fr))
-            done cframes;
-    fr.streamed s.sampleRate (framesize * 2)
-        [ Window win.boxcar, Hop framesize ]
-        rframes;
+    do s:
+        if ch != s.channels then
+            failWith "Signal stream and IR must have same number of channels (\(s.channels) != \(ch))"
+        fi;
+        sigfr = framer s;
+        extended = sigfr ++
+            map do _: list (cplx.zeros (ch * (framesize + 1))) done
+               [1..length irfr-1];
+        cframes = doFastConvolve irfr extended; 
+        rframes =
+           (mat.toRowMajor (mat.zeroMatrix { rows = ch, columns = framesize * 2})) ::
+            map do fr:
+                mat.fromRows
+                   (map inverseTransform (splitInto (framesize+1) fr))
+                done cframes;
+        fr.streamed s.sampleRate (framesize * 2)
+            [ Window win.boxcar, Hop framesize ]
+            rframes;
+    done;
 );
 
 plainConvolvedWith ir s =
     // prerequisite: ir and s have same number of channels
+    //!!! test that and throw
    (var history = mat.toRowMajor
        (mat.zeroMatrix { rows = s.channels, columns = mat.width ir - 1 });
     s with 
@@ -127,23 +135,21 @@ nextPowerOfTwo n =
         fi;
     nextPowerOfTwo' 1 n);
 
-//!!! todo: partial application so as to preprocess ir (in fast convolution case)
-convolvedWith options ir s = //!!! cheap mono thing here
+//!!! doc note: this supports partial application (it returns a function that
+// expects the signal) so as to pre-process the IR
+convolvedWith options ir = //!!! cheap mono thing here
 //!!! doc note: fast convolution output is padded to next frame boundary
-   (if mat.height ir != s.channels then
-        failWith "Signal stream and IR must have same number of channels (\(s.channels) != \(mat.height ir))"
-    fi;
-    var type = Fast ();
+   (var type = Fast ();
     var framesize = nextPowerOfTwo (mat.width ir);
     for options \case of
-        Fast s: if s then type := Fast () else type := Plain () fi;
+        Fast f: if f then type := Fast () else type := Plain () fi;
         Framesize n: framesize := nextPowerOfTwo n;
         esac;
     case type of
     Fast ():
-        fastConvolvedWith ir framesize s;
+        fastConvolvedWith ir framesize;
     Plain ():
-        plainConvolvedWith ir s;
+        plainConvolvedWith ir;
     esac);
 
 {

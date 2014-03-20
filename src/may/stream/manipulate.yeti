@@ -41,7 +41,8 @@ withDuration nsamples s = //!!! should nsamples be a time in seconds? (no)
             if not s.finished? then
                 mat.resizedTo { rows = s.channels, columns = n } (s.read n);
             else 
-                mat.zeroMatrix { columns = n, rows = s.channels }
+                mat.toRowMajor
+                   (mat.zeroMatrix { columns = n, rows = s.channels });
             fi),
     });
 
@@ -49,7 +50,7 @@ delayedBy nsamples s = //!!! doc: nsamples may be -ve
    (var prepos = 0;
     zeros n = mat.toRowMajor
        (prepos := prepos + n;
-        mat.zeroMatrix { rows = s.channels, columns = n });
+        mat.toRowMajor (mat.zeroMatrix { rows = s.channels, columns = n }));
     delay = 
         if nsamples < 0 then
             \0 (s.read (-nsamples));
@@ -105,7 +106,9 @@ extendedBy nsamples s = //!!! doc: nsamples may *not* be -ve
                 pos := pos + zc;
                 toAdd := toAdd - zc;
                 mat.concatHorizontal
-                   [r, mat.zeroMatrix { rows = s.channels, columns = zc }];
+                   [r, 
+                    mat.toRowMajor
+                       (mat.zeroMatrix { rows = s.channels, columns = zc })];
             fi),
         close = s.close
     });
@@ -214,7 +217,8 @@ repeated s =
     if s.available == Infinite () then s
     else
         var pos = 0;
-        var cache = mat.zeroMatrix { rows = s.channels, columns = 0 };
+        var cache = mat.toRowMajor
+           (mat.zeroMatrix { rows = s.channels, columns = 0 });
         chunks = array [];
         cachedPartsFor count =
            (start = pos % (mat.width cache);
@@ -377,7 +381,7 @@ picked frac s = //!!! frac must be an integer [how to enforce this??]
         read n =
            (m = s.read (n*frac);
             obtained = maths.ceil ((mat.width m) / frac);
-            mat.flipped
+            mat.toRowMajor
                (mat.fromColumns
                    (map do c: mat.getColumn (c*frac) m done [0..obtained-1])))
     };
