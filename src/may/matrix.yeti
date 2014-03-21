@@ -677,10 +677,23 @@ product m1 m2 =
     fi;
 
 entryWiseProduct m1 m2 = // or element-wise, or Hadamard product
-//!!! todo: faster, sparse version, unit tests
     if (size m1) != (size m2)
     then failWith "Matrices are not the same size: \(size m1), \(size m2)";
-    else generate do row col: at' m1 row col * at' m2 row col done (size m1);
+    else 
+        if isSparse? m1 then
+            newSparse (size m1)
+               ((taggerForTypeOf m1)
+                   (map do { i, j, v }: { i, j, v = v * (at' m2 i j) } done
+                       (enumerateSparse m1)))
+        elif isSparse? m2 then
+            entryWiseProduct m2 m1
+        else
+            if isRowMajor? m1 then
+                fromRows (array (map2 vec.multiply (asRows m1) (asRows m2)));
+            else
+                fromColumns (array (map2 vec.multiply (asColumns m1) (asColumns m2)));
+            fi
+        fi
     fi;
 
 concatAgainstGrain tagger getter counter mm =
