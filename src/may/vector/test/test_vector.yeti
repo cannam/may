@@ -183,14 +183,19 @@ vec = load may.vector;
         compare (vec.list (vec.multiply (vec.consts (-3) 4) (vec.fromList [1,2,3]))) [-3,-6,-9]
 ),
 
-"divideBy": \(
-    compare (vec.list (vec.divideBy 5 (vec.ones 0))) [] and
-        compare (vec.list (vec.divideBy 5 (vec.fromList [1,2,-3]))) [0.2,0.4,-0.6]
+"divide": \(
+    compare (vec.list (vec.divide (vec.zeros 0) (vec.ones 5))) [] and
+        compare (vec.list (vec.divide (vec.consts (-3) 4) (vec.fromList [1,2,3]))) [-3,-(3/2),-1]
 ),
 
 "scaled": \(
     compare (vec.list (vec.scaled 5 (vec.ones 0))) [] and
         compare (vec.list (vec.scaled 5 (vec.fromList [1,2,-3]))) [5,10,-15]
+),
+
+"divideBy": \(
+    compare (vec.list (vec.divideBy 5 (vec.ones 0))) [] and
+        compare (vec.list (vec.divideBy 5 (vec.fromList [1,2,-3]))) [0.2,0.4,-0.6]
 ),
 
 "abs": \(

@@ -676,7 +676,7 @@ product m1 m2 =
         fi;
     fi;
 
-entryWiseProduct m1 m2 = // or element-wise, or Hadamard product
+entryWiseProduct m1 m2 =
     if (size m1) != (size m2)
     then failWith "Matrices are not the same size: \(size m1), \(size m2)";
     else 
@@ -692,6 +692,26 @@ entryWiseProduct m1 m2 = // or element-wise, or Hadamard product
                 fromRows (array (map2 vec.multiply (asRows m1) (asRows m2)));
             else
                 fromColumns (array (map2 vec.multiply (asColumns m1) (asColumns m2)));
+            fi
+        fi
+    fi;
+
+entryWiseDivide m1 m2 =
+    if (size m1) != (size m2)
+    then failWith "Matrices are not the same size: \(size m1), \(size m2)";
+    else 
+        if isSparse? m1 then
+            newSparse (size m1)
+               ((taggerForTypeOf m1)
+                   (map do { i, j, v }: { i, j, v = v / (at' m2 i j) } done
+                       (enumerateSparse m1)))
+        // For m2 to be sparse makes no sense (divide by zero all over
+        // the shop).
+        else
+            if isRowMajor? m1 then
+                fromRows (array (map2 vec.divide (asRows m1) (asRows m2)));
+            else
+                fromColumns (array (map2 vec.divide (asColumns m1) (asColumns m2)));
             fi
         fi
     fi;
@@ -951,6 +971,7 @@ json m =
     any = any',
     product,
     entryWiseProduct,
+    entryWiseDivide,
     concatHorizontal,
     concatVertical,
     rowSlice,
@@ -1011,6 +1032,7 @@ as
     any is (number -> boolean) -> matrix_t -> boolean,
     product is matrix_t -> matrix_t -> matrix_t,
     entryWiseProduct is matrix_t -> matrix_t -> matrix_t,
+    entryWiseDivide is matrix_t -> matrix_t -> matrix_t,
     concatHorizontal is list<matrix_t> -> matrix_t,
     concatVertical is list<matrix_t> -> matrix_t,
     rowSlice is matrix_t -> number -> number -> matrix_t, 

@@ -223,6 +223,9 @@ subtract v1 v2 is ~double[] -> ~double[] -> ~double[] =
 multiply b1 b2 is ~double[] -> ~double[] -> ~double[] = 
     VectorBits#multiply(b1, b2);
 
+divide b1 b2 is ~double[] -> ~double[] -> ~double[] = 
+    VectorBits#divide(b1, b2);
+
 scaled n v is number -> ~double[] -> ~double[] =
     if n == 1 then v
     else VectorBits#scaled(v, n);
@@ -315,8 +318,9 @@ typedef opaque vector_t = ~double[];
     add,
     subtract,
     multiply,
-    divideBy,
+    divide,
     scaled,
+    divideBy,
     abs = abs',
     negative,
     sqr,
@@ -355,8 +359,9 @@ typedef opaque vector_t = ~double[];
     add is list?<vector_t> -> vector_t,
     subtract is vector_t -> vector_t -> vector_t,
     multiply is vector_t -> vector_t -> vector_t, 
-    divideBy is number -> vector_t -> vector_t, 
+    divide is vector_t -> vector_t -> vector_t, 
     scaled is number -> vector_t -> vector_t,
+    divideBy is number -> vector_t -> vector_t, 
     abs is vector_t -> vector_t,
     negative is vector_t -> vector_t,
     sqr is vector_t -> vector_t,
