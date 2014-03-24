@@ -653,7 +653,7 @@ denseProduct size m1 m2 =
     for [0..size.rows - 1] do i:
         row = getRow i m1;
         for [0..size.columns - 1] do j:
-            data[j][i] := vec.sum (vec.multiply row (getColumn j m2));
+            data[j][i] := vec.sum (vec.multiply [row, getColumn j m2]);
         done;
     done;
     newMatrix size (Columns (array (map vec.vector (list data)))));
@@ -689,9 +689,11 @@ entryWiseProduct m1 m2 =
             entryWiseProduct m2 m1
         else
             if isRowMajor? m1 then
-                fromRows (array (map2 vec.multiply (asRows m1) (asRows m2)));
+                fromRows (array (map2 do v1 v2: vec.multiply [v1,v2] done
+                   (asRows m1) (asRows m2)));
             else
-                fromColumns (array (map2 vec.multiply (asColumns m1) (asColumns m2)));
+                fromColumns (array (map2 do v1 v2: vec.multiply [v1,v2] done
+                   (asColumns m1) (asColumns m2)));
             fi
         fi
     fi;

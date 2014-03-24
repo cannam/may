@@ -12,33 +12,30 @@ public class VectorBits
 	return tot;
     }
 
-    public static double[] multiply(double[] v1, double[] v2) {
-	int len = v1.length;
-	if (v2.length < len) {
-	    len = v2.length;
+    public static void multiplyBy(double[] out, double[] in) {
+	for (int i = 0; i < in.length && i < out.length; ++i) {
+	    out[i] *= in[i];
 	}
-	double[] out = new double[len];
-	for (int i = 0; i < len; ++i) {
-	    out[i] = v1[i] * v2[i];
+	for (int i = in.length; i < out.length; ++i) {
+	    out[i] *= 0.0;
 	}
-	return out;
     }
 
-    public static double[] divide(double[] v1, double[] v2) {
-	int len = v1.length;
-	if (v2.length < len) {
-	    len = v2.length;
+    public static void divideBy(double[] out, double[] in) {
+	for (int i = 0; i < in.length && i < out.length; ++i) {
+	    out[i] /= in[i];
 	}
-	double[] out = new double[len];
-	for (int i = 0; i < len; ++i) {
-	    out[i] = v1[i] / v2[i];
-	}
-	return out;
     }
 
-    public static void addTo(double[] out, double[] in, int len) {
-	for (int i = 0; i < len; ++i) {
+    public static void addTo(double[] out, double[] in) {
+	for (int i = 0; i < in.length && i < out.length; ++i) {
 	    out[i] += in[i];
+	}
+    }
+
+    public static void subtractFrom(double[] out, double[] in) {
+	for (int i = 0; i < in.length && i < out.length; ++i) {
+	    out[i] -= in[i];
 	}
     }
 

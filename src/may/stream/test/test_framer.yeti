@@ -32,7 +32,7 @@ expectedStream framesize opts n =
         w = vec.scaled factor (win.hann framesize);
         syn.precalculatedMono rate
            (vec.concat [
-                vec.multiply (vec.fromList [1..m]) (vec.slice w 0 m),
+                vec.multiply [vec.fromList [1..m], vec.slice w 0 m],
                 vec.fromList [m+1..n]
             ])
     fi);

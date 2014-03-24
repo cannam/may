@@ -86,7 +86,8 @@ frames framesize options stream =
         Hop h: hop := h;
         Padded p: padded := p;
         Window w:
-            windower := mat.mapRows (vec.multiply (w framesize));
+           (window = w framesize;
+            windower := mat.mapRows (do v: vec.multiply [v, window] done));
         FrequencyDomain f:
             if f then
                 transform := mat.mapRows (fft.realForwardMagnitude framesize);
@@ -106,7 +107,8 @@ complexFrames framesize options stream =
         Hop h: hop := h;
         Padded p: padded := p;
         Window w:
-            windower := mat.mapRows (vec.multiply (w framesize));
+           (window = w framesize;
+            windower := mat.mapRows (do v: vec.multiply [v, window] done));
         FrequencyDomain f:
         //!!! what if both f and not-f provided in one options list? need reset
             if f then 
@@ -196,7 +198,7 @@ streamOverlapping rate { framesize, hop, window } frames =
                 reverse acc
             else
                 this = mat.resizedTo { columns = framesize, rows = channels }
-                   (mat.mapRows (vec.multiply w) (head remaining));
+                   (mat.mapRows do v: vec.multiply [v,w] done (head remaining));
                 remaining := tail remaining;
                 framesFor (samples - hop) (this::acc)
             fi;

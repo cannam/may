@@ -204,27 +204,31 @@ mean v is ~double[] -> number =
         len: sum' v / len
     esac;
 
+listOp f vv =
+    case vv of
+    [v]: v;
+    v::rest:
+       (out = copyOf v;
+        for rest (f out);
+        out);
+    _: failWith "Empty argument list";
+    esac;
+
+//!!! doc: returned vector is same length as first argument (this has changed, formerly it was length of shortest argument)
 add vv is list?<~double[]> -> ~double[] =
-   (len = head (sort (map length' vv));
-    out = new double[len];
-    for vv do v:
-        VectorBits#addTo(out, v, len);
-    done;
-    out);
+    listOp do out v: VectorBits#addTo(out, v) done vv;
 
+//!!! doc: returned vector is same length as first argument (this has changed, formerly it was length of shortest argument)
 subtract v1 v2 is ~double[] -> ~double[] -> ~double[] =
-   (len = if length v1 < length v2 then length v1 else length v2 fi;
-    out = new double[len];
-    for [0..len-1] do i:
-        out[i] := v1[i] - v2[i]
-    done;
-    out);
+    listOp do out v: VectorBits#subtractFrom(out, v) done [v1, v2];
 
-multiply b1 b2 is ~double[] -> ~double[] -> ~double[] = 
-    VectorBits#multiply(b1, b2);
+//!!! doc: returned vector is same length as first argument (this has changed, formerly it was length of shortest argument). If first arg is longer than others, the spare values will become zero
+multiply vv is list?<~double[]> -> ~double[] =
+    listOp do out v: VectorBits#multiplyBy(out, v) done vv;
 
-divide b1 b2 is ~double[] -> ~double[] -> ~double[] = 
-    VectorBits#divide(b1, b2);
+//!!! doc: returned vector is same length as first argument (this has changed, formerly it was length of shortest argument). If first arg is longer than second, the spare values are left untouched (not divided by zero)
+divide v1 v2 is ~double[] -> ~double[] -> ~double[] = 
+    listOp do out v: VectorBits#divideBy(out, v) done [v1, v2];
 
 scaled n v is number -> ~double[] -> ~double[] =
     if n == 1 then v
@@ -239,7 +243,9 @@ divideBy n v is number -> ~double[] -> ~double[] =
     fi;
 
 sqr v =
-    multiply v v;
+   (out = copyOf v;
+    VectorBits#multiplyBy(out, v);
+    out);
 
 rms =
     sqrt . mean . sqr;
@@ -358,7 +364,7 @@ typedef opaque vector_t = ~double[];
     mean is vector_t -> number,
     add is list?<vector_t> -> vector_t,
     subtract is vector_t -> vector_t -> vector_t,
-    multiply is vector_t -> vector_t -> vector_t, 
+    multiply is list?<vector_t> -> vector_t, 
     divide is vector_t -> vector_t -> vector_t, 
     scaled is number -> vector_t -> vector_t,
     divideBy is number -> vector_t -> vector_t, 

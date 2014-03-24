@@ -168,24 +168,27 @@ vec = load may.vector;
 
 "add": \(
     compare (vec.list (vec.add [vec.zeros 0, vec.ones 5])) [] and
-        compare (vec.list (vec.add [vec.consts 3 4, vec.fromList [1,2,3] ])) [4,5,6] and
-        compare (vec.list (vec.add [vec.consts (-3) 4, vec.fromList [1,2,3] ])) [-2,-1,0] 
+        compare (vec.list (vec.add [vec.consts 3 4, vec.fromList [1,2,3] ])) [4,5,6,3] and
+        compare (vec.list (vec.add [vec.consts (-3) 4, vec.fromList [1,2,3] ])) [-2,-1,0,-3] and
+        compare (vec.list (vec.add [vec.consts 3 3, vec.fromList [1,2,3], vec.fromList [6,7,8,9] ])) [10,12,14] 
 ),
 
 "subtract": \(
     compare (vec.list (vec.subtract (vec.zeros 0) (vec.ones 5))) [] and
-        compare (vec.list (vec.subtract (vec.consts 3 4) (vec.fromList [1,2,3]))) [2,1,0] and
-        compare (vec.list (vec.subtract (vec.consts (-3) 4) (vec.fromList [1,2,3]))) [-4,-5,-6]
+        compare (vec.list (vec.subtract (vec.consts 3 4) (vec.fromList [1,2,3]))) [2,1,0,3] and
+        compare (vec.list (vec.subtract (vec.consts (-3) 4) (vec.fromList [1,2,3]))) [-4,-5,-6,-3]
 ),
 
 "multiply": \(
-    compare (vec.list (vec.multiply (vec.zeros 0) (vec.ones 5))) [] and
-        compare (vec.list (vec.multiply (vec.consts (-3) 4) (vec.fromList [1,2,3]))) [-3,-6,-9]
+    compare (vec.list (vec.multiply [vec.zeros 0, vec.ones 5])) [] and
+        compare (vec.list (vec.multiply [vec.consts (-3) 4, vec.fromList [1,2,3]])) [-3,-6,-9,0] and
+        compare (vec.list (vec.multiply [vec.consts 3 3, vec.fromList [1,2,3], vec.fromList [6,7,8,9]])) [18,42,72]
 ),
 
 "divide": \(
     compare (vec.list (vec.divide (vec.zeros 0) (vec.ones 5))) [] and
-        compare (vec.list (vec.divide (vec.consts (-3) 4) (vec.fromList [1,2,3]))) [-3,-(3/2),-1]
+        compare (vec.list (vec.divide (vec.consts (-3) 3) (vec.fromList [1,2,3]))) [-3,-(3/2),-1] and
+        compare (vec.list (vec.divide (vec.consts (-3) 4) (vec.fromList [1,2,3]))) [-3,-(3/2),-1,-3] // values in first vec beyond end of second are *not* divided by zero, just left alone
 ),
 
 "scaled": \(

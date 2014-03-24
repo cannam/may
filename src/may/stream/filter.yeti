@@ -27,7 +27,7 @@ bandpassed f0 f1 attenuation bandwidth s =
              else win.dirac filterLength;
              fi;
          fi;
-    filter = vec.multiply idealBandpass kw;
+    filter = vec.multiply [idealBandpass, kw];
     filtered = convolve.convolvedWith [Framesize 1024]
        (mat.fromRows (map \filter [1..s.channels]))
         s;
