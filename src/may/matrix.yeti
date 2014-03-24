@@ -682,27 +682,33 @@ product m1 m2 =
         fi;
     fi;
 
-entryWiseProduct m1 m2 =
-    if (size m1) != (size m2)
-    then failWith "Matrices are not the same size: \(size m1), \(size m2)";
-    else 
-        if isSparse? m1 then
-            newSparse (size m1)
-               ((taggerForTypeOf m1)
-                   (map do { i, j, v }: { i, j, v = v * (at' m2 i j) } done
-                       (enumerateSparse m1)))
-        elif isSparse? m2 then
-            entryWiseProduct m2 m1
-        else
-            if isRowMajor? m1 then
-                fromRows (array (map2 do v1 v2: vec.multiply [v1,v2] done
-                   (asRows m1) (asRows m2)));
-            else
-                fromColumns (array (map2 do v1 v2: vec.multiply [v1,v2] done
-                   (asColumns m1) (asColumns m2)));
-            fi
-        fi
-    fi;
+entryWiseProduct mm =
+    case mm of
+    m1::m2::rest:
+        entryWiseProduct
+           (if (size m1) != (size m2)
+            then failWith "Matrices are not the same size: \(size m1), \(size m2)";
+            else 
+                if isSparse? m1 then
+                    newSparse (size m1)
+                       ((taggerForTypeOf m1)
+                           (map do { i, j, v }: { i, j, v = v * (at' m2 i j) } done
+                               (enumerateSparse m1)))
+                elif isSparse? m2 then
+                    entryWiseProduct (m2::m1::rest)
+                else
+                    if isRowMajor? m1 then
+                        fromRows (array (map2 do v1 v2: vec.multiply [v1,v2] done
+                           (asRows m1) (asRows m2)));
+                    else
+                        fromColumns (array (map2 do v1 v2: vec.multiply [v1,v2] done
+                           (asColumns m1) (asColumns m2)));
+                    fi
+                fi
+            fi :: rest);
+    [m1]: m1;
+    _: failWith "Empty argument list";
+    esac;
 
 entryWiseDivide m1 m2 =
     if (size m1) != (size m2)
@@ -1048,7 +1054,7 @@ as
     all is (number -> boolean) -> matrix_t -> boolean,
     any is (number -> boolean) -> matrix_t -> boolean,
     product is matrix_t -> matrix_t -> matrix_t,
-    entryWiseProduct is matrix_t -> matrix_t -> matrix_t,
+    entryWiseProduct is list?<matrix_t> -> matrix_t,
     entryWiseDivide is matrix_t -> matrix_t -> matrix_t,
     resizedTo is { rows is number, columns is number } -> matrix_t -> matrix_t,
     repeatedHorizontal is number -> matrix_t -> matrix_t,
