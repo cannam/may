@@ -152,7 +152,7 @@ sum' streams =
         if sz.columns == 0 then
             mat.zeroMatrix sz
         else
-            mat.sum (mat.resizedTo sz m1) (mat.resizedTo sz m2);
+            mat.sum [mat.resizedTo sz m1, mat.resizedTo sz m2];
         fi);
     channels = head (sortBy (>) (map (.channels) streams));
     {

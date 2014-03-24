@@ -33,6 +33,10 @@ consts m n is number -> number -> ~double[] =
 /// Return a vector of length n, containing all ones.
 ones n = consts 1.0 n;
 
+/// Return a vector of length n, containing random values.
+randoms n is number -> ~double[] =
+   (map \(Math#random()) [1..n]) as ~double[];
+
 /// Return a vector of the values in the given list.
 fromList l is list?<number> -> ~double[] =
     l as ~double[];
@@ -302,6 +306,7 @@ typedef opaque vector_t = ~double[];
     zeros,
     consts,
     ones,
+    randoms,
     vector v = v,
     primitive,
     floats,
@@ -343,6 +348,7 @@ typedef opaque vector_t = ~double[];
     zeros is number -> vector_t,
     consts is number -> number -> vector_t,
     ones is number -> vector_t,
+    randoms is number -> vector_t,
     vector is ~double[] -> vector_t,
     primitive is vector_t -> ~double[],
     floats is vector_t -> ~float[],

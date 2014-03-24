@@ -163,9 +163,10 @@ overlapAdd overlap frames =
         first::rest:
            (w = mat.width pending;
             pre = mat.columnSlice pending 0 (w - overlap);
-            added = mat.sum first
-               (mat.resizedTo (mat.size first)
-               (mat.columnSlice pending (w - overlap) w));
+            added = mat.sum
+               [first,
+                (mat.resizedTo (mat.size first)
+                    (mat.columnSlice pending (w - overlap) w))];
             ola rest added (pre::acc));
          _:
             reverse (pending::acc);

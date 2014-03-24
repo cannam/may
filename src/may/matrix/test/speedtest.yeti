@@ -127,30 +127,30 @@ reportOn (time \(mat.product rms rms));
 println "";
 
 print "CMD + CMD... ";
-reportOn (time \(mat.sum cmd cmd));
+reportOn (time \(mat.sum [cmd, cmd]));
 
 print "CMD + RMD... ";
-reportOn (time \(mat.sum cmd rmd));
+reportOn (time \(mat.sum [cmd, rmd]));
 
 print "RMD + CMD... ";
-reportOn (time \(mat.sum rmd cmd));
+reportOn (time \(mat.sum [rmd, cmd]));
 
 print "RMD + RMD... ";
-reportOn (time \(mat.sum rmd rmd));
+reportOn (time \(mat.sum [rmd, rmd]));
 
 println "";
 
 print "CMS + CMS... ";
-reportOn (time \(mat.sum cms cms));
+reportOn (time \(mat.sum [cms, cms]));
 
 print "CMS + RMS... ";
-reportOn (time \(mat.sum cms rms));
+reportOn (time \(mat.sum [cms, rms]));
 
 print "RMS + CMS... ";
-reportOn (time \(mat.sum rms cms));
+reportOn (time \(mat.sum [rms, cms]));
 
 print "RMS + RMS... ";
-reportOn (time \(mat.sum rms rms));
+reportOn (time \(mat.sum [rms, rms]));
 
 println "";
 
@@ -204,15 +204,15 @@ reportOn (time \(mat.product rms rms));
 println "";
 
 print "CMS + CMS... ";
-reportOn (time \(mat.sum cms cms));
+reportOn (time \(mat.sum [cms, cms]));
 
 print "CMS + RMS... ";
-reportOn (time \(mat.sum cms rms));
+reportOn (time \(mat.sum [cms, rms]));
 
 print "RMS + CMS... ";
-reportOn (time \(mat.sum rms cms));
+reportOn (time \(mat.sum [rms, cms]));
 
 print "RMS + RMS... ";
-reportOn (time \(mat.sum rms rms));
+reportOn (time \(mat.sum [rms, rms]));
 
 ();

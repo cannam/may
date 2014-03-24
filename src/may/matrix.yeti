@@ -504,16 +504,22 @@ sparseSumOrDifference op m1 m2 =
             done (keys h));
     newSparseMatching m1 entries);
 
-sum' m1 m2 =
-    if (size m1) != (size m2)
-    then failWith "Matrices are not the same size: \(size m1), \(size m2)";
-    elif isSparse? m1 and isSparse? m2 then
-        sparseSumOrDifference (+) m1 m2;
-    else
-        add2 v1 v2 = vec.add [v1,v2];
-        denseLinearOp add2 m1 m2;
-    fi;
-
+sum' mm =
+    case mm of
+    m1::m2::rest:
+        sum' 
+           (if (size m1) != (size m2)
+            then failWith "Matrices are not the same size: \(size m1), \(size m2)";
+            elif isSparse? m1 and isSparse? m2 then
+                sparseSumOrDifference (+) m1 m2;
+            else
+                add2 v1 v2 = vec.add [v1,v2];
+                denseLinearOp add2 m1 m2;
+            fi :: rest);
+    [m1]: m1;
+    _: failWith "Empty argument list";
+    esac;
+    
 difference m1 m2 =
     if (size m1) != (size m2)
     then failWith "Matrices are not the same size: \(size m1), \(size m2)";
@@ -1034,7 +1040,7 @@ as
     maxValue is matrix_t -> number,
     asRows is matrix_t -> list<vec.vector_t>, 
     asColumns is matrix_t -> list<vec.vector_t>,
-    sum is matrix_t -> matrix_t -> matrix_t,
+    sum is list?<matrix_t> -> matrix_t,
     difference is matrix_t -> matrix_t -> matrix_t,
     abs is matrix_t -> matrix_t,
     negative is matrix_t -> matrix_t,
