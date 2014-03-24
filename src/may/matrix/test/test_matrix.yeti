@@ -445,6 +445,36 @@ makeTests name flipper =
         [[1,4],[0,5],[3,6]];
 ),
 
+"repeated-horiz-\(name)": \(
+    compareMatrices
+       (mat.repeatedHorizontal 2 (fromColumns [[1,4],[0,5]]))
+       (fromColumns [[1,4],[0,5],[1,4],[0,5]]) and
+    compareMatrices
+       (mat.repeatedHorizontal 2 (fromRows [[1,0],[4,5]]))
+       (fromColumns [[1,4],[0,5],[1,4],[0,5]]) and
+    compareMatrices
+       (mat.repeatedHorizontal 0 (fromColumns [[1,4],[0,5]]))
+       (fromColumns []) and
+    compareMatrices
+       (mat.repeatedHorizontal 4 (fromColumns [[]]))
+       (fromColumns [[],[],[],[]])
+),
+
+"repeated-vert-\(name)": \(
+    compareMatrices
+       (mat.repeatedVertical 2 (fromRows [[1,4],[0,5]]))
+       (fromRows [[1,4],[0,5],[1,4],[0,5]]) and
+    compareMatrices
+       (mat.repeatedVertical 2 (fromColumns [[1,0],[4,5]]))
+       (fromRows [[1,4],[0,5],[1,4],[0,5]]) and
+    compareMatrices
+       (mat.repeatedVertical 0 (fromRows [[1,4],[0,5]]))
+       (fromRows []) and
+    compareMatrices
+       (mat.repeatedVertical 4 (fromRows [[]]))
+       (fromRows [[],[],[],[]])
+),
+
 "concat-horiz-\(name)": \(
     compareMatrices
        (mat.concatHorizontal 

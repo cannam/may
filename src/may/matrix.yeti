@@ -885,6 +885,14 @@ resizedTo newsize m =
             fi
     fi);
 
+repeatedHorizontal n m =
+   (cols = asColumns m;
+    fromColumns (fold do acc _: acc ++ cols done [] [1..n]));
+
+repeatedVertical n m =
+   (rows = asRows m;
+    fromRows (fold do acc _: acc ++ rows done [] [1..n]));
+
 minValue m =
     if width m == 0 or height m == 0 then 0
     else 
@@ -959,7 +967,6 @@ json m =
     toSparse,
     toDense,
     scaled,
-    resizedTo,
     minValue,
     maxValue,
     asRows,
@@ -974,6 +981,9 @@ json m =
     product,
     entryWiseProduct,
     entryWiseDivide,
+    resizedTo,
+    repeatedHorizontal,
+    repeatedVertical,
     concatHorizontal,
     concatVertical,
     rowSlice,
@@ -1020,7 +1030,6 @@ as
     toSparse is matrix_t -> matrix_t,
     toDense is matrix_t -> matrix_t,
     scaled is number -> matrix_t -> matrix_t,
-    resizedTo is { rows is number, columns is number } -> matrix_t -> matrix_t,
     minValue is matrix_t -> number,
     maxValue is matrix_t -> number,
     asRows is matrix_t -> list<vec.vector_t>, 
@@ -1035,6 +1044,9 @@ as
     product is matrix_t -> matrix_t -> matrix_t,
     entryWiseProduct is matrix_t -> matrix_t -> matrix_t,
     entryWiseDivide is matrix_t -> matrix_t -> matrix_t,
+    resizedTo is { rows is number, columns is number } -> matrix_t -> matrix_t,
+    repeatedHorizontal is number -> matrix_t -> matrix_t,
+    repeatedVertical is number -> matrix_t -> matrix_t,
     concatHorizontal is list<matrix_t> -> matrix_t,
     concatVertical is list<matrix_t> -> matrix_t,
     rowSlice is matrix_t -> number -> number -> matrix_t, 
