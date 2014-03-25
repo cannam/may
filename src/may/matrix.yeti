@@ -40,6 +40,8 @@
 
 module may.matrix;
 
+{ ceil } = load may.mathmisc;
+
 vec = load may.vector;
 
 load yeti.experimental.json;
@@ -897,13 +899,37 @@ resizedTo newsize m =
             fi
     fi);
 
+//!!! doc: always dense
 repeatedHorizontal n m =
-   (cols = asColumns m;
-    fromColumns (fold do acc _: acc ++ cols done [] [1..n]));
+   (if n == 1 then m
+    else
+        cols = asColumns m;
+        fromColumns (fold do acc _: acc ++ cols done [] [1..n])
+    fi);
 
+//!!! doc: always dense
 repeatedVertical n m =
-   (rows = asRows m;
-    fromRows (fold do acc _: acc ++ rows done [] [1..n]));
+   (if n == 1 then m
+    else
+        rows = asRows m;
+        fromRows (fold do acc _: acc ++ rows done [] [1..n])
+    fi);
+
+//!!! doc: always dense
+tiledTo newsize m =
+    if newsize == size m then
+        m
+    elif (height m) == 0 or (width m) == 0 then
+        zeroMatrixWithTypeOf m newsize;
+    else    
+        h = ceil (newsize.columns / (width m));
+        v = ceil (newsize.rows / (height m));
+        if isRowMajor? m then
+            resizedTo newsize (repeatedHorizontal h (repeatedVertical v m))
+        else
+            resizedTo newsize (repeatedVertical v (repeatedHorizontal h m))
+        fi
+    fi;
 
 minValue m =
     if width m == 0 or height m == 0 then 0
@@ -994,6 +1020,7 @@ json m =
     entryWiseProduct,
     entryWiseDivide,
     resizedTo,
+    tiledTo,
     repeatedHorizontal,
     repeatedVertical,
     concatHorizontal,
@@ -1057,6 +1084,7 @@ as
     entryWiseProduct is list?<matrix_t> -> matrix_t,
     entryWiseDivide is matrix_t -> matrix_t -> matrix_t,
     resizedTo is { rows is number, columns is number } -> matrix_t -> matrix_t,
+    tiledTo is { rows is number, columns is number } -> matrix_t -> matrix_t,
     repeatedHorizontal is number -> matrix_t -> matrix_t,
     repeatedVertical is number -> matrix_t -> matrix_t,
     concatHorizontal is list<matrix_t> -> matrix_t,

@@ -419,6 +419,33 @@ makeTests name flipper =
                (mat.toSparse (fromColumns [[1,4],[2,5],[3,6]])))
 ),
 
+"tiledTo-\(name)": \(
+    compareMatrices
+       (mat.tiledTo { rows = 2, columns = 2 }
+           (fromColumns [[1,4],[2,5],[3,6]]))
+       (fromColumns [[1,4],[2,5]]) and
+        compareMatrices
+           (mat.tiledTo { rows = 3, columns = 4 }
+               (fromColumns [[1,4],[2,5],[3,6]]))
+           (fromColumns [[1,4,1],[2,5,2],[3,6,3],[1,4,1]]) and
+        compareMatrices
+           (mat.tiledTo { rows = 7, columns = 2 }
+               (fromColumns [[1,4],[2,5],[3,6]]))
+           (fromColumns [[1,4,1,4,1,4,1],[2,5,2,5,2,5,2]]) and
+        compareMatrices
+           (mat.tiledTo { rows = 1, columns = 1 }
+               (fromColumns [[1,4],[2,5],[3,6]]))
+           (fromRows [[1]]) and
+        compareMatrices
+           (mat.tiledTo { rows = 2, columns = 3 }
+               (mat.zeroMatrix { rows = 0, columns = 0 }))
+           (fromRows [[0,0,0],[0,0,0]]) and
+        compareMatrices
+           (mat.tiledTo { rows = 0, columns = 0 }
+               (mat.zeroMatrix { rows = 4, columns = 3 }))
+           (fromRows [])
+),
+
 "zeroSizeMatrix-\(name)": \(
     compareMatrices
        (mat.zeroMatrix { rows = 0, columns = 0 })
