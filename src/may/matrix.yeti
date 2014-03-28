@@ -933,16 +933,37 @@ tiledTo newsize m =
 
 minValue m =
     if width m == 0 or height m == 0 then 0
-    else 
+    elif isSparse? m then
         minv ll = fold min (head ll) (tail ll);
-        minv (map (.v) (enumerate m));
+        minnz = minv (map (.v) (enumerate m));
+        if minnz > 0 and nonZeroValues m < (width m * height m) then 0
+        else minnz fi;
+    elif isRowMajor? m then
+        vec.min (vec.fromList (map vec.min (asRows m)));
+    else
+        vec.min (vec.fromList (map vec.min (asColumns m)));
     fi;
 
 maxValue m =
     if width m == 0 or height m == 0 then 0
-    else 
+    elif isSparse? m then
         maxv ll = fold max (head ll) (tail ll);
-        maxv (map (.v) (enumerate m));
+        maxnz = maxv (map (.v) (enumerate m));
+        if maxnz < 0 and nonZeroValues m < (width m * height m) then 0
+        else maxnz fi;
+    elif isRowMajor? m then
+        vec.max (vec.fromList (map vec.max (asRows m)));
+    else
+        vec.max (vec.fromList (map vec.max (asColumns m)));
+    fi;
+
+total m = 
+    if isSparse? m then
+        fold (+) 0 (map (.v) (enumerateSparse m));
+    elif isRowMajor? m then
+        fold (+) 0 (map vec.sum (asRows m));
+    else
+        fold (+) 0 (map vec.sum (asColumns m));
     fi;
 
 mapRows rf m =
@@ -1007,6 +1028,7 @@ json m =
     scaled,
     minValue,
     maxValue,
+    total,
     asRows,
     asColumns,
     sum = sum',
@@ -1071,6 +1093,7 @@ as
     scaled is number -> matrix_t -> matrix_t,
     minValue is matrix_t -> number,
     maxValue is matrix_t -> number,
+    total is matrix_t -> number,
     asRows is matrix_t -> list<vec.vector_t>, 
     asColumns is matrix_t -> list<vec.vector_t>,
     sum is list?<matrix_t> -> matrix_t,
