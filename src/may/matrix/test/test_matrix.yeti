@@ -227,6 +227,29 @@ makeTests name flipper =
         compareMatrices (mat.mapColumns (vec.scaled 2) m') m''
 ),
 
+"minValue-\(name)": \(
+    compare (mat.minValue (fromRows [[1,2],[3,4],[5,-1]])) (-1) and
+    compare (mat.minValue (fromRows [[1,2],[3,0],[5,-1]])) (-1) and
+    compare (mat.minValue (fromRows [[1,2],[3,0],[5,1]])) 0 and
+    compare (mat.minValue (fromRows [[],[],[]])) 0
+),    
+
+"maxValue-\(name)": \(
+    compare (mat.maxValue (fromRows [[1,2],[3,4],[5,-1]])) 5 and
+    compare (mat.maxValue (fromRows [[1,2],[3,0],[5,-1]])) 5 and
+    compare (mat.maxValue (fromRows [[-1,-2],[-3,0],[-5,-1]])) 0 and
+    compare (mat.maxValue (fromRows [[-1,-2],[-3,-4],[-5,-1]])) (-1) and
+    compare (mat.maxValue (fromRows [[],[],[]])) 0
+),    
+
+"total-\(name)": \(
+    compare (mat.total (fromRows [[1,2],[3,4],[5,-1]])) 14 and
+    compare (mat.total (fromRows [[1,2],[3,0],[5,-1]])) 10 and
+    compare (mat.total (fromRows [[-1,-2],[-3,0],[-5,-1]])) (-12) and
+    compare (mat.total (fromRows [[-1,-2],[-3,-4],[-5,-1]])) (-16) and
+    compare (mat.total (fromRows [[],[],[]])) 0
+),    
+
 "sum-\(name)": \(
     compareMatrices
        (mat.sum [constMatrix 2 { rows = 3, columns = 4 },
