@@ -218,19 +218,19 @@ listOp f vv =
     _: failWith "Empty argument list";
     esac;
 
-//!!! doc: returned vector is same length as first argument (this has changed, formerly it was length of shortest argument)
+//!!! doc: throws exception if not all inputs are of the same length
 add vv is list?<~double[]> -> ~double[] =
     listOp do out v: VectorBits#addTo(out, v) done vv;
 
-//!!! doc: returned vector is same length as first argument (this has changed, formerly it was length of shortest argument)
+//!!! doc: throws exception if not all inputs are of the same length
 subtract v1 v2 is ~double[] -> ~double[] -> ~double[] =
     listOp do out v: VectorBits#subtractFrom(out, v) done [v1, v2];
 
-//!!! doc: returned vector is same length as first argument (this has changed, formerly it was length of shortest argument). If first arg is longer than others, the spare values will become zero
+//!!! doc: throws exception if not all inputs are of the same length
 multiply vv is list?<~double[]> -> ~double[] =
     listOp do out v: VectorBits#multiplyBy(out, v) done vv;
 
-//!!! doc: returned vector is same length as first argument (this has changed, formerly it was length of shortest argument). If first arg is longer than second, the spare values are left untouched (not divided by zero)
+//!!! doc: throws exception if not all inputs are of the same length
 divide v1 v2 is ~double[] -> ~double[] -> ~double[] = 
     listOp do out v: VectorBits#divideBy(out, v) done [v1, v2];
 

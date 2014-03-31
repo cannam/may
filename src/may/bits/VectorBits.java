@@ -3,6 +3,15 @@ package may.bits;
 
 public class VectorBits
 {
+    public static void checkLengths(double[] v1, double[] v2) {
+	if (v1.length != v2.length) {
+	    throw new IllegalArgumentException
+		("Found vector of length " + v2.length +
+		 ", but all so far in this arithmetic operation have had length " +
+		 v1.length);
+	}
+    }
+
     public static double sum(double[] v) {
 	double tot = 0.0;
 	int len = v.length;
@@ -13,6 +22,7 @@ public class VectorBits
     }
 
     public static void multiplyBy(double[] out, double[] in) {
+	checkLengths(out, in);
 	for (int i = 0; i < in.length && i < out.length; ++i) {
 	    out[i] *= in[i];
 	}
@@ -22,18 +32,21 @@ public class VectorBits
     }
 
     public static void divideBy(double[] out, double[] in) {
+	checkLengths(out, in);
 	for (int i = 0; i < in.length && i < out.length; ++i) {
 	    out[i] /= in[i];
 	}
     }
 
     public static void addTo(double[] out, double[] in) {
+	checkLengths(out, in);
 	for (int i = 0; i < in.length && i < out.length; ++i) {
 	    out[i] += in[i];
 	}
     }
 
     public static void subtractFrom(double[] out, double[] in) {
+	checkLengths(out, in);
 	for (int i = 0; i < in.length && i < out.length; ++i) {
 	    out[i] -= in[i];
 	}

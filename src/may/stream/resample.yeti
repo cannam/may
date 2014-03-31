@@ -297,6 +297,7 @@ resampledDirectlyTo targetRate s =
                 pd = phaseData[phase];
 
                 for [0..s.channels-1] do ch:
+//                println "lengths \(vec.length (mat.getRow ch buffer)) and \(vec.length pd.filter)";
                     rowdata[ch][i] := vec.sum
                        (vec.multiply [mat.getRow ch buffer, pd.filter]);
                 done;
