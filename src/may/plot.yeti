@@ -20,6 +20,7 @@ import org.jzy3d.plot3d.primitives.axes: ContourAxeBox;
 import org.jzy3d.contour: DefaultContourColoringPolicy;
 import org.jzy3d.contour: MapperContourPictureGenerator;
 import org.jzy3d.chart.factories.AWTChartComponentFactory;
+import org.jzy3d.plot3d.text.drawable: DrawableTextBillboard, DrawableTextBitmap;
 
 import javax.imageio: ImageIO;
 
@@ -129,6 +130,11 @@ plotSeries chart colour depth { start, step, values } is ~Chart -> ~Color -> num
 */
     ());
 
+addCaption chart colour caption is ~Chart -> ~Color -> string -> () =
+   (scene = chart#getScene();
+    text = new DrawableTextBitmap(caption, new Coord3d(0, 0, 0), colour);
+    scene#add(text));
+
 /**
  * Plot a list of typed structures onto a single chart, and return the
  * resulting Chart object.
@@ -144,6 +150,9 @@ plot structures =
     for structures do s:
         colour = distinctColour j;
         case s of
+        Caption caption:
+            addCaption chart (new Color(0, 0, 0)) caption;
+            j := j - 1; // doesn't count as a distinct structure
         Grid matrix:
             plotMatrix chart colour matrix;
         Contour matrix:
