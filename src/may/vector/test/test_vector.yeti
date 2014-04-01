@@ -163,7 +163,36 @@ vec = load may.vector;
     compare ((vec.mean . vec.zeros) 0) 0 and
         compare ((vec.mean . vec.zeros) 5) 0 and
         compare ((vec.mean . vec.ones) 5) 1 and
-        compare ((vec.mean . vec.fromList) [1,-2,3,0]) 0.5
+        compare ((vec.mean . vec.fromList) [1,-2,3,0]) 0.5 and
+        compare ((vec.mean . vec.fromList) [1,-2,3,2]) 1
+),
+
+"median": \(
+    compare ((vec.median . vec.zeros) 0) 0 and
+        compare ((vec.median . vec.zeros) 5) 0 and
+        compare ((vec.median . vec.ones) 5) 1 and
+        compare ((vec.median . vec.fromList) [-2,1,2,3]) 1.5 and
+        compare ((vec.median . vec.fromList) [1,-2,3,2]) 1.5 and
+        compare ((vec.median . vec.fromList) [1,-2,3,0]) 0.5 and
+        compare ((vec.median . vec.fromList) [1,-2,3,0,6]) 1
+),
+
+"upperQuartile": \(
+    compare ((vec.quantile 0.75 . vec.zeros) 0) 0 and
+        compare ((vec.quantile 0.75 . vec.zeros) 5) 0 and
+        compare ((vec.quantile 0.75 . vec.ones) 5) 1 and
+        compare ((vec.quantile 0.75 . vec.fromList) [0,1,2]) 1.5 and
+        compare ((vec.quantile 0.75 . vec.fromList) [0,1,2,3]) 2.25 and
+        compare ((vec.quantile 0.75 . vec.fromList) [1,-2,3,2]) 2.25
+),
+
+"sorted": \(
+    compare ((vec.list . vec.sorted . vec.zeros) 0) [] and
+        compare ((vec.list . vec.sorted . vec.zeros) 5) [0,0,0,0,0] and
+        compare ((vec.list . vec.sorted . vec.ones) 5) [1,1,1,1,1] and
+        compare ((vec.list . vec.sorted . vec.fromList) [-2,1,2,3]) [-2,1,2,3] and
+        compare ((vec.list . vec.sorted . vec.fromList) [1,-2,3,2]) [-2,1,2,3] and
+        compare ((vec.list . vec.sorted . vec.fromList) [1,-2,-2.1,3,0.5,1]) [-2.1,-2,0.5,1,1,3]
 ),
 
 "add": \(

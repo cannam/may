@@ -5,6 +5,8 @@ mat = load may.matrix;
 vec = load may.vector;
 cpx = load may.complex;
 
+{ floor } = load may.mathmisc;
+
 typedef opaque complexmatrix_t = {
     size is { rows is number, columns is number },
     real is Some mat.matrix_t | None (),
@@ -311,7 +313,7 @@ format m =
               (map do row: map cpx.format row |> strJoin "";
                done (asRows (columnSlice m c0 (c1 + 1))) |> strJoin "\n")
             ];
-        done [0..width m / chunk - 1] |> concat);
+        done [0..floor(width m / chunk)] |> concat);
 
 print' = println . format;
 eprint' = eprintln . format;

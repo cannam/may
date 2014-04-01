@@ -40,7 +40,7 @@
 
 module may.matrix;
 
-{ ceil } = load may.mathmisc;
+{ ceil, floor, random } = load may.mathmisc;
 
 vec = load may.vector;
 
@@ -364,7 +364,7 @@ toDense m =
     };
 
 constMatrix n = generate do row col: n done;
-randomMatrix = generate do row col: Math#random() done;
+randomMatrix = generate do row col: random () done;
 identityMatrix = constMatrix 1;
 
 transposed m =
@@ -992,7 +992,7 @@ format m =
                    done (vec.list row) |> strJoin "";
                done (asRows (columnSlice m c0 (c1 + 1))) |> strJoin "\n")
             ];
-        done [0..width m / chunk - 1] |> concat);
+        done [0..floor(width m / chunk)] |> concat);
 
 print' = println . format;
 eprint' = eprintln . format;

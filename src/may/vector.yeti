@@ -18,7 +18,7 @@ module may.vector;
 import java.util: Arrays;
 import may.bits: VectorBits;
 
-{ ceil } = load may.mathmisc;
+{ floor, ceil } = load may.mathmisc;
 
 /// Return a vector of n zeros.
 zeros n is number -> ~double[] =
@@ -208,6 +208,27 @@ mean v is ~double[] -> number =
         len: sum' v / len
     esac;
 
+sorted v is ~double[] -> ~double[] =
+   (v' = copyOf v;
+    Arrays#sort(v');
+    v');
+
+quantile q v is number -> ~double[] -> number =
+    if empty? v then 0
+    else
+        v = sorted v;
+        dist = q * (length v - 1);
+        low = floor dist;
+        high = ceil dist;
+        if low == high then v[low]
+        else
+            v[low] * (high - dist) + v[high] * (dist - low);
+        fi;
+    fi;
+
+median v is ~double[] -> number =
+    quantile 0.5 v;
+
 listOp f vv =
     case vv of
     [v]: v;
@@ -322,10 +343,13 @@ typedef opaque vector_t = ~double[];
     slice,
     resizedTo,
     reverse,
+    sorted,
     repeated,
     concat = concat',
     sum = sum',
     mean,
+    median,
+    quantile,
     add,
     subtract,
     multiply,
@@ -364,10 +388,13 @@ typedef opaque vector_t = ~double[];
     slice is vector_t -> number -> number -> vector_t,
     resizedTo is number -> vector_t -> vector_t,
     reverse is vector_t -> vector_t,
+    sorted is vector_t -> vector_t,
     repeated is vector_t -> number -> vector_t,
     concat is list?<vector_t> -> vector_t,
     sum is vector_t -> number,
     mean is vector_t -> number,
+    median is vector_t -> number,
+    quantile is number -> vector_t -> number,
     add is list?<vector_t> -> vector_t,
     subtract is vector_t -> vector_t -> vector_t,
     multiply is list?<vector_t> -> vector_t, 
