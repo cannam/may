@@ -3,7 +3,6 @@ module may.feature.specdiff;
 
 fr = load may.stream.framer;
 ch = load may.stream.channels;
-cm = load may.matrix.complex;
 
 load may.feature.feature;
 

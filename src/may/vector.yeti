@@ -18,7 +18,7 @@ module may.vector;
 import java.util: Arrays;
 import may.bits: VectorBits;
 
-{ ceil } = load may.mathmisc;
+{ floor, ceil } = load may.mathmisc;
 
 /// Return a vector of n zeros.
 zeros n is number -> ~double[] =
@@ -32,6 +32,10 @@ consts m n is number -> number -> ~double[] =
 
 /// Return a vector of length n, containing all ones.
 ones n = consts 1.0 n;
+
+/// Return a vector of length n, containing random values.
+randoms n is number -> ~double[] =
+   (map \(Math#random()) [1..n]) as ~double[];
 
 /// Return a vector of the values in the given list.
 fromList l is list?<number> -> ~double[] =
@@ -204,24 +208,52 @@ mean v is ~double[] -> number =
         len: sum' v / len
     esac;
 
+sorted v is ~double[] -> ~double[] =
+   (v' = copyOf v;
+    Arrays#sort(v');
+    v');
+
+quantile q v is number -> ~double[] -> number =
+    if empty? v then 0
+    else
+        v = sorted v;
+        dist = q * (length v - 1);
+        low = floor dist;
+        high = ceil dist;
+        if low == high then v[low]
+        else
+            v[low] * (high - dist) + v[high] * (dist - low);
+        fi;
+    fi;
+
+median v is ~double[] -> number =
+    quantile 0.5 v;
+
+listOp f vv =
+    case vv of
+    [v]: v;
+    v::rest:
+       (out = copyOf v;
+        for rest (f out);
+        out);
+    _: failWith "Empty argument list";
+    esac;
+
+//!!! doc: throws exception if not all inputs are of the same length
 add vv is list?<~double[]> -> ~double[] =
-   (len = head (sort (map length' vv));
-    out = new double[len];
-    for vv do v:
-        VectorBits#addTo(out, v, len);
-    done;
-    out);
+    listOp do out v: VectorBits#addTo(out, v) done vv;
 
+//!!! doc: throws exception if not all inputs are of the same length
 subtract v1 v2 is ~double[] -> ~double[] -> ~double[] =
-   (len = if length v1 < length v2 then length v1 else length v2 fi;
-    out = new double[len];
-    for [0..len-1] do i:
-        out[i] := v1[i] - v2[i]
-    done;
-    out);
+    listOp do out v: VectorBits#subtractFrom(out, v) done [v1, v2];
 
-multiply b1 b2 is ~double[] -> ~double[] -> ~double[] = 
-    VectorBits#multiply(b1, b2);
+//!!! doc: throws exception if not all inputs are of the same length
+multiply vv is list?<~double[]> -> ~double[] =
+    listOp do out v: VectorBits#multiplyBy(out, v) done vv;
+
+//!!! doc: throws exception if not all inputs are of the same length
+divide v1 v2 is ~double[] -> ~double[] -> ~double[] = 
+    listOp do out v: VectorBits#divideBy(out, v) done [v1, v2];
 
 scaled n v is number -> ~double[] -> ~double[] =
     if n == 1 then v
@@ -236,7 +268,9 @@ divideBy n v is number -> ~double[] -> ~double[] =
     fi;
 
 sqr v =
-    multiply v v;
+   (out = copyOf v;
+    VectorBits#multiplyBy(out, v);
+    out);
 
 rms =
     sqrt . mean . sqr;
@@ -293,6 +327,7 @@ typedef opaque vector_t = ~double[];
     zeros,
     consts,
     ones,
+    randoms,
     vector v = v,
     primitive,
     floats,
@@ -308,15 +343,19 @@ typedef opaque vector_t = ~double[];
     slice,
     resizedTo,
     reverse,
+    sorted,
     repeated,
     concat = concat',
     sum = sum',
     mean,
+    median,
+    quantile,
     add,
     subtract,
     multiply,
-    divideBy,
+    divide,
     scaled,
+    divideBy,
     abs = abs',
     negative,
     sqr,
@@ -333,6 +372,7 @@ typedef opaque vector_t = ~double[];
     zeros is number -> vector_t,
     consts is number -> number -> vector_t,
     ones is number -> vector_t,
+    randoms is number -> vector_t,
     vector is ~double[] -> vector_t,
     primitive is vector_t -> ~double[],
     floats is vector_t -> ~float[],
@@ -348,15 +388,19 @@ typedef opaque vector_t = ~double[];
     slice is vector_t -> number -> number -> vector_t,
     resizedTo is number -> vector_t -> vector_t,
     reverse is vector_t -> vector_t,
+    sorted is vector_t -> vector_t,
     repeated is vector_t -> number -> vector_t,
     concat is list?<vector_t> -> vector_t,
     sum is vector_t -> number,
     mean is vector_t -> number,
+    median is vector_t -> number,
+    quantile is number -> vector_t -> number,
     add is list?<vector_t> -> vector_t,
     subtract is vector_t -> vector_t -> vector_t,
-    multiply is vector_t -> vector_t -> vector_t, 
-    divideBy is number -> vector_t -> vector_t, 
+    multiply is list?<vector_t> -> vector_t, 
+    divide is vector_t -> vector_t -> vector_t, 
     scaled is number -> vector_t -> vector_t,
+    divideBy is number -> vector_t -> vector_t, 
     abs is vector_t -> vector_t,
     negative is vector_t -> vector_t,
     sqr is vector_t -> vector_t,

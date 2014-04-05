@@ -40,8 +40,11 @@
 
 module may.matrix;
 
+{ ceil, floor, random } = load may.mathmisc;
+
 vec = load may.vector;
-mm = load may.mathmisc;
+
+load yeti.experimental.json;
 
 typedef opaque matrix_t = {
     size is { rows is number, columns is number },
@@ -361,7 +364,7 @@ toDense m =
     };
 
 constMatrix n = generate do row col: n done;
-randomMatrix = generate do row col: Math#random() done;
+randomMatrix = generate do row col: random () done;
 identityMatrix = constMatrix 1;
 
 transposed m =
@@ -503,16 +506,22 @@ sparseSumOrDifference op m1 m2 =
             done (keys h));
     newSparseMatching m1 entries);
 
-sum' m1 m2 =
-    if (size m1) != (size m2)
-    then failWith "Matrices are not the same size: \(size m1), \(size m2)";
-    elif isSparse? m1 and isSparse? m2 then
-        sparseSumOrDifference (+) m1 m2;
-    else
-        add2 v1 v2 = vec.add [v1,v2];
-        denseLinearOp add2 m1 m2;
-    fi;
-
+sum' mm =
+    case mm of
+    m1::m2::rest:
+        sum' 
+           (if (size m1) != (size m2)
+            then failWith "Matrices are not the same size: \(size m1), \(size m2)";
+            elif isSparse? m1 and isSparse? m2 then
+                sparseSumOrDifference (+) m1 m2;
+            else
+                add2 v1 v2 = vec.add [v1,v2];
+                denseLinearOp add2 m1 m2;
+            fi :: rest);
+    [m1]: m1;
+    _: failWith "Empty argument list";
+    esac;
+    
 difference m1 m2 =
     if (size m1) != (size m2)
     then failWith "Matrices are not the same size: \(size m1), \(size m2)";
@@ -652,7 +661,7 @@ denseProduct size m1 m2 =
     for [0..size.rows - 1] do i:
         row = getRow i m1;
         for [0..size.columns - 1] do j:
-            data[j][i] := vec.sum (vec.multiply row (getColumn j m2));
+            data[j][i] := vec.sum (vec.multiply [row, getColumn j m2]);
         done;
     done;
     newMatrix size (Columns (array (map vec.vector (list data)))));
@@ -675,11 +684,52 @@ product m1 m2 =
         fi;
     fi;
 
-entryWiseProduct m1 m2 = // or element-wise, or Hadamard product
-//!!! todo: faster, sparse version, unit tests
+entryWiseProduct mm =
+    case mm of
+    m1::m2::rest:
+        entryWiseProduct
+           (if (size m1) != (size m2)
+            then failWith "Matrices are not the same size: \(size m1), \(size m2)";
+            else 
+                if isSparse? m1 then
+                    newSparse (size m1)
+                       ((taggerForTypeOf m1)
+                           (map do { i, j, v }: { i, j, v = v * (at' m2 i j) } done
+                               (enumerateSparse m1)))
+                elif isSparse? m2 then
+                    entryWiseProduct (m2::m1::rest)
+                else
+                    if isRowMajor? m1 then
+                        fromRows (array (map2 do v1 v2: vec.multiply [v1,v2] done
+                           (asRows m1) (asRows m2)));
+                    else
+                        fromColumns (array (map2 do v1 v2: vec.multiply [v1,v2] done
+                           (asColumns m1) (asColumns m2)));
+                    fi
+                fi
+            fi :: rest);
+    [m1]: m1;
+    _: failWith "Empty argument list";
+    esac;
+
+entryWiseDivide m1 m2 =
     if (size m1) != (size m2)
     then failWith "Matrices are not the same size: \(size m1), \(size m2)";
-    else generate do row col: at' m1 row col * at' m2 row col done (size m1);
+    else 
+        if isSparse? m1 then
+            newSparse (size m1)
+               ((taggerForTypeOf m1)
+                   (map do { i, j, v }: { i, j, v = v / (at' m2 i j) } done
+                       (enumerateSparse m1)))
+        // For m2 to be sparse makes no sense (divide by zero all over
+        // the shop).
+        else
+            if isRowMajor? m1 then
+                fromRows (array (map2 vec.divide (asRows m1) (asRows m2)));
+            else
+                fromColumns (array (map2 vec.divide (asColumns m1) (asColumns m2)));
+            fi
+        fi
     fi;
 
 concatAgainstGrain tagger getter counter mm =
@@ -691,11 +741,10 @@ concatAgainstGrain tagger getter counter mm =
 
 concatWithGrain tagger getter counter mm =
     tagger (array
-       (concat
-           (map do m:
-               n = counter (size m);
-               map do i: getter i m done [0..n-1]
-               done mm)));
+       (concatMap do m:
+           n = counter (size m);
+           map do i: getter i m done [0..n-1]
+        done mm));
 
 sparseConcat direction first mm =
    (dimension d f = if direction == d then sum (map f mm) else f first fi;
@@ -850,18 +899,71 @@ resizedTo newsize m =
             fi
     fi);
 
+//!!! doc: always dense
+repeatedHorizontal n m =
+   (if n == 1 then m
+    else
+        cols = asColumns m;
+        fromColumns (fold do acc _: acc ++ cols done [] [1..n])
+    fi);
+
+//!!! doc: always dense
+repeatedVertical n m =
+   (if n == 1 then m
+    else
+        rows = asRows m;
+        fromRows (fold do acc _: acc ++ rows done [] [1..n])
+    fi);
+
+//!!! doc: always dense
+tiledTo newsize m =
+    if newsize == size m then
+        m
+    elif (height m) == 0 or (width m) == 0 then
+        zeroMatrixWithTypeOf m newsize;
+    else    
+        h = ceil (newsize.columns / (width m));
+        v = ceil (newsize.rows / (height m));
+        if isRowMajor? m then
+            resizedTo newsize (repeatedHorizontal h (repeatedVertical v m))
+        else
+            resizedTo newsize (repeatedVertical v (repeatedHorizontal h m))
+        fi
+    fi;
+
 minValue m =
     if width m == 0 or height m == 0 then 0
-    else 
+    elif isSparse? m then
         minv ll = fold min (head ll) (tail ll);
-        minv (map (.v) (enumerate m));
+        minnz = minv (map (.v) (enumerate m));
+        if minnz > 0 and nonZeroValues m < (width m * height m) then 0
+        else minnz fi;
+    elif isRowMajor? m then
+        vec.min (vec.fromList (map vec.min (asRows m)));
+    else
+        vec.min (vec.fromList (map vec.min (asColumns m)));
     fi;
 
 maxValue m =
     if width m == 0 or height m == 0 then 0
-    else 
+    elif isSparse? m then
         maxv ll = fold max (head ll) (tail ll);
-        maxv (map (.v) (enumerate m));
+        maxnz = maxv (map (.v) (enumerate m));
+        if maxnz < 0 and nonZeroValues m < (width m * height m) then 0
+        else maxnz fi;
+    elif isRowMajor? m then
+        vec.max (vec.fromList (map vec.max (asRows m)));
+    else
+        vec.max (vec.fromList (map vec.max (asColumns m)));
+    fi;
+
+total m = 
+    if isSparse? m then
+        fold (+) 0 (map (.v) (enumerateSparse m));
+    elif isRowMajor? m then
+        fold (+) 0 (map vec.sum (asRows m));
+    else
+        fold (+) 0 (map vec.sum (asColumns m));
     fi;
 
 mapRows rf m =
@@ -880,21 +982,23 @@ format m =
             [ "\nColumns \(c0) to \(c1)\n",
               (map do row:
                    map do v:
-                   //!!! not right -- want to round to 1dp of exp notation if less than 1e-4
-                       n = mm.round (v * 100000);
-                       strPad ' ' 10 "\(n / 100000)";
+                       strPad ' ' 10
+                          (if v == 0 then "0.0"
+                           elif abs v >= 1000.0 or abs v < 0.01 then
+                               String#format("%.2E", [v as ~Double])
+                           else
+                               String#format("%5f", [v as ~Double])
+                           fi);
                    done (vec.list row) |> strJoin "";
                done (asRows (columnSlice m c0 (c1 + 1))) |> strJoin "\n")
             ];
-        done [0..width m / chunk - 1] |> concat);
+        done [0..floor(width m / chunk)] |> concat);
 
 print' = println . format;
 eprint' = eprintln . format;
 
-//!!! todo: look at all occurrences of matrix (and complexmatrix)
-// construction and make sure we have good apis for those use cases.
-// in particular, constructing from literal data (list<list<number>>)
-// is much too hard at the moment.
+json m =
+    jsonList (map do r: jsonList (map jsonNum (vec.list r)) done (asRows m));
 
 {
     size,
@@ -922,9 +1026,9 @@ eprint' = eprintln . format;
     toSparse,
     toDense,
     scaled,
-    resizedTo,
     minValue,
     maxValue,
+    total,
     asRows,
     asColumns,
     sum = sum',
@@ -936,6 +1040,11 @@ eprint' = eprintln . format;
     any = any',
     product,
     entryWiseProduct,
+    entryWiseDivide,
+    resizedTo,
+    tiledTo,
+    repeatedHorizontal,
+    repeatedVertical,
     concatHorizontal,
     concatVertical,
     rowSlice,
@@ -953,6 +1062,7 @@ eprint' = eprintln . format;
     format,
     print = print',
     eprint = eprint',
+    json,
 }
 as
 {
@@ -981,12 +1091,12 @@ as
     toSparse is matrix_t -> matrix_t,
     toDense is matrix_t -> matrix_t,
     scaled is number -> matrix_t -> matrix_t,
-    resizedTo is { rows is number, columns is number } -> matrix_t -> matrix_t,
     minValue is matrix_t -> number,
     maxValue is matrix_t -> number,
+    total is matrix_t -> number,
     asRows is matrix_t -> list<vec.vector_t>, 
     asColumns is matrix_t -> list<vec.vector_t>,
-    sum is matrix_t -> matrix_t -> matrix_t,
+    sum is list?<matrix_t> -> matrix_t,
     difference is matrix_t -> matrix_t -> matrix_t,
     abs is matrix_t -> matrix_t,
     negative is matrix_t -> matrix_t,
@@ -994,7 +1104,12 @@ as
     all is (number -> boolean) -> matrix_t -> boolean,
     any is (number -> boolean) -> matrix_t -> boolean,
     product is matrix_t -> matrix_t -> matrix_t,
-    entryWiseProduct is matrix_t -> matrix_t -> matrix_t,
+    entryWiseProduct is list?<matrix_t> -> matrix_t,
+    entryWiseDivide is matrix_t -> matrix_t -> matrix_t,
+    resizedTo is { rows is number, columns is number } -> matrix_t -> matrix_t,
+    tiledTo is { rows is number, columns is number } -> matrix_t -> matrix_t,
+    repeatedHorizontal is number -> matrix_t -> matrix_t,
+    repeatedVertical is number -> matrix_t -> matrix_t,
     concatHorizontal is list<matrix_t> -> matrix_t,
     concatVertical is list<matrix_t> -> matrix_t,
     rowSlice is matrix_t -> number -> number -> matrix_t, 
@@ -1012,5 +1127,6 @@ as
     format is matrix_t -> string,
     print is matrix_t -> (),
     eprint is matrix_t -> (),
+    json is matrix_t -> json,
 }
 

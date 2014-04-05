@@ -44,6 +44,16 @@ compareMatrices tolerance obtained expected =
         false;
     fi);
 
+assertException f =
+    try
+        \() (f ());
+        println "** failed to catch expected exception";
+        false;
+    catch Exception _:
+        goodCompares := goodCompares + 1;
+        true;
+    yrt;
+
 time msg f =
    (start = System#currentTimeMillis();
     result = f ();
@@ -62,8 +72,12 @@ failedTests testHash =
                     println "Test \(name) failed";
                     name;
                 fi 
-            catch FailureException e:
+            catch Exception e:
                 println "Test \(name) threw exception: \(e)";
+                trace = e#getStackTrace();
+                maxLen = 10;
+                for (take maxLen trace) do e: println "    at \(e)" done;
+                if length trace > maxLen then println "    ..." fi;
                 name;
             yrt;
         done (sort (keys testHash)));
@@ -81,7 +95,7 @@ runTests group testHash =
     bad);
 
 {
-    compare, compareUsing, compareMatrices, assert,
+    compare, compareUsing, compareMatrices, assert, assertException,
     time,
     runTests, 
 }

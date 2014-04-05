@@ -65,6 +65,9 @@ nextPowerOfTwo x =
         np x 1;
     fi;
 
+random () =
+    Math#random();
+
 {
     gcd,
     factorial,
@@ -76,5 +79,6 @@ nextPowerOfTwo x =
     log2,
     isPowerOfTwo,
     nextPowerOfTwo,
+    random,
 }
 

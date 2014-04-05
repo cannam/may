@@ -70,7 +70,8 @@ frames' framesize hop padded stream =
             else 
                 mat.asRows
                    (mat.concatHorizontal
-                       [mat.zeroMatrix { rows = stream.channels, columns = hop },
+                       [mat.toRowMajor
+                           (mat.zeroMatrix { rows = stream.channels, columns = hop }),
                         stream.read (framesize - hop)]);
             fi;
         overlappingBlockList framesize hop stream framesize initialBuffer;
@@ -85,7 +86,8 @@ frames framesize options stream =
         Hop h: hop := h;
         Padded p: padded := p;
         Window w:
-            windower := mat.mapRows (vec.multiply (w framesize));
+           (window = w framesize;
+            windower := mat.mapRows (do v: vec.multiply [v, window] done));
         FrequencyDomain f:
             if f then
                 transform := mat.mapRows (fft.realForwardMagnitude framesize);
@@ -105,7 +107,8 @@ complexFrames framesize options stream =
         Hop h: hop := h;
         Padded p: padded := p;
         Window w:
-            windower := mat.mapRows (vec.multiply (w framesize));
+           (window = w framesize;
+            windower := mat.mapRows (do v: vec.multiply [v, window] done));
         FrequencyDomain f:
         //!!! what if both f and not-f provided in one options list? need reset
             if f then 
@@ -122,7 +125,8 @@ streamContiguous rate framesize frames =
    (var remaining = frames;
     var position = 0;
     channels = mat.height (head frames); // so we don't need to keep a head ptr
-    var buffered = mat.zeroMatrix { rows = channels, columns = 0 };
+    var buffered = mat.toRowMajor
+       (mat.zeroMatrix { rows = channels, columns = 0 });
     {
         get position () = position,
         get channels () = channels,
@@ -159,9 +163,10 @@ overlapAdd overlap frames =
         first::rest:
            (w = mat.width pending;
             pre = mat.columnSlice pending 0 (w - overlap);
-            added = mat.sum first
-               (mat.resizedTo (mat.size first)
-               (mat.columnSlice pending (w - overlap) w));
+            added = mat.sum
+               [first,
+                (mat.resizedTo (mat.size first)
+                    (mat.columnSlice pending (w - overlap) w))];
             ola rest added (pre::acc));
          _:
             reverse (pending::acc);
@@ -170,7 +175,7 @@ overlapAdd overlap frames =
     first::rest:
         mat.concatHorizontal (ola rest first []);
      _: 
-        mat.zeroMatrix { rows = 0, columns = 0 };
+        mat.toRowMajor (mat.zeroMatrix { rows = 0, columns = 0 });
     esac);
 
 streamOverlapping rate { framesize, hop, window } frames =
@@ -181,7 +186,8 @@ streamOverlapping rate { framesize, hop, window } frames =
     w = vec.scaled factor (window framesize);
     channels = mat.height (head frames); // so we don't need to keep a head ptr
 
-    var buffered = mat.zeroMatrix { rows = channels, columns = 0 };
+    var buffered = 
+        mat.toRowMajor (mat.zeroMatrix { rows = channels, columns = 0 });
 
     syncd = synchronized remaining;
 
@@ -193,7 +199,7 @@ streamOverlapping rate { framesize, hop, window } frames =
                 reverse acc
             else
                 this = mat.resizedTo { columns = framesize, rows = channels }
-                   (mat.mapRows (vec.multiply w) (head remaining));
+                   (mat.mapRows do v: vec.multiply [v,w] done (head remaining));
                 remaining := tail remaining;
                 framesFor (samples - hop) (this::acc)
             fi;

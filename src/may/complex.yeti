@@ -2,7 +2,6 @@
 module may.complex;
 
 vec = load may.vector;
-mm = load may.mathmisc;
 
 import java.lang: ClassCastException;
 
@@ -31,13 +30,16 @@ class Cplx(double real, double imag)
         fi,
     String format()
        (f v r =
-       //!!! not right -- want to round to 1dp of exp notation if less than 1e-4
-           (n = mm.round (v * 10000);
-            s = "\(n / 10000)";
+           (s = if v == 0.0 then "0.0"
+                elif abs v >= 1000.0 or abs v < 0.01 then
+                    String#format("%.1E", [v as ~Double])
+                else
+                    String#format("%4f", [v as ~Double])
+                fi;
             if r then
-               (strPad ' ' (8 - strLength s) '') ^ s
+               (strPad ' ' (9 - strLength s) '') ^ s
             else
-                strPad ' ' 7 "\(s)i";
+                strPad ' ' 8 "\(s)i";
             fi);
         if imag < 0 then
             " \(f real true)-\(f (-imag) false)"

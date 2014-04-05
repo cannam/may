@@ -3,7 +3,7 @@ module may.vector.test.test_vector;
 
 vec = load may.vector;
 
-{ compare } = load may.test;
+{ compare, assertException } = load may.test;
 
 [
 
@@ -163,34 +163,70 @@ vec = load may.vector;
     compare ((vec.mean . vec.zeros) 0) 0 and
         compare ((vec.mean . vec.zeros) 5) 0 and
         compare ((vec.mean . vec.ones) 5) 1 and
-        compare ((vec.mean . vec.fromList) [1,-2,3,0]) 0.5
+        compare ((vec.mean . vec.fromList) [1,-2,3,0]) 0.5 and
+        compare ((vec.mean . vec.fromList) [1,-2,3,2]) 1
+),
+
+"median": \(
+    compare ((vec.median . vec.zeros) 0) 0 and
+        compare ((vec.median . vec.zeros) 5) 0 and
+        compare ((vec.median . vec.ones) 5) 1 and
+        compare ((vec.median . vec.fromList) [-2,1,2,3]) 1.5 and
+        compare ((vec.median . vec.fromList) [1,-2,3,2]) 1.5 and
+        compare ((vec.median . vec.fromList) [1,-2,3,0]) 0.5 and
+        compare ((vec.median . vec.fromList) [1,-2,3,0,6]) 1
+),
+
+"upperQuartile": \(
+    compare ((vec.quantile 0.75 . vec.zeros) 0) 0 and
+        compare ((vec.quantile 0.75 . vec.zeros) 5) 0 and
+        compare ((vec.quantile 0.75 . vec.ones) 5) 1 and
+        compare ((vec.quantile 0.75 . vec.fromList) [0,1,2]) 1.5 and
+        compare ((vec.quantile 0.75 . vec.fromList) [0,1,2,3]) 2.25 and
+        compare ((vec.quantile 0.75 . vec.fromList) [1,-2,3,2]) 2.25
+),
+
+"sorted": \(
+    compare ((vec.list . vec.sorted . vec.zeros) 0) [] and
+        compare ((vec.list . vec.sorted . vec.zeros) 5) [0,0,0,0,0] and
+        compare ((vec.list . vec.sorted . vec.ones) 5) [1,1,1,1,1] and
+        compare ((vec.list . vec.sorted . vec.fromList) [-2,1,2,3]) [-2,1,2,3] and
+        compare ((vec.list . vec.sorted . vec.fromList) [1,-2,3,2]) [-2,1,2,3] and
+        compare ((vec.list . vec.sorted . vec.fromList) [1,-2,-2.1,3,0.5,1]) [-2.1,-2,0.5,1,1,3]
 ),
 
 "add": \(
-    compare (vec.list (vec.add [vec.zeros 0, vec.ones 5])) [] and
-        compare (vec.list (vec.add [vec.consts 3 4, vec.fromList [1,2,3] ])) [4,5,6] and
-        compare (vec.list (vec.add [vec.consts (-3) 4, vec.fromList [1,2,3] ])) [-2,-1,0] 
+    compare (vec.list (vec.add [vec.zeros 0, vec.ones 0])) [] and
+        compare (vec.list (vec.add [vec.consts 3 4, vec.fromList [1,2,3,0] ])) [4,5,6,3] and
+        assertException \(vec.add [vec.consts 3 3, vec.fromList [1,2,3], vec.fromList [6,7,8,9] ])
 ),
 
 "subtract": \(
-    compare (vec.list (vec.subtract (vec.zeros 0) (vec.ones 5))) [] and
-        compare (vec.list (vec.subtract (vec.consts 3 4) (vec.fromList [1,2,3]))) [2,1,0] and
-        compare (vec.list (vec.subtract (vec.consts (-3) 4) (vec.fromList [1,2,3]))) [-4,-5,-6]
+    compare (vec.list (vec.subtract (vec.zeros 0) (vec.ones 0))) [] and
+        compare (vec.list (vec.subtract (vec.consts 3 4) (vec.fromList [1,2,3,0]))) [2,1,0,3] and
+        assertException \(vec.subtract (vec.consts (-3) 4) (vec.fromList [1,2,3]))
 ),
 
 "multiply": \(
-    compare (vec.list (vec.multiply (vec.zeros 0) (vec.ones 5))) [] and
-        compare (vec.list (vec.multiply (vec.consts (-3) 4) (vec.fromList [1,2,3]))) [-3,-6,-9]
+    compare (vec.list (vec.multiply [vec.zeros 0, vec.ones 0])) [] and
+        compare (vec.list (vec.multiply [vec.consts (-3) 4, vec.fromList [1,2,3,0]])) [-3,-6,-9,0] and
+        assertException \(vec.multiply [vec.consts 3 3, vec.fromList [1,2,3], vec.fromList [6,7,8,9]])
 ),
 
-"divideBy": \(
-    compare (vec.list (vec.divideBy 5 (vec.ones 0))) [] and
-        compare (vec.list (vec.divideBy 5 (vec.fromList [1,2,-3]))) [0.2,0.4,-0.6]
+"divide": \(
+    compare (vec.list (vec.divide (vec.zeros 0) (vec.ones 0))) [] and
+        compare (vec.list (vec.divide (vec.consts (-3) 3) (vec.fromList [1,2,3]))) [-3,-(3/2),-1] and
+        assertException \(vec.divide (vec.consts (-3) 4) (vec.fromList [1,2,3]));
 ),
 
 "scaled": \(
     compare (vec.list (vec.scaled 5 (vec.ones 0))) [] and
         compare (vec.list (vec.scaled 5 (vec.fromList [1,2,-3]))) [5,10,-15]
+),
+
+"divideBy": \(
+    compare (vec.list (vec.divideBy 5 (vec.ones 0))) [] and
+        compare (vec.list (vec.divideBy 5 (vec.fromList [1,2,-3]))) [0.2,0.4,-0.6]
 ),
 
 "abs": \(

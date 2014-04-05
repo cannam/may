@@ -208,19 +208,19 @@ windowFunction type options =
 
 //!!! doc note: recalculates window every time! not fast for multiple blocks, consider windowedFrames then
 windowed windowFunc data =
-    vec.multiply (windowFunc (vec.length data)) data;
+    vec.multiply [windowFunc (vec.length data), data];
 
 windowedRows windowFunc matrix = 
    (w = windowFunc (mat.width matrix);
     mat.fromRows
-       (map (vec.multiply w) (mat.asRows matrix)));
+       (map do v: vec.multiply [v,w] done (mat.asRows matrix)));
 
 windowedFrames windowFunc frames =
     case frames of
         []: frames;
          _: (first = head frames;
              window = windowFunc (vec.length first);
-             map (vec.multiply window) frames);
+             map do v: vec.multiply [v,window] done frames);
     esac;
 
 {

@@ -25,7 +25,7 @@ kaiserSincFilterFor { n, attenuation, bandwidth, samplerate } =
     length = if length > maxlength then maxlength else length fi;
     kw = win.kaiser (pp with { length });
     sw = win.sinc (n*2) length;
-    vec.multiply sw kw);
+    vec.multiply [sw, kw]);
 
 durationAdjusterFor factor s =
     case s.available of
@@ -297,8 +297,9 @@ resampledDirectlyTo targetRate s =
                 pd = phaseData[phase];
 
                 for [0..s.channels-1] do ch:
+//                println "lengths \(vec.length (mat.getRow ch buffer)) and \(vec.length pd.filter)";
                     rowdata[ch][i] := vec.sum
-                       (vec.multiply (mat.getRow ch buffer) pd.filter);
+                       (vec.multiply [mat.getRow ch buffer, pd.filter]);
                 done;
             
                 buffer := mat.concatHorizontal
@@ -335,7 +336,10 @@ resampledDirectlyTo targetRate s =
             fi)
     });
 
-resampledTo = resampledDirectlyTo;
+resampledTo targetRate s =
+    if s.sampleRate == targetRate then s
+    else resampledDirectlyTo targetRate s;
+    fi;
 
 {
     kaiserSincFilterFor,

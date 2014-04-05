@@ -77,7 +77,8 @@ showChart opts chart is 'a -> ~Chart -> () =
         \() ChartLauncher#openStaticChart(chart);
     fi;
     if opts.saveTo != "" then
-        \() chart#screenshot(opts.saveTo);
+        outfile = new File(opts.saveTo);
+        \() chart#screenshot(outfile);
     fi);
     
 plotBarChart options values =

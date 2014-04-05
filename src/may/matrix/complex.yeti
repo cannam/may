@@ -5,6 +5,8 @@ mat = load may.matrix;
 vec = load may.vector;
 cpx = load may.complex;
 
+{ floor } = load may.mathmisc;
+
 typedef opaque complexmatrix_t = {
     size is { rows is number, columns is number },
     real is Some mat.matrix_t | None (),
@@ -204,7 +206,7 @@ addParts p1 p2 =
     case p1 of
     Some m1:
         case p2 of
-        Some m2: Some (mat.sum m1 m2);
+        Some m2: Some (mat.sum [m1, m2]);
         none: Some m1;
         esac;
     none:
@@ -239,16 +241,22 @@ multiplyParts p1 p2 =
         none;
     esac;
 
-sum c1 c2 =
-   (a = c1.real;
-    b = c1.imaginary;
-    c = c2.real;
-    d = c2.imaginary;
-    {
-        size = c1.size,
-        real = addParts a c,
-        imaginary = addParts b d,
-    });
+sum cc =
+    case cc of
+    c1::c2::rest:
+        sum
+           (a = c1.real;
+            b = c1.imaginary;
+            c = c2.real;
+            d = c2.imaginary;
+            {
+                size = c1.size,
+                real = addParts a c,
+                imaginary = addParts b d,
+            } :: rest);
+    [c1]: c1;
+    _: failWith "Empty argument list";
+    esac;
 
 product c1 c2 =
    (a = c1.real;
@@ -305,7 +313,7 @@ format m =
               (map do row: map cpx.format row |> strJoin "";
                done (asRows (columnSlice m c0 (c1 + 1))) |> strJoin "\n")
             ];
-        done [0..width m / chunk - 1] |> concat);
+        done [0..floor(width m / chunk)] |> concat);
 
 print' = println . format;
 eprint' = eprintln . format;
@@ -374,7 +382,7 @@ eprint' = eprintln . format;
     toSparse is complexmatrix_t -> complexmatrix_t,
     toDense is complexmatrix_t -> complexmatrix_t,
     scaled is number -> complexmatrix_t -> complexmatrix_t,
-    sum is complexmatrix_t -> complexmatrix_t -> complexmatrix_t,
+    sum is list?<complexmatrix_t> -> complexmatrix_t,
     difference is complexmatrix_t -> complexmatrix_t -> complexmatrix_t,
     abs is complexmatrix_t -> mat.matrix_t,
     product is complexmatrix_t -> complexmatrix_t -> complexmatrix_t,

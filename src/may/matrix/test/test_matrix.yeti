@@ -227,17 +227,45 @@ makeTests name flipper =
         compareMatrices (mat.mapColumns (vec.scaled 2) m') m''
 ),
 
+"minValue-\(name)": \(
+    compare (mat.minValue (fromRows [[1,2],[3,4],[5,-1]])) (-1) and
+    compare (mat.minValue (fromRows [[1,2],[3,0],[5,-1]])) (-1) and
+    compare (mat.minValue (fromRows [[1,2],[3,0],[5,1]])) 0 and
+    compare (mat.minValue (fromRows [[],[],[]])) 0
+),    
+
+"maxValue-\(name)": \(
+    compare (mat.maxValue (fromRows [[1,2],[3,4],[5,-1]])) 5 and
+    compare (mat.maxValue (fromRows [[1,2],[3,0],[5,-1]])) 5 and
+    compare (mat.maxValue (fromRows [[-1,-2],[-3,0],[-5,-1]])) 0 and
+    compare (mat.maxValue (fromRows [[-1,-2],[-3,-4],[-5,-1]])) (-1) and
+    compare (mat.maxValue (fromRows [[],[],[]])) 0
+),    
+
+"total-\(name)": \(
+    compare (mat.total (fromRows [[1,2],[3,4],[5,-1]])) 14 and
+    compare (mat.total (fromRows [[1,2],[3,0],[5,-1]])) 10 and
+    compare (mat.total (fromRows [[-1,-2],[-3,0],[-5,-1]])) (-12) and
+    compare (mat.total (fromRows [[-1,-2],[-3,-4],[-5,-1]])) (-16) and
+    compare (mat.total (fromRows [[],[],[]])) 0
+),    
+
 "sum-\(name)": \(
     compareMatrices
-       (mat.sum (constMatrix 2 { rows = 3, columns = 4 })
-                (constMatrix 1 { rows = 3, columns = 4 }))
-       (constMatrix 3 { rows = 3, columns = 4 })
+       (mat.sum [constMatrix 2 { rows = 3, columns = 4 },
+                 constMatrix 1 { rows = 3, columns = 4 }])
+       (constMatrix 3 { rows = 3, columns = 4 }) and
+    compareMatrices
+       (mat.sum [constMatrix 2 { rows = 3, columns = 4 },
+                 constMatrix 1 { rows = 3, columns = 4 },
+                 fromRows [[1,2,3,4],[5,6,7,8],[9,10,11,12]]])
+       (fromRows [[4,5,6,7],[8,9,10,11],[12,13,14,15]])
 ),
 
 "sumFail-\(name)": \(
     try 
-      \() (mat.sum (constMatrix 2 { rows = 3, columns = 4 })
-                   (constMatrix 1 { rows = 3, columns = 5 }));
+      \() (mat.sum [constMatrix 2 { rows = 3, columns = 4 },
+                    constMatrix 1 { rows = 3, columns = 5 }]);
         false;
     catch FailureException e:
         true
@@ -257,11 +285,11 @@ makeTests name flipper =
             { i = 1, j = 0, v = 5 },
             { i = 1, j = 1, v = -4 }, // NB this means [1,1] -> 0, sparse zero
         ]);
-    tot = mat.sum s t;
+    tot = mat.sum [s, t];
     mat.isSparse? tot and
-        compareMatrices tot (mat.sum (mat.toDense s) t) and
-        compareMatrices tot (mat.sum (mat.toDense s) (mat.toDense t)) and
-        compareMatrices tot (mat.sum s (mat.toDense t)) and
+        compareMatrices tot (mat.sum [mat.toDense s, t]) and
+        compareMatrices tot (mat.sum [mat.toDense s, mat.toDense t]) and
+        compareMatrices tot (mat.sum [s, mat.toDense t]) and
         compareMatrices tot 
            (mat.newSparseMatrix { rows = 2, columns = 3 } (Rows [
                { i = 0, j = 0, v = 1 },
@@ -332,6 +360,32 @@ makeTests name flipper =
            (fromColumns [[58,139],[64,154]])
 ),
 
+"entryWiseProduct-\(name)": \(
+    compareMatrices
+       (mat.entryWiseProduct
+           [fromRows [[1,2,3],[4,5,0]],
+            fromRows [[6,7,8],[0,1,2]]])
+       (fromRows [[6,14,24],[0,5,0]]) and
+    compareMatrices
+       (mat.entryWiseProduct
+           [fromRows [[1,2,3],[4,5,0]],
+            fromColumns [[6,0],[7,1],[8,2]]])
+       (fromRows [[6,14,24],[0,5,0]])
+),
+
+"entryWiseDivide-\(name)": \(
+    compareMatrices
+       (mat.entryWiseDivide
+           (fromRows [[1,2,3],[4,5,0]])
+           (fromRows [[6,7,8],[1,2,3]]))
+       (fromRows [[1/6,2/7,3/8],[4,5/2,0]]) and
+    compareMatrices
+       (mat.entryWiseDivide
+           (fromRows [[1,2,3],[4,5,0]])
+           (fromColumns [[6,1],[7,2],[8,3]]))
+       (fromRows [[1/6,2/7,3/8],[4,5/2,0]]);
+),
+
 "sparseProduct-\(name)": \(
     s = mat.newSparseMatrix { rows = 2, columns = 3 } (Columns [
         { i = 0, j = 0, v = 1 },
@@ -388,6 +442,33 @@ makeTests name flipper =
                (mat.toSparse (fromColumns [[1,4],[2,5],[3,6]])))
 ),
 
+"tiledTo-\(name)": \(
+    compareMatrices
+       (mat.tiledTo { rows = 2, columns = 2 }
+           (fromColumns [[1,4],[2,5],[3,6]]))
+       (fromColumns [[1,4],[2,5]]) and
+        compareMatrices
+           (mat.tiledTo { rows = 3, columns = 4 }
+               (fromColumns [[1,4],[2,5],[3,6]]))
+           (fromColumns [[1,4,1],[2,5,2],[3,6,3],[1,4,1]]) and
+        compareMatrices
+           (mat.tiledTo { rows = 7, columns = 2 }
+               (fromColumns [[1,4],[2,5],[3,6]]))
+           (fromColumns [[1,4,1,4,1,4,1],[2,5,2,5,2,5,2]]) and
+        compareMatrices
+           (mat.tiledTo { rows = 1, columns = 1 }
+               (fromColumns [[1,4],[2,5],[3,6]]))
+           (fromRows [[1]]) and
+        compareMatrices
+           (mat.tiledTo { rows = 2, columns = 3 }
+               (mat.zeroMatrix { rows = 0, columns = 0 }))
+           (fromRows [[0,0,0],[0,0,0]]) and
+        compareMatrices
+           (mat.tiledTo { rows = 0, columns = 0 }
+               (mat.zeroMatrix { rows = 4, columns = 3 }))
+           (fromRows [])
+),
+
 "zeroSizeMatrix-\(name)": \(
     compareMatrices
        (mat.zeroMatrix { rows = 0, columns = 0 })
@@ -417,6 +498,36 @@ makeTests name flipper =
        (map vec.list
            (mat.asColumns (fromColumns [[1,4],[0,5],[3,6]])))
         [[1,4],[0,5],[3,6]];
+),
+
+"repeated-horiz-\(name)": \(
+    compareMatrices
+       (mat.repeatedHorizontal 2 (fromColumns [[1,4],[0,5]]))
+       (fromColumns [[1,4],[0,5],[1,4],[0,5]]) and
+    compareMatrices
+       (mat.repeatedHorizontal 2 (fromRows [[1,0],[4,5]]))
+       (fromColumns [[1,4],[0,5],[1,4],[0,5]]) and
+    compareMatrices
+       (mat.repeatedHorizontal 0 (fromColumns [[1,4],[0,5]]))
+       (fromColumns []) and
+    compareMatrices
+       (mat.repeatedHorizontal 4 (fromColumns [[]]))
+       (fromColumns [[],[],[],[]])
+),
+
+"repeated-vert-\(name)": \(
+    compareMatrices
+       (mat.repeatedVertical 2 (fromRows [[1,4],[0,5]]))
+       (fromRows [[1,4],[0,5],[1,4],[0,5]]) and
+    compareMatrices
+       (mat.repeatedVertical 2 (fromColumns [[1,0],[4,5]]))
+       (fromRows [[1,4],[0,5],[1,4],[0,5]]) and
+    compareMatrices
+       (mat.repeatedVertical 0 (fromRows [[1,4],[0,5]]))
+       (fromRows []) and
+    compareMatrices
+       (mat.repeatedVertical 4 (fromRows [[]]))
+       (fromRows [[],[],[],[]])
 ),
 
 "concat-horiz-\(name)": \(
