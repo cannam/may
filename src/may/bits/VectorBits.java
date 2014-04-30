@@ -5,10 +5,12 @@ public class VectorBits
 {
     public static void checkLengths(double[] v1, double[] v2) {
 	if (v1.length != v2.length) {
-	    throw new IllegalArgumentException
+	    IllegalArgumentException e = new IllegalArgumentException
 		("Found vector of length " + v2.length +
 		 ", but all so far in this arithmetic operation have had length " +
 		 v1.length);
+//	    e.printStackTrace();
+	    throw e;
 	}
     }
 

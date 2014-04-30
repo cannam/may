@@ -250,7 +250,7 @@ resampledDirectlyTo targetRate s =
         // data buffer. Since these are all fixed per phase, we might
         // as well precalculate.
 
-        // I'm sure the sums for drop, take, nextPhase could be simpler.
+        // I'm sure the sums for drop, nextPhase etc could be simpler.
 
         var nextPhase = (phase - outputSpacing);
         nextPhase < 0 loop nextPhase := nextPhase + inputSpacing;
@@ -264,22 +264,37 @@ resampledDirectlyTo targetRate s =
                (map do i: vec.at filt (i * inputSpacing + phase) done
                     [0 .. filtZipLength-1]),
             drop = maths.ceil ((max 0 (outputSpacing - phase)) / inputSpacing),
-            take = int ((outputSpacing + ((flen - 1 - phase) % inputSpacing))
-                        / inputSpacing),
+            take = 0, // fill these in in a moment
         };
 
+        done [0..inputSpacing-1]);
+
+    phaseData = array
+       (map do phase:
+        pd = phaseData[phase];
+        pd with { 
+            take =
+               (diff =
+                   (vec.length phaseData[pd.nextPhase].filter) -
+                   (vec.length pd.filter) + pd.drop;
+                if diff < 0 then
+                    failWith "Internal error: diff < 0 (== \(diff)) in phase data initialisation (for phase \(phase), filter length \(vec.length pd.filter), next phase \(pd.nextPhase), next phase filter length \(vec.length phaseData[pd.nextPhase].filter), drop \(pd.drop), source rate \(sourceRate), target rate \(targetRate))";
+                fi;
+                diff),
+        }
         done [0..inputSpacing-1]);
 
     var phase = halflen % inputSpacing;
     
     var buffer = mat.toRowMajor
-       (mat.concatHorizontal
-           [mat.zeroMatrix { 
-                rows = s.channels,
-                columns = int (halflen / inputSpacing)
-            },
-            s.read (maths.ceil ((halflen + 1) / inputSpacing))
+       (left = int (halflen / inputSpacing);
+        right = maths.ceil ((halflen + 1) / inputSpacing);
+        mat.concatHorizontal
+           [mat.zeroMatrix { rows = s.channels, columns = left },
+            mat.resizedTo { rows = s.channels, columns = right } (s.read right)
             ]);
+
+//eprintln "initial buffer size \(mat.size buffer) (halflen = \(halflen), inputSpacing = \(inputSpacing))";
 
     var pos = 0;
 
@@ -302,9 +317,14 @@ resampledDirectlyTo targetRate s =
                        (vec.multiply [mat.getRow ch buffer, pd.filter]);
                 done;
             
+//eprintln "drop = \(pd.drop), take = \(pd.take), filter length = \(vec.length pd.filter), next filter length = \(vec.length phaseData[pd.nextPhase].filter)";
+
                 buffer := mat.concatHorizontal
                    [mat.columnSlice buffer pd.drop (mat.width buffer),
-                    s.read pd.take];
+                    mat.resizedTo { rows = s.channels, columns = pd.take }
+                       (s.read pd.take)];
+
+//eprintln "buffer size now \(mat.size buffer)";
 
                 phase := pd.nextPhase;
 
