@@ -234,6 +234,7 @@ streamed rate framesize options frames =
         Hop h: hop := h;
         Padded p: padded := p;
         Window w: winopt := Some w;
+        FrequencyDomain f: failWith "Cannot stream from real input with FrequencyDomain true (need to use complexStreamed)";
     esac;
     window =
         case winopt of
@@ -253,6 +254,7 @@ streamed rate framesize options frames =
         streamOverlapping rate { framesize, hop, window } frames;
     fi);
 
+//!!! todo: this is not yet tested
 complexStreamed rate framesize options frames =
    (streamOptions = array [];
     var rowTransform = complex.magnitudes;
@@ -282,7 +284,7 @@ typedef opt_t =
 
     overlapAdd,
 
-    streamed,
-    complexStreamed,
+    streamed is number -> number -> list?<opt_t> -> list<mat.matrix_t> -> stream_t,
+    complexStreamed is number -> number -> list?<opt_t> -> list<cm.complexmatrix_t> -> stream_t,
 }
 

@@ -71,12 +71,17 @@ realForward n =
 realForwardMagnitude n =
     complex.magnitudes . (realForward n);
 
-//!!! doc: input requires n/2+1 complex values (or should test and throw?)
+//!!! doc: input requires n/2+1 complex values 
 //!!! doc: powers of two only? check with jtransforms
+//!!! this function fails if the input is the wrong length (and that is the right thing to do I think) but the other functions just resize it. Should they fail too?
 realInverse n = 
    (d = new DoubleFFT_1D(n);
     do cplx:
-        arr = complexToPacked (array cplx);
+        carr = array cplx;
+        if length carr != 1 + int (n/2) then
+            failWith "Complex-to-real inverse FFT of size \(n) expects \(1 + int (n/2)) complex values as input (DC to Nyquist only), not \(length carr) as supplied";
+        fi;
+        arr = complexToPacked carr;
         d#realInverse(arr, true);
         vec.vector arr;
     done);

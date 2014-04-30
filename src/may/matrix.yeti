@@ -132,6 +132,7 @@ at' m row col =
 
 //!!! better as getXx or just xx?
 
+//!!! arguably getRow, getColumn, getDiagonal should have m as first arg for symmetry with at
 getColumn j m =
     case m.data of
     DenseCols cols: cols[j];
