@@ -80,5 +80,6 @@ random () =
     isPowerOfTwo,
     nextPowerOfTwo,
     random,
+    eps = 1e-15,
 }
 

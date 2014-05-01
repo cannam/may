@@ -7,9 +7,14 @@ mat = load may.matrix;
 
 load may.stream.type;
 
+/**
+ * Generate a stream using a generator function. The generator takes
+ * a sample index and returns a number in the range -1,+1. The
+ * generator is guaranteed to be called with sample indices in order
+ * 0,1,2,... so it may maintain state between calls if desired.
+ */   
 generated sampleRate generator =
-   (// generator takes sample number as arg, returns number in -1,+1 range
-    var position = 0;
+   (var position = 0;
     {
         get position () = position,
         get channels () = 1, 
@@ -28,6 +33,15 @@ generated sampleRate generator =
 
 sinusoid sampleRate freq =
     generated sampleRate (sin . (* (2 * pi * freq / sampleRate)));
+
+varyingSinusoid sampleRate freqGenerator =
+   (var phase = 0;
+    generator i =
+       (ifreq = freqGenerator i;
+        result = sin phase;
+        phase := phase + 2 * pi * ifreq / sampleRate;
+        result);
+    generated sampleRate generator);
 
 whiteNoise sampleRate =
     generated sampleRate \((Math#random() * 2.0) - 1.0);
@@ -113,6 +127,7 @@ empty sampleRate channels = // degenerate stream with no data in it, occasionall
     precalculatedMono is number -> vec.vector_t -> stream_t,
     precalculatedRepeated is number -> mat.matrix_t -> stream_t,
     sinusoid is number -> number -> stream_t, 
+    varyingSinusoid is number -> (number -> number) -> stream_t,
     whiteNoise is number -> stream_t,
     silent is number -> stream_t,
     empty is number -> number -> stream_t,

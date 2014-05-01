@@ -5,10 +5,10 @@
 module may.stream.waves;
 
 { sinusoid, generated } = load may.stream.syntheticstream;
-{ sum, scaledBy } = load may.stream.manipulate;
-{ precalculatedRepeated } = load may.stream.syntheticstream;
+{ sum, scaledBy, withDuration } = load may.stream.manipulate;
+{ precalculatedRepeated, varyingSinusoid } = load may.stream.syntheticstream;
 { resampledTo } = load may.stream.resample;
-{ gcd, floor, ceil } = load may.mathmisc;
+{ gcd, floor, ceil, log10, pow, eps } = load may.mathmisc;
 
 load may.stream.type;
 
@@ -75,6 +75,27 @@ impulseTrain sampleRate freq =
         fi;
     fi;
 
+//!!! todo: test. How?
+sineSweep sampleRate { startFrequency, endFrequency, duration, logarithmic } =
+   (forward = 
+        if logarithmic then
+            do x: log10 if x < eps then eps else x fi done
+        else id
+        fi;
+    inverse =
+        if logarithmic then pow 10
+        else id
+        fi;
+    a = forward startFrequency;
+    b = forward endFrequency;
+    withDuration duration
+       (varyingSinusoid sampleRate
+            do i:
+                dist = i / duration;
+                inverse (a + (b - a) * dist);
+            done)
+    );
+
 cached f sampleRate freq =
    (n = cycleLengthFor sampleRate freq;
     if n == 0 then
@@ -96,6 +117,7 @@ triangle = cached triangle';
     saw is number -> number -> stream_t, 
     triangle is number -> number -> stream_t,
     impulseTrain is number -> number -> stream_t,
+    sineSweep is number -> { startFrequency is number, endFrequency is number, duration is number, logarithmic is boolean } -> stream_t,
     cycleLengthFor is number -> number -> number,
 }
 
