@@ -5,12 +5,61 @@ vec = load may.vector;
 mat = load may.matrix;
 syn = load may.stream.syntheticstream;
 manip = load may.stream.manipulate;
+channels = load may.stream.channels;
 resample = load may.stream.resample;
 win = load may.signal.window;
 waves = load may.stream.waves;
 fft = load may.transform.fft;
 
 { compare, compareUsing, compareMatrices, assert, time } = load may.test;
+
+measureFrequency sampleRate cycles stream =
+   (case stream.available of
+    Known n:
+       (v = channels.mixedDown (stream.read n);
+        var firstCrossing = -1;
+        var lastCrossing = -1;
+        var nCrossings = 0;
+        for [0..vec.length v - 2] do i:
+            if nCrossings < cycles and vec.at v i <= 0 and vec.at v (i+1) > 0 then
+                if firstCrossing < 0 then
+                    firstCrossing := i;
+                fi;
+                lastCrossing := i;
+                nCrossings := nCrossings + 1;
+            fi;
+        done;
+        if nCrossings < 2 then 0
+        else
+            cycle = (lastCrossing - firstCrossing) / (nCrossings - 1);
+            freq = sampleRate / cycle;
+            eprintln "lastCrossing = \(lastCrossing), firstCrossing = \(firstCrossing), dist = \(lastCrossing - firstCrossing), nCycles = \(nCrossings - 1), cycle = \(cycle), freq = \(freq)";
+            freq;
+        fi);
+   _: failWith "Expected stream duration to be known";
+   esac);
+
+testFrequencyIntegrity freq sourceRate targetRate =
+   (// Test that downsample and then upsample again produces a signal
+    // at the same frequency as the original (i.e. the overall speed
+    // is retained exactly, regardless of the SNR on the way).
+    nCycles = 5000;
+    duration = int (nCycles * sourceRate / freq);
+    originals = manip.duplicated 2
+       (manip.withDuration duration (syn.sinusoid sourceRate freq));
+    there = manip.duplicated 2
+       (resample.resampledTo targetRate originals[0]);
+    back = resample.resampledTo sourceRate there[0];
+    origFreq = measureFrequency sourceRate (nCycles - 2) originals[1];
+    backFreq = measureFrequency sourceRate (nCycles - 2) back;
+    if not (compare backFreq origFreq) then
+        iFreq = measureFrequency targetRate (nCycles - 2) there[1];
+        eprintln "** note: rate conversion \(sourceRate) -> \(targetRate) -> \(sourceRate)";
+        eprintln "** frequency measured from intermediate stream: \(iFreq)";
+        false
+    else
+        true
+    fi);
 
 [
 
@@ -206,6 +255,30 @@ fft = load may.transform.fft;
     b = vec.fromList
        (map do i: vec.at result (i*factor) done [0..vec.length data - 1]);
     compareMatrices 1e-5 (mat.newRowVector b) (mat.newRowVector data);
+),
+
+"down-up-2": \(
+    testFrequencyIntegrity 440 44100 22050;
+),
+
+"down-up-5": \(
+    testFrequencyIntegrity 440 44100 8820;
+),
+
+"down-up-16": \(
+    testFrequencyIntegrity 440 48000 3000;
+),
+
+"up-down-2": \(
+    testFrequencyIntegrity 440 44100 88200;
+),
+
+"up-down-5": \(
+    testFrequencyIntegrity 440 9600 48000;
+),
+
+"up-down-16": \(
+    testFrequencyIntegrity 440 3000 48000;
 ),
 
 "same-rate": \(
