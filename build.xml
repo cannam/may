@@ -1,6 +1,7 @@
 <project name="may" default="test" basedir=".">
 
   <property name="jardir" value="${basedir}/ext/jar"/>
+  <property name="yetidir" value="${basedir}/../yeti"/>
 
   <property name="extjars" value="${jardir}/jvamp.jar:${jardir}/yertle.jar:${jardir}/jtransforms-2.4.jar:${jardir}/jzy3d-swt-0.9.1.jar:${jardir}/jzy3d-api-0.9.1.jar:${jardir}/jogl-all.jar:${jardir}/gluegen.jar:${jardir}/gluegen-rt.jar:${jardir}/opencsv-2.1.jar:${jardir}/org.convexhull.jar"/>
 
@@ -22,7 +23,7 @@
 
   <target name="taskdef">
     <taskdef name="yetic" classname="yeti.lang.compiler.YetiTask"
-	     classpath="${basedir}/../yeti/yeti.jar:${extjars}" />
+	     classpath="${yetidir}/yeti.jar:${extjars}" />
   </target>
 
   <target name="prepare">
@@ -61,7 +62,7 @@
   </target>
 
   <target name="test" depends="jar,testjar,taskdef">
-    <java classpath="${basedir}/maytests.jar:${basedir}/may.jar:${basedir}/../yeti/yeti.jar:${extjars}"
+    <java classpath="${basedir}/maytests.jar:${basedir}/may.jar:${yetidir}/yeti.jar:${extjars}"
 	  classname="may.test.all"
 	  fork="true" failonerror="true">
       <sysproperty key="java.library.path" path="${basedir}/ext/native/${archtag}"/>
@@ -69,7 +70,7 @@
   </target>
 
   <target name="coverage" depends="jar,testjar,taskdef">
-    <java classpath="${basedir}/../emma-2.0.5312/lib/emma.jar:${basedir}/maytests.jar:${basedir}/may.jar:${basedir}/../yeti/yeti.jar:${extjars}"
+    <java classpath="${basedir}/../emma-2.0.5312/lib/emma.jar:${basedir}/maytests.jar:${basedir}/may.jar:${yetidir}/yeti.jar:${extjars}"
 	  classname="emma"
 	  fork="true" failonerror="true">
       <sysproperty key="java.library.path" path="${basedir}/ext/native/${archtag}"/>
