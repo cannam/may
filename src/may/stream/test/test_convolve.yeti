@@ -130,6 +130,30 @@ makeTests name withUnknown =
         done convolutionOptions);
 ),
 
+"parameterInvariance": \(
+    // convolution by any method should give identical results
+    rate = 8000;
+    irlen = 500;
+    siglen = 1500;
+    ir = (syn.whiteNoise rate).read irlen;
+    params = [
+        [ Fast true, Framesize 256 ], 
+        [ Fast true, Framesize 512 ], 
+        [ Fast false, Framesize 256 ], 
+        [ Fast false, Framesize 512 ]
+    ];
+    signals = manip.duplicated (length params)
+       (manip.withDuration siglen (syn.whiteNoise rate));
+    convolved = map2 do s p:
+        mat.getRow 0
+          ((convolve.convolvedWith p ir s).read (siglen + irlen - 1));
+    done signals params;
+    diffs = map do c:
+        vec.max (vec.subtract c (head convolved))
+    done convolved;
+    all id (map (compareUsing do a b: abs (a - b) < 1e-12 done (head diffs)) diffs);
+),
+
 ]);
 
 knowns = makeTests "known" false;
