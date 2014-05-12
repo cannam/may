@@ -13,53 +13,77 @@ fft = load may.transform.fft;
 
 { compare, compareUsing, compareMatrices, assert, time } = load may.test;
 
-measureFrequency sampleRate cycles stream =
+eps = 1e-14;
+
+measureFrequency cycles stream =
    (case stream.available of
     Known n:
        (v = channels.mixedDown (stream.read n);
-        var firstCrossing = -1;
-        var lastCrossing = -1;
-        var nCrossings = 0;
-        for [0..vec.length v - 2] do i:
-            if nCrossings < cycles and vec.at v i <= 0 and vec.at v (i+1) > 0 then
-                if firstCrossing < 0 then
-                    firstCrossing := i;
-                fi;
-                lastCrossing := i;
-                nCrossings := nCrossings + 1;
+        var firstPeak = -1;
+        var lastPeak = -1;
+        var nPeaks = 0;
+        // count +ve peaks
+        len = vec.length v;
+        for [int(len/4) .. len - 2] do i:
+            // allow some fuzz
+            x0 = int (10000 * vec.at v (i-1));
+            x1 = int (10000 * vec.at v (i));
+            x2 = int (10000 * vec.at v (i+1));
+            if nPeaks < (cycles + 1) and
+                x1 > 0 and x1 > x0 and x1 >= x2 then
+                if firstPeak < 0 then firstPeak := i; fi;
+                lastPeak := i;
+                nPeaks := nPeaks + 1;
             fi;
         done;
-        if nCrossings < 2 then 0
+        if nPeaks < 2 then 0
         else
-            cycle = (lastCrossing - firstCrossing) / (nCrossings - 1);
-            freq = sampleRate / cycle;
-            eprintln "lastCrossing = \(lastCrossing), firstCrossing = \(firstCrossing), dist = \(lastCrossing - firstCrossing), nCycles = \(nCrossings - 1), cycle = \(cycle), freq = \(freq)";
-            freq;
+            cycle = (lastPeak - firstPeak) / (nPeaks - 1);
+            stream.sampleRate / cycle;
         fi);
    _: failWith "Expected stream duration to be known";
    esac);
 
-testFrequencyIntegrity freq sourceRate targetRate =
-   (// Test that downsample and then upsample again produces a signal
-    // at the same frequency as the original (i.e. the overall speed
-    // is retained exactly, regardless of the SNR on the way).
-    nCycles = 5000;
+testFrequencyIntegrityWith sort freq sourceRate forward backward =
+   (// Test that downsample and then upsample again (or vice versa,
+    // depending on forward and backward manipulators) produces a
+    // signal at the same frequency as the original (i.e. the overall
+    // speed is retained exactly, regardless of the SNR on the way).
+    nCycles = 200;
     duration = int (nCycles * sourceRate / freq);
-    originals = manip.duplicated 2
+    originals = manip.duplicated 3
        (manip.withDuration duration (syn.sinusoid sourceRate freq));
-    there = manip.duplicated 2
-       (resample.resampledTo targetRate originals[0]);
-    back = resample.resampledTo sourceRate there[0];
-    origFreq = measureFrequency sourceRate (nCycles - 2) originals[1];
-    backFreq = measureFrequency sourceRate (nCycles - 2) back;
+    there = manip.duplicated 3 (forward originals[0]);
+    back = manip.duplicated 3 (backward there[0]);
+    origFreq = measureFrequency (nCycles/2) originals[1];
+    backFreq = measureFrequency (nCycles/2) back[1];
     if not (compare backFreq origFreq) then
-        iFreq = measureFrequency targetRate (nCycles - 2) there[1];
-        eprintln "** note: rate conversion \(sourceRate) -> \(targetRate) -> \(sourceRate)";
-        eprintln "** frequency measured from intermediate stream: \(iFreq)";
+        eprintln "** note: rate conversion \(sourceRate) -> \(there[1].sampleRate) -> \(sourceRate)";
+        examples = array (map do s:
+            channels.mixedDown (s[2].read 500)
+        done [ originals, there, back ]);
         false
     else
         true
     fi);
+
+testFrequencyIntegrity freq sourceRate targetRate =
+    if sourceRate / targetRate == int (sourceRate / targetRate) then
+        testFrequencyIntegrityWith "decimated" freq sourceRate
+           (resample.decimated (sourceRate / targetRate))
+           (resample.interpolated (sourceRate / targetRate))
+    elif targetRate / sourceRate == int (targetRate / sourceRate) then
+        testFrequencyIntegrityWith "interpolated" freq sourceRate
+           (resample.interpolated (targetRate / sourceRate))
+           (resample.decimated (targetRate / sourceRate))
+    else
+        true
+    fi and
+        testFrequencyIntegrityWith
+           (if sourceRate > targetRate then "downsampled" else "upsampled" fi)
+            freq sourceRate
+           (resample.resampledTo targetRate)
+           (resample.resampledTo sourceRate);
 
 [
 
@@ -258,27 +282,19 @@ testFrequencyIntegrity freq sourceRate targetRate =
 ),
 
 "down-up-2": \(
-    testFrequencyIntegrity 440 44100 22050;
-),
-
-"down-up-5": \(
-    testFrequencyIntegrity 440 44100 8820;
+    testFrequencyIntegrity 441 44100 22050;
 ),
 
 "down-up-16": \(
-    testFrequencyIntegrity 440 48000 3000;
+    testFrequencyIntegrity 300 48000 3000;
 ),
 
 "up-down-2": \(
-    testFrequencyIntegrity 440 44100 88200;
-),
-
-"up-down-5": \(
-    testFrequencyIntegrity 440 9600 48000;
+    testFrequencyIntegrity 441 44100 88200;
 ),
 
 "up-down-16": \(
-    testFrequencyIntegrity 440 3000 48000;
+    testFrequencyIntegrity 300 3000 48000;
 ),
 
 "same-rate": \(

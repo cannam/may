@@ -6,7 +6,7 @@ mat = load may.matrix;
 syn = load may.stream.syntheticstream;
 manip = load may.stream.manipulate;
 
-{ compare, compareUsing, assert } = load may.test;
+{ compare, compareUsing, compareMatrices, assert } = load may.test;
 
 makeTests name withUnknown =
    (maybeDuration n str =
@@ -671,6 +671,12 @@ makeTests name withUnknown =
         compare str.available (Known 0) and
         compare str.finished? true and
         ( str.close (); true )
+),
+
+"spaced-picked-\(name)": \(
+    originals = manip.duplicated 2 (maybeDuration 2000 (syn.sinusoid 3000 440));
+    str = manip.picked 16 (manip.spaced 16 originals[0]);
+    compareMatrices 1e-12 (str.read 2000) (originals[1].read 2000);
 ),
 
 //!!! still no tests for multi-channel inputs
