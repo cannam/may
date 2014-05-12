@@ -76,12 +76,12 @@ decimated factor s = //!!! factor must be an integer [how to enforce this??]
         filtered =
            (convolve.convolvedWith [Framesize 1024]
                (mat.fromRows (map \filter [1..s.channels])) s);
-        delay = -(int ((vec.length filter) / 4));
+        delay = -(int ((vec.length filter) / 2));
         scaleFactor = 1 / fparams.n;
         out = adjuster
            (manip.scaledBy scaleFactor
-               (manip.delayedBy delay
-                   (manip.picked factor filtered)));
+               (manip.picked factor
+                   (manip.delayedBy delay filtered)));
         out with { get sampleRate () = s.sampleRate / factor };
     fi;
 
