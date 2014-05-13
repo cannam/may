@@ -17,7 +17,8 @@ functions = [
     Bartlett () : win.bartlett,
 ];
 
-close aa bb = all id (map2 do a b: (abs (a - b) < 0.0001) done aa bb);
+close aa bb = (length aa == length bb) and
+    all id (map2 do a b: (abs (a - b) < 0.0001) done aa bb);
 
 isSymmetric a =
    (len = (vec.length a);
