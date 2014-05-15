@@ -43,8 +43,20 @@ varyingSinusoid sampleRate freqGenerator =
         result);
     generated sampleRate generator);
 
+/**
+ * Generate a white noise stream with a maximum amplitude of 0.5.
+ * 
+ * This is limited to 0.5 rather than 1.0 to help avoid
+ * situations in which subsequent processing causes hard-to-spot
+ * clipping. For example, filtering noise to limit its bandwidth
+ * may increase the levels of some samples: if you do this naively
+ * and then export the result to an audio file, it will clip and
+ * the resulting noise will be neither correctly distributed nor
+ * band-limited. But because individual samples are random, it's
+ * very easy to miss what is happening.
+ */
 whiteNoise sampleRate =
-    generated sampleRate \((Math#random() * 2.0) - 1.0);
+    generated sampleRate \((Math#random() * 1.0) - 0.5);
 
 silent sampleRate =
     generated sampleRate \0;
