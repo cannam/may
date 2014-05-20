@@ -156,6 +156,8 @@ write str name is stream_t -> string -> number =
 //!!! no, the header size is included in the return value!
     n / (channels * bitdepth));
 
+//!!! todo: io module style openWith
+
 {
     open,
     openMono,
