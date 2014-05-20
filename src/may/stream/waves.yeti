@@ -54,7 +54,8 @@ triangle' sampleRate freq =
 // Bandlimited impulse train: produce naive pulse train at a frequency
 // that is an integer fraction of the sample rate (so as to have exact
 // sample locations), then resample so as to place the impulses at the
-// requested frequency
+// requested frequency. The maximum sample is 0.5 rather than 1 to
+// avoid clipping in further manipulation.
 impulseTrain sampleRate freq =
     if freq > sampleRate/2 then
         failWith "Can't generate impulse train with frequency > half the sample rate (\(freq) > \(sampleRate)/2)"
@@ -62,7 +63,7 @@ impulseTrain sampleRate freq =
         naiveTrain f =
            (spacing = int (sampleRate / f);
             generated sampleRate
-                do n: if n % spacing == 0 then 1 else 0 fi done);
+                do n: if n % spacing == 0 then 0.5 else 0 fi done);
         ratio = sampleRate / freq;
         if ratio == int ratio then
             naiveTrain freq
