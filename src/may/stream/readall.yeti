@@ -1,0 +1,26 @@
+
+module may.stream.readall;
+
+load may.stream.type;
+
+mat = load may.matrix;
+af = load may.stream.audiofile;
+
+readAll stream = 
+    case stream.available of
+    Known n: stream.read n;
+    _: failWith "Cannot readAll from infinite or unknown-duration stream";
+    esac;
+
+//!!! todo: use openWith (when available!)
+readAllFrom filename =
+   (str = af.open filename;
+    mat = readAll str;
+    str.close ();
+    mat);
+
+{
+    readAll is stream_t -> mat.matrix_t,
+    readAllFrom is string -> mat.matrix_t, 
+}
+
