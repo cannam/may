@@ -68,6 +68,10 @@ fastConvolvedWith ir framesize =
                 mat.fromRows
                    (map inverseTransform (splitInto (framesize+1) fr))
                 done cframes;
+        //!!! streamed returns availability Unknown, always until the
+        // list is actually empty. But if we were passed an infinite
+        // stream, we'd like to preserve that, and if the stream
+        // length is known, then our length is known too...
         fr.streamed s.sampleRate (framesize * 2)
             [ Window win.boxcar, Hop framesize ]
             rframes;
