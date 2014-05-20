@@ -29,12 +29,12 @@ decode32f bytes doubles n is ~byte[] -> ~double[] -> number -> () =
     done
    );
 
-decodeFail () = 
-    throw new UnsupportedAudioFileException("Audio format not supported. Supported formats are 8-bit unsigned PCM, 16-bit signed little-endian PCM, or IEEE float");
+decodeFail f is ~AudioFormat -> () = 
+    throw new UnsupportedAudioFileException("Audio format \"\(f#toString())\" not supported. Supported formats are 8-bit unsigned PCM, 16-bit signed little-endian PCM, or IEEE float.");
 
 decode { format is ~AudioFormat } bytes doubles n = 
    (if format#isBigEndian() then
-        decodeFail()
+        decodeFail format;
     else
         enc = format#getEncoding();
         bits = format#getSampleSizeInBits();
@@ -45,7 +45,7 @@ decode { format is ~AudioFormat } bytes doubles n =
         elif bits == 8 and enc == AudioFormat$Encoding#PCM_UNSIGNED then
             decode8u bytes doubles n;
         else
-            decodeFail();
+            decodeFail format;
         fi
     fi);
 
