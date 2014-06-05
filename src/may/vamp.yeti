@@ -81,14 +81,23 @@ listPlugins () =
         [];
     yrt);
 
-getKnownPluginKeys () =
-   (store = getGlobalStore ();
-    nodes = vamprdf.allPluginNodes store;
+getPluginKeysFrom store =
+   (nodes = vamprdf.allPluginNodes store;
     // ordering is random out of the store; might as well sort
-    sort (map do n: (vamprdf.pluginDataByNode store n).pluginKey done nodes));
+    sort (concatMap do n:
+        case vamprdf.pluginKeyByNode store n of Some k: [k]; None (): [] esac 
+        done nodes));
+
+getKnownPluginKeys () =
+   (global = getPluginKeysFrom (getGlobalStore ());
+    system = getPluginKeysFrom (getSystemStore ());
+    sort (nub (concat [global, system])));
 
 getDataForKnownPlugin key =
-    vamprdf.pluginDataByKey (getGlobalStore ()) key;
+    case vamprdf.pluginDataByKey (getSystemStore ()) key of
+    Some d: Some d;
+    None _: vamprdf.pluginDataByKey (getGlobalStore ()) key;
+    esac;
    
 categoryOf key =
     list PluginLoader#getInstance()#getPluginCategory(key);

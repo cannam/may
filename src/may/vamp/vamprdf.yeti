@@ -222,14 +222,18 @@ pluginDataByNode store pluginNode =
    (tprop abbr = textProperty store pluginNode abbr;
     nprop abbr =
         try number (textProperty store pluginNode abbr); catch Exception _: 0 yrt;
-    soname =
+    { soname, libraryName } =
         case libraryNodeFor store pluginNode of
-        None (): "";
-        Some n: textProperty store n "vamp:identifier";
+        Some n: { 
+                soname = textProperty store n "vamp:identifier",
+                libraryName = textProperty store n "dc:title"
+            };
+        None (): { soname = "", libraryName = "" };
         esac;
     {
+        pluginNode,
         pluginKey = soname ^ ":" ^ tprop "vamp:identifier",
-        soname,
+        library = { soname, name = libraryName },
         apiVersion = nprop "vamp:vamp_API_version",
         identifier = tprop "vamp:identifier",
         name = tprop "dc:title",
@@ -270,6 +274,17 @@ pluginDataByNode store pluginNode =
                        done matches)),
     });
 
+pluginKeyByNode store node =
+    case libraryNodeFor store node of
+    Some libnode: 
+        Some
+           (textProperty store libnode "vamp:identifier" ^
+            ":" ^
+            textProperty store node "vamp:identifier");
+    None ():
+        None ();
+    esac;
+
 pluginDataByKey store key =
     case pluginNodesByKey store key of
     node::others: Some (pluginDataByNode store node);
@@ -282,6 +297,7 @@ loadGlobalVampRdf,
 allPluginNodes,
 allLibraryNodes,
 pluginNodesByKey,
+pluginKeyByNode,
 pluginDataByNode,
 pluginDataByKey,
 }
