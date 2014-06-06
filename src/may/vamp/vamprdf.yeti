@@ -3,6 +3,7 @@ module may.vamp.vamprdf;
 
 read = load yertle.read;
 { newRdfStore } = load yertle.store;
+{ textProperty, iriProperty, nodeProperty } = load yertle.property;
 
 import java.io: File;
 
@@ -145,31 +146,6 @@ libraryNodeFor store pluginNode =
         } of
     { s = IRI iri }::others: Some (IRI iri);
     { s = Blank n }::others: Some (Blank n);
-     _: None ();
-    esac;
-
-textProperty store subject name =
-    case store.match {
-        s = Known subject, p = Known (store.expand name), o = Wildcard ()
-        } of
-    { o = Literal { value = text } }::others: text;
-     _: "";
-    esac;
-
-iriProperty store subject name =
-    case store.match {
-        s = Known subject, p = Known (store.expand name), o = Wildcard ()
-        } of
-    { o = IRI iri }::others: IRI iri;
-     _: None ();
-    esac;
-
-nodeProperty store subject name =
-    case store.match {
-        s = Known subject, p = Known (store.expand name), o = Wildcard ()
-        } of
-    { o = IRI iri }::others: Some (IRI iri);
-    { o = Blank n }::others: Some (Blank n);
      _: None ();
     esac;
 
