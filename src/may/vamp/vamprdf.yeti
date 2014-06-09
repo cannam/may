@@ -226,7 +226,11 @@ pluginDataByNode store pluginNode =
             fi),
         copyright = tprop "dc:rights",
         version = tprop "owl:versionInfo",
-        category = tprop "vamp:category",
+        category = 
+           (cat = tprop "vamp:category";
+            if cat == "" then []
+            else list (strSplit " > " cat)
+            fi),
         inputDomain = inputDomainOf store pluginNode,
         infoURL =
            (case iriProperty store pluginNode "foaf:page" of

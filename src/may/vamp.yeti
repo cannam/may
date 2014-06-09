@@ -100,7 +100,7 @@ getDataForKnownPlugin key =
     esac;
    
 categoryOf key =
-    list PluginLoader#getInstance()#getPluginCategory(key);
+    map string PluginLoader#getInstance()#getPluginCategory(key);
 
 inputDomain d is ~Plugin$InputDomain -> 'a = 
     if d == Plugin$InputDomain#FREQUENCY_DOMAIN then
