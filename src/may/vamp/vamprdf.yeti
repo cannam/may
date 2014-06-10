@@ -248,6 +248,18 @@ pluginDataByNode store pluginNode =
                 textsProperty store n "vamp:has_binary"
                 done (libraryNodesFor store pluginNode),
             source = strLower (libtextprop "vamp:has_source") == "true",
+            downloadURL = 
+                case concatMap do n:
+                    irisProperty store n "doap:download-page"
+                    done (libraryNodesFor store pluginNode) of
+                IRI iri::_: iri;
+                _: "";
+                esac,
+            infoURL =
+                case iriProperty store pluginNode "foaf:page" of
+                IRI iri: iri;
+                 _: "";
+                esac,
         },
         apiVersion = numprop "vamp:vamp_API_version",
         identifier = textprop "vamp:identifier",
@@ -275,12 +287,6 @@ pluginDataByNode store pluginNode =
                 irisProperty store n "foaf:page"
                 done makerNodes of
             IRI iri::_: iri;
-            _: "";
-            esac,
-        downloadURL =
-            case nodeprop "doap:download-page" of
-            Some (IRI iri): iri;
-            Some _: "";
             _: "";
             esac,
         copyright = textprop "dc:rights",
