@@ -1,9 +1,12 @@
 
 module may.vamp.vamprdf;
 
+//!!! todo: Test. None of this has tests yet
+
 read = load yertle.read;
 { newRdfStore } = load yertle.store;
-{ textProperty, iriProperty, nodeProperty } = load yertle.property;
+{ textProperty, iriProperty, nodeProperty, 
+  textsProperty, irisProperty, nodesProperty } = load yertle.property;
 
 import java.io: File;
 
@@ -140,14 +143,34 @@ pluginNodesByKey store key =
             done candidatePlugins
     esac);
 
-libraryNodeFor store pluginNode =
-    case store.match {
-        s = Wildcard (), p = Known (store.expand "vamp:available_plugin"), o = Known pluginNode
-        } of
-    { s = IRI iri }::others: Some (IRI iri);
-    { s = Blank n }::others: Some (Blank n);
-     _: None ();
+libraryNodesFor store pluginNode =
+    map (.s) 
+       (store.match {
+            s = Wildcard (), 
+            p = Known (store.expand "vamp:available_plugin"), 
+            o = Known pluginNode
+        });
+
+libraryTextProperty store pluginNode abbr =
+    case concatMap do n:
+        textsProperty store n abbr
+        done (libraryNodesFor store pluginNode) of
+    t::_: t;
+    _: "";
     esac;
+
+libraryNodeProperty store pluginNode abbr =
+    case concatMap do n:
+        nodesProperty store n abbr
+        done (libraryNodesFor store pluginNode) of
+    (Some n)::_: Some n;
+    _: None ();
+    esac;
+
+makerNodesFor store pluginNode =
+    concatMap do n:
+        nodesProperty store n "foaf:maker"
+        done (pluginNode::(libraryNodesFor store pluginNode));
 
 inputDomainOf store pluginNode =
    case store.match {
@@ -195,56 +218,85 @@ outputDescriptor store outputNode =
     });
 
 pluginDataByNode store pluginNode =
-   (tprop abbr = textProperty store pluginNode abbr;
-    nprop abbr =
-        try number (textProperty store pluginNode abbr); catch Exception _: 0 yrt;
-    { soname, libraryName } =
-        case libraryNodeFor store pluginNode of
-        Some n: { 
-                soname = textProperty store n "vamp:identifier",
-                libraryName = textProperty store n "dc:title"
-            };
-        None (): { soname = "", libraryName = "" };
+   (makerNodes = makerNodesFor store pluginNode;
+    libtextprop abbr = libraryTextProperty store pluginNode abbr;
+    libnodeprop abbr = libraryNodeProperty store pluginNode abbr;
+    textprop abbr = 
+        case textProperty store pluginNode abbr of
+        "": libtextprop abbr;
+        text: text;
         esac;
+    nodeprop abbr = 
+        case nodeProperty store pluginNode abbr of
+        Some s: s;
+        _: libnodeprop abbr;
+        esac;
+    numprop abbr = try
+        number (textProperty store pluginNode abbr);
+        catch Exception _: 0 
+        yrt;
+    soname = libtextprop "vamp:identifier";
     {
         pluginNode,
-        pluginKey = soname ^ ":" ^ tprop "vamp:identifier",
-        library = { soname, name = libraryName },
-        apiVersion = nprop "vamp:vamp_API_version",
-        identifier = tprop "vamp:identifier",
-        name = tprop "dc:title",
-        description = tprop "dc:description",
+        pluginKey = soname ^ ":" ^ 
+           (textProperty store pluginNode "vamp:identifier"),
+        library = { 
+            soname, 
+            name = libtextprop "dc:title",
+            description = libtextprop "dc:description",
+            platforms = concatMap do n:
+                textsProperty store n "vamp:has_binary"
+                done (libraryNodesFor store pluginNode),
+            source = strLower (libtextprop "vamp:has_source") == "true",
+        },
+        apiVersion = numprop "vamp:vamp_API_version",
+        identifier = textprop "vamp:identifier",
+        name = textprop "dc:title",
+        description = textprop "dc:description",
         maker =
-           (tmaker = tprop "foaf:maker";
-            if tmaker == "" then
-                case nodeProperty store pluginNode "foaf:maker" of
-                Some n: textProperty store n "foaf:name";
-                None (): "";
-                esac
-            else
-                tmaker
-            fi),
-        copyright = tprop "dc:rights",
-        version = tprop "owl:versionInfo",
+            case textprop "foaf:maker" of
+            "": case concatMap do n:
+                    textsProperty store n "foaf:name"
+                    done makerNodes of
+                name::_: name;
+                _: "";
+                esac;
+            name: name;
+            esac,
+        makerLogoURL =
+            case concatMap do n:
+                irisProperty store n "foaf:logo"
+                done makerNodes of
+            IRI iri::_: iri;
+            _: "";
+            esac,
+        makerInfoURL =
+            case concatMap do n:
+                irisProperty store n "foaf:page"
+                done makerNodes of
+            IRI iri::_: iri;
+            _: "";
+            esac,
+        downloadURL =
+            case nodeprop "doap:download-page" of
+            Some (IRI iri): iri;
+            Some _: "";
+            _: "";
+            esac,
+        copyright = textprop "dc:rights",
+        version = textprop "owl:versionInfo",
         category = 
-           (cat = tprop "vamp:category";
+           (cat = textprop "vamp:category";
             if cat == "" then []
             else list (strSplit " > " cat)
             fi),
         inputDomain = inputDomainOf store pluginNode,
         infoURL =
-           (case iriProperty store pluginNode "foaf:page" of
-            IRI iri: iri;
-            None ():
-                case libraryNodeFor store pluginNode of
-                None (): "";
-                Some n:
-                    case iriProperty store n "foaf:page" of
-                    IRI iri: iri;
-                    None (): "";
-                    esac;
-                esac;
-            esac),
+            case nodeprop "foaf:page" of
+            Some (IRI iri): iri;
+            Some _: "";
+            _: ""
+            esac,
         outputs = 
            (matches = store.match { s = Known pluginNode,
                                     p = Known (store.expand "vamp:output"), 
@@ -255,19 +307,18 @@ pluginDataByNode store pluginNode =
     });
 
 pluginKeyByNode store node =
-    case libraryNodeFor store node of
-    Some libnode: 
+    case libraryNodesFor store node of
+    libnode::_:
         Some
            (textProperty store libnode "vamp:identifier" ^
             ":" ^
             textProperty store node "vamp:identifier");
-    None ():
-        None ();
+    _: None ();
     esac;
 
 pluginDataByKey store key =
     case pluginNodesByKey store key of
-    node::others: Some (pluginDataByNode store node);
+    node::_: Some (pluginDataByNode store node);
     _: None ()
     esac;
 
