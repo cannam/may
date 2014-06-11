@@ -228,7 +228,7 @@ pluginDataByNode store pluginNode =
         esac;
     nodeprop abbr = 
         case nodeProperty store pluginNode abbr of
-        Some s: s;
+        Some s: Some s;
         _: libnodeprop abbr;
         esac;
     numprop abbr = try
@@ -255,10 +255,12 @@ pluginDataByNode store pluginNode =
                 IRI iri::_: iri;
                 _: "";
                 esac,
-            infoURL =
-                case iriProperty store pluginNode "foaf:page" of
-                IRI iri: iri;
-                 _: "";
+            infoURL = 
+                case concatMap do n:
+                    irisProperty store n "foaf:page"
+                    done (libraryNodesFor store pluginNode) of
+                IRI iri::_: iri;
+                _: "";
                 esac,
         },
         apiVersion = numprop "vamp:vamp_API_version",
@@ -301,7 +303,7 @@ pluginDataByNode store pluginNode =
             case nodeprop "foaf:page" of
             Some (IRI iri): iri;
             Some _: "";
-            _: ""
+            None (): ""
             esac,
         outputs = 
            (matches = store.match { s = Known pluginNode,
