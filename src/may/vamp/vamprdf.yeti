@@ -248,6 +248,7 @@ pluginDataByNode store pluginNode =
                 textsProperty store n "vamp:has_binary"
                 done (libraryNodesFor store pluginNode),
             source = strLower (libtextprop "vamp:has_source") == "true",
+            isVamPy = strLower (libtextprop "vamp:is_vampy_plugin") == "true",
             downloadURL = 
                 case concatMap do n:
                     irisProperty store n "doap:download-page"
