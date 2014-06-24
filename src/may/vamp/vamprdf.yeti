@@ -16,7 +16,20 @@ import java.lang: UnsatisfiedLinkError;
 
 getPluginPath () =
    (try map string PluginLoader#getInstance()#getPluginPath();
-    catch UnsatisfiedLinkError e: [];
+    catch UnsatisfiedLinkError e: 
+        eprintln "WARNING: getPluginPath: Failed to load jVamp library: \(e#getMessage())";
+        eprintln "(Looking up VAMP_PATH environment variable directly instead)";
+        try
+            path = System#getenv("VAMP_PATH");
+            if nullptr? path then []
+            else
+                sep = System#getProperty("path.separator");
+                list (strSplit sep path);
+            fi
+        catch Exception e:
+            eprintln "(Caught exception: \(e#getMessage())";
+            [];
+        yrt;
     yrt);
 
 systemVampRdfFiles () =
