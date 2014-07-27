@@ -72,11 +72,17 @@ magnitude c is ~Cplx -> number =
 angle c is ~Cplx -> number =
     c#getAngle();
 
+fromPolar mag angle is number -> number -> ~Cplx =
+    complex (mag * Math#cos(angle)) (mag * Math#sin(angle));
+
 sum' cc is list?<~Cplx> -> ~Cplx =
     complex (sum (map real cc)) (sum (map imaginary cc));
 
 add c1 c2 is ~Cplx -> ~Cplx -> ~Cplx =
     complex (real c1 + real c2) (imaginary c1 + imaginary c2);
+
+subtract c1 c2 is ~Cplx -> ~Cplx -> ~Cplx =
+    complex (real c1 - real c2) (imaginary c1 - imaginary c2);
 
 multiply c1 c2 is ~Cplx -> ~Cplx -> ~Cplx =
    (a = real c1;
@@ -118,8 +124,10 @@ typedef opaque complex_t = ~may.Cplx;
    complex,
    magnitude,
    angle,
+   fromPolar,
    sum = sum',
    add,
+   subtract,
    multiply,
    scale,
    zero,
@@ -136,8 +144,10 @@ typedef opaque complex_t = ~may.Cplx;
    complex is number -> number -> complex_t,
    magnitude is complex_t -> number,
    angle is complex_t -> number,
+   fromPolar is number -> number -> complex_t,
    sum is list?<complex_t> -> complex_t,
    add is complex_t -> complex_t -> complex_t,
+   subtract is complex_t -> complex_t -> complex_t,
    multiply is complex_t -> complex_t -> complex_t,
    scale is number -> complex_t -> complex_t,
    zero is complex_t,
