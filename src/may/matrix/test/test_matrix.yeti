@@ -16,6 +16,7 @@ makeTests name flipper =
     randomMatrix s = flipper (mat.randomMatrix s);
     identityMatrix s = flipper (mat.identityMatrix s);
     generate f s = flipper (mat.generate f s);
+    newMatrix s data = flipper (mat.newMatrix s data);
     fromRows d = flipper (mat.fromRows (map vec.fromList d));
     fromColumns d = flipper (mat.fromColumns (map vec.fromList d));
 [
@@ -93,6 +94,58 @@ makeTests name flipper =
 "widthAndHeight-\(name)": \(
     m = constMatrix 2 { rows = 3, columns = 4 };
     compare (mat.size m) { columns = mat.width m, rows = mat.height m }
+),
+
+"newMatrix-rows-\(name)": \(
+    rowc rr = Rows (map vec.fromList rr);
+    m1 = newMatrix { rows = 0, columns = 0 } (rowc []);
+    m2 = newMatrix { rows = 2, columns = 0 } (rowc [[],[]]);
+    m3 = newMatrix { rows = 3, columns = 2 } (rowc [[1,2],[3,4],[5,6]]);
+    compare (mat.size m1) { rows = 0, columns = 0 } and
+        compare (mat.size m2) { rows = 2, columns = 0 } and
+        compare (mat.size m3) { rows = 3, columns = 2 } and
+        compareMatrices m3 (fromRows [[1,2],[3,4],[5,6]]);
+),
+
+"newMatrix-columns-\(name)": \(
+    colc cc = Columns (map vec.fromList cc);
+    m1 = newMatrix { rows = 0, columns = 0 } (colc []);
+    m2 = newMatrix { rows = 0, columns = 2 } (colc [[],[]]);
+    m3 = newMatrix { rows = 2, columns = 3 } (colc [[1,2],[3,4],[5,6]]);
+    compare (mat.size m1) { rows = 0, columns = 0 } and
+        compare (mat.size m2) { rows = 0, columns = 2 } and
+        compare (mat.size m3) { rows = 2, columns = 3 } and
+        compareMatrices m3 (fromColumns [[1,2],[3,4],[5,6]]);
+),
+
+"newMatrix-fail-\(name)": \(
+    rowc rr = Rows (map vec.fromList rr);
+    colc cc = Columns (map vec.fromList cc);
+    all id
+       (map do t:
+            try
+                \() (t ());
+                false;
+            catch FailureException e:
+                true;
+            yrt
+        done
+        [
+        \(newMatrix { rows = 0, columns = 0 } (rowc [[]])),
+        \(newMatrix { rows = 0, columns = 0 } (colc [[]])),
+        \(newMatrix { rows = 2, columns = 0 } (rowc [[]])),
+        \(newMatrix { rows = 0, columns = 2 } (colc [[]])),
+        \(newMatrix { rows = 2, columns = 2 } (rowc [[],[]])),
+        \(newMatrix { rows = 2, columns = 2 } (colc [[],[]])),
+        \(newMatrix { rows = 2, columns = 3 } (rowc [[1,2],[3,4,5]])),
+        \(newMatrix { rows = 3, columns = 2 } (colc [[1,2],[3,4,5]])),
+        \(newMatrix { rows = 2, columns = 3 } (rowc [[1,2,3],[4,5]])),
+        \(newMatrix { rows = 3, columns = 2 } (colc [[1,2,3],[4,5]])),
+        \(newMatrix { rows = 2, columns = 3 } (rowc [[1,2,3],[4,5,6],[7,8,9]])),
+        \(newMatrix { rows = 3, columns = 2 } (colc [[1,2,3],[4,5,6],[7,8,9]])),
+        \(newMatrix { rows = 2, columns = 3 } (rowc [[1,2,3]])),
+        \(newMatrix { rows = 3, columns = 2 } (colc [[1,2,3]]))
+        ]);
 ),
 
 "equal-\(name)": \(

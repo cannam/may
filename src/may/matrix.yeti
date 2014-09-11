@@ -213,9 +213,9 @@ newMatrix size d =
     case d of
     Rows rr: 
         if (length rr) != size.rows then
-            failWith "Wrong number of rows in row-major newMatrix (\(length rr), size calls for \(size.rows)";
+            failWith "Wrong number of rows in row-major newMatrix (\(length rr), size calls for \(size.rows))";
         elif not empty? rr and vec.length (head rr) != size.columns then
-            failWith "Wrong number of columns in row-major newMatrix (\(vec.length (head rr)), size calls for \(size.columns)";
+            failWith "Wrong number of columns in row-major newMatrix (\(vec.length (head rr)), size calls for \(size.columns))";
         else
             {
                 size,
@@ -224,9 +224,9 @@ newMatrix size d =
         fi;
     Columns cc: 
         if (length cc) != size.columns then
-            failWith "Wrong number of columns in column-major newMatrix (\(length cc), size calls for \(size.columns)";
+            failWith "Wrong number of columns in column-major newMatrix (\(length cc), size calls for \(size.columns))";
         elif not empty? cc and vec.length (head cc) != size.rows then
-            failWith "Wrong number of rows in column-major newMatrix (\(vec.length (head cc)), size calls for \(size.rows)";
+            failWith "Wrong number of rows in column-major newMatrix (\(vec.length (head cc)), size calls for \(size.rows))";
         else
             {
                 size,
@@ -968,7 +968,11 @@ total m =
     fi;
 
 mapRows rf m =
-    newMatrix (size m) (Rows (map rf (asRows m)));
+   (rows = map rf (asRows m);
+    if not empty? rows and vec.length (head rows) != width m then
+        failWith "Map function changes row length in mapRows: from \(width m) to \(vec.length (head rows))";
+    fi;
+    newMatrix (size m) (Rows (map rf (asRows m))));
 
 mapColumns cf m =
     newMatrix (size m) (Columns (map cf (asColumns m)));
