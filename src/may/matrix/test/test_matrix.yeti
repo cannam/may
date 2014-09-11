@@ -272,12 +272,36 @@ makeTests name flipper =
         compareMatrices (mat.mapRows (vec.scaled 2) m') m''
 ),
 
+"mapRows-extend-\(name)": \(
+    m = fromRows [[1,4],[0,5],[3,6]];
+    m' = mat.mapRows do r: vec.concat [r, r] done m;
+    compareMatrices m' (mat.concatHorizontal [ m, m ])
+),
+
+"mapRows-shrink-\(name)": \(
+    m = fromRows [[1,4],[0,5],[3,6]];
+    m' = mat.mapRows do r: vec.resizedTo 1 r done m;
+    compareMatrices m' (fromRows [[1],[0],[3]]);
+),
+
 "mapColumns-\(name)": \(
     m = fromRows [[1,4],[0,5],[3,6]];
     m' = fromColumns [[1,0,3],[4,5,6]];
     m'' = fromRows [[2,8],[0,10],[6,12]];
     compareMatrices (mat.mapColumns (vec.scaled 2) m) m'' and
         compareMatrices (mat.mapColumns (vec.scaled 2) m') m''
+),
+
+"mapColumns-extend-\(name)": \(
+    m = fromColumns [[1,4],[0,5],[3,6]];
+    m' = mat.mapColumns do r: vec.concat [r, r] done m;
+    compareMatrices m' (mat.concatVertical [ m, m ])
+),
+
+"mapColumns-shrink-\(name)": \(
+    m = fromColumns [[1,4],[0,5],[3,6]];
+    m' = mat.mapColumns do r: vec.resizedTo 1 r done m;
+    compareMatrices m' (fromColumns [[1],[0],[3]]);
 ),
 
 "minValue-\(name)": \(

@@ -968,14 +968,10 @@ total m =
     fi;
 
 mapRows rf m =
-   (rows = map rf (asRows m);
-    if not empty? rows and vec.length (head rows) != width m then
-        failWith "Map function changes row length in mapRows: from \(width m) to \(vec.length (head rows))";
-    fi;
-    newMatrix (size m) (Rows (map rf (asRows m))));
+    fromRows (map rf (asRows m));
 
 mapColumns cf m =
-    newMatrix (size m) (Columns (map cf (asColumns m)));
+    fromColumns (map cf (asColumns m));
 
 format m =
     strJoin "\n"
