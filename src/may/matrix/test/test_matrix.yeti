@@ -284,6 +284,22 @@ makeTests name flipper =
     compareMatrices m' (fromRows [[1],[0],[3]]);
 ),
 
+"mapRows-fail-\(name)": \(
+    try
+        m = fromRows [[1,4],[0,5],[3,6]];
+        \() (mat.mapRows
+            do r: 
+                if vec.at r 0 == 1
+                then vec.concat [r, r] 
+                else vec.resizedTo 1 r
+                fi 
+            done m);
+        false
+    catch FailureException e:
+        true
+    yrt
+),
+
 "mapColumns-\(name)": \(
     m = fromRows [[1,4],[0,5],[3,6]];
     m' = fromColumns [[1,0,3],[4,5,6]];
@@ -302,6 +318,22 @@ makeTests name flipper =
     m = fromColumns [[1,4],[0,5],[3,6]];
     m' = mat.mapColumns do r: vec.resizedTo 1 r done m;
     compareMatrices m' (fromColumns [[1],[0],[3]]);
+),
+
+"mapColumns-fail-\(name)": \(
+    try
+        m = fromColumns [[1,4],[0,5],[3,6]];
+        \() (mat.mapColumns
+            do r: 
+                if vec.at r 0 == 1
+                then vec.concat [r, r] 
+                else vec.resizedTo 1 r
+                fi 
+            done m);
+        false
+    catch FailureException e:
+        true
+    yrt
 ),
 
 "minValue-\(name)": \(

@@ -444,6 +444,9 @@ equal =
     equal' (==) vec.equal;
 
 fromRows rows =
+   (if any do r: vec.length r != vec.length (head rows) done rows then
+        failWith "Inconsistent row lengths in fromRows (\(map vec.length rows))";
+    fi;
     {
         size = { 
             rows = length rows, 
@@ -453,9 +456,12 @@ fromRows rows =
                 fi,
         },
         data = DenseRows (array rows)
-    };
+    });
 
 fromColumns cols =
+   (if any do c: vec.length c != vec.length (head cols) done cols then
+        failWith "Inconsistent column lengths in fromColumns (\(map vec.length cols))";
+    fi;
     {
         size = { 
             columns = length cols, 
@@ -465,7 +471,7 @@ fromColumns cols =
                 fi,
         },
         data = DenseCols (array cols)
-    };
+    });
 
 fromLists data = 
     case data of
