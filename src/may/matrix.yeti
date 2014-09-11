@@ -214,8 +214,8 @@ newMatrix size d =
     Rows rr: 
         if (length rr) != size.rows then
             failWith "Wrong number of rows in row-major newMatrix (\(length rr), size calls for \(size.rows))";
-        elif not empty? rr and vec.length (head rr) != size.columns then
-            failWith "Wrong number of columns in row-major newMatrix (\(vec.length (head rr)), size calls for \(size.columns))";
+        elif not (all do r: vec.length r == size.columns done rr) then
+            failWith "Wrong or inconsistent number of columns in rows in row-major newMatrix (\(map vec.length rr)), size calls for \(size.columns))";
         else
             {
                 size,
@@ -225,8 +225,8 @@ newMatrix size d =
     Columns cc: 
         if (length cc) != size.columns then
             failWith "Wrong number of columns in column-major newMatrix (\(length cc), size calls for \(size.columns))";
-        elif not empty? cc and vec.length (head cc) != size.rows then
-            failWith "Wrong number of rows in column-major newMatrix (\(vec.length (head cc)), size calls for \(size.rows))";
+        elif not (all do c: vec.length c == size.rows done cc) then
+            failWith "Wrong or inconsistent number of rows in in columns in column-major newMatrix (\(map vec.length cc)), size calls for \(size.rows))";
         else
             {
                 size,
