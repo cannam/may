@@ -82,6 +82,7 @@ frames framesize options stream =
     var padded = true;
     var windower = id;
     var transform = id;
+    var mixer = id;
     for options \case of
         Hop h: hop := h;
         Padded p: padded := p;
@@ -92,10 +93,13 @@ frames framesize options stream =
             if f then
                 transform := mat.mapRows (fft.realForwardMagnitude framesize);
             fi;
+        MixedTo c:
+            mixer := manip.mixedTo c;
     esac;
     map transform
        (map windower
-           (frames' framesize hop padded stream)));
+           (frames' framesize hop padded
+               (mixer stream))));
 
 complexFrames framesize options stream =
    (var hop = framesize;
@@ -103,6 +107,7 @@ complexFrames framesize options stream =
     var windower = id;
     var rowTransform = 
         do r: complex.complexArray r (vec.zeros (vec.length r)) done;
+    var mixer = id;
     for options \case of
         Hop h: hop := h;
         Padded p: padded := p;
@@ -114,12 +119,15 @@ complexFrames framesize options stream =
             if f then 
                 rowTransform := fft.realForward framesize;
             fi;
+        MixedTo c:
+            mixer := manip.mixedTo c;
     esac;
     map do m:
         cm.fromRows (map rowTransform (mat.asRows m))
         done
        (map windower
-           (frames' framesize hop padded stream)));
+           (frames' framesize hop padded 
+               (mixer stream))));
 
 streamContiguous rate framesize frames =
    (var remaining = frames;
