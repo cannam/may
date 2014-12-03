@@ -292,6 +292,9 @@ unityNormalised v is ~double[] -> ~double[] =
         v;
     fi);
 
+euclideanDistance v1 v2 is ~double[] -> ~double[] -> number =
+    VectorBits#euclideanDistance(v1, v2);
+
 zipped vv is list?<~double[]> -> ~double[] =
     case vv of
     [v]: v;
@@ -366,6 +369,7 @@ typedef opaque vector_t = ~double[];
     maxindex,
     minindex,
     unityNormalised,
+    euclideanDistance,
     zipped,
     unzipped,
 } as {
@@ -411,6 +415,7 @@ typedef opaque vector_t = ~double[];
     maxindex is vector_t -> number,
     minindex is vector_t -> number,
     unityNormalised is vector_t -> vector_t,
+    euclideanDistance is vector_t -> vector_t -> number,
     zipped is list?<vector_t> -> vector_t,
     unzipped is number -> vector_t -> array<vector_t>,
 }

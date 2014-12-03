@@ -58,5 +58,15 @@ public class VectorBits
 	}
 	return out;
     }
+    
+    public static double euclideanDistance(double[] v1, double[] v2) {
+	checkLengths(v1, v2);
+	double sum = 0.0;
+	for (int i = 0; i < v1.length; ++i) {
+	    double d = v1[i] - v2[i];
+	    sum += d * d;
+	}
+	return Math.sqrt(sum);
+    }
 }
 
