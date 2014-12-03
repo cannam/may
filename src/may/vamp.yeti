@@ -313,8 +313,8 @@ processStream key output stream =
 processFile key output filename = 
     processStream key output (af.open filename);
 
-processStreamStructured key output filename =
-    vamppost.postprocess (processStream key output filename);
+processStreamStructured key output stream =
+    vamppost.postprocess (processStream key output stream);
 
 processFileStructured key output filename =
     vamppost.postprocess (processFile key output filename);
