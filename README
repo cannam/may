@@ -1,0 +1,17 @@
+
+MAY
+===
+
+May is a collection of modules for mathematical manipulation and audio
+analysis and processing with the Yeti (https://mth.github.io/yeti/)
+programming language.
+
+Yeti is a functional language that runs on the JVM, and May makes use
+of both Java and native Yeti modules.
+
+This is an implementation exercise as much as anything.
+
+See https://code.soundsoftware.ac.uk/projects/may.
+
+
+
