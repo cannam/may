@@ -44,7 +44,7 @@ module may.matrix;
 
 vec = load may.vector;
 
-load yeti.experimental.json;
+load yeti.json;
 
 typedef opaque matrix_t = {
     size is { rows is number, columns is number },
@@ -1005,7 +1005,7 @@ print' = println . format;
 eprint' = eprintln . format;
 
 json m =
-    jsonList (map do r: jsonList (map jsonNum (vec.list r)) done (asRows m));
+    jsOfList (map do r: jsOfList (map jsOfNum (vec.list r)) done (asRows m));
 
 {
     size,
