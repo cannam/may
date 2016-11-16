@@ -31,7 +31,7 @@ tests =
 "version": \(
     case v.loadPlugin rate testPluginKey of
     Error e: (eprintln "version: Error: \(e)"; false);
-    OK plugin: compare plugin.version 1;
+    OK plugin: compare plugin.version 4;
     esac
 ),
 
