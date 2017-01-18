@@ -216,6 +216,14 @@ outputDescriptor store outputNode =
             then Known (nprop "vamp:bin_count")
             else Unknown ()
             fi,
+        sampleType = iprop "vamp:sample_type",
+        sampleRate =
+            case tprop "vamp:sample_rate" of
+            "": Unknown();
+            sr: try Known (number sr)
+                catch Exception _: Unknown ()
+                yrt;
+            esac,
         computes =
             case iprop "vamp:computes_event_type" of
             IRI iri: Event iri;
